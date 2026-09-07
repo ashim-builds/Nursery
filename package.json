@@ -1,0 +1,38 @@
+{
+  "name": "nursery-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mobile-First Nursery & Botanical Flowers eCommerce Platform",
+  "workspaces": [
+    "services",
+    "web"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=services & npm run dev --workspace=web",
+    "dev:backend": "npm run dev --workspace=services",
+    "dev:frontend": "npm run dev --workspace=web",
+    "build": "npm run build --workspace=services && npm run build --workspace=web",
+    "build:backend": "npm run build --workspace=services",
+    "build:frontend": "npm run build --workspace=web",
+    "prisma:generate": "npm run prisma:generate --workspace=services",
+    "prisma:migrate": "npm run prisma:migrate --workspace=services",
+    "prisma:seed": "npm run prisma:seed --workspace=services",
+    "prisma:studio": "npm run prisma:studio --workspace=services",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f"
+  },
+  "keywords": [
+    "nursery",
+    "plants",
+    "flowers",
+    "ecommerce",
+    "nepal",
+    "react19",
+    "express",
+    "prisma",
+    "mysql"
+  ],
+  "author": "Nursery Platform Team",
+  "license": "MIT"
+}

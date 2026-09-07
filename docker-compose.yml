@@ -1,0 +1,68 @@
+services:
+  # 1. MySQL 8 Database Container
+  mysql:
+    image: mysql:8.0
+    container_name: nursery_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: nursery_root_secure_pass
+      MYSQL_DATABASE: nursery_db
+      MYSQL_USER: nursery_user
+      MYSQL_PASSWORD: nursery_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - nursery_internal
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pnursery_root_secure_pass"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # 2. Express Backend Services Container
+  services:
+    build:
+      context: ./services
+      dockerfile: Dockerfile
+    container_name: nursery_services
+    restart: unless-stopped
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      DATABASE_URL: "mysql://nursery_user:nursery_password@mysql:3306/nursery_db"
+      JWT_SECRET: super_secret_jwt_nursery_access_key_2026_nepal
+      JWT_EXPIRES_IN: 7d
+      JWT_REFRESH_SECRET: super_secret_jwt_nursery_refresh_key_2026_nepal
+      JWT_REFRESH_EXPIRES_IN: 30d
+      CLOUDINARY_CLOUD_NAME: demo_nursery_cloud
+      CLOUDINARY_API_KEY: 123456789012345
+      CLOUDINARY_API_SECRET: your_cloudinary_api_secret
+      FRONTEND_URL: "http://web"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - nursery_internal
+
+  # 3. React / Nginx Frontend Web Container
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: nursery_web
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - services
+    networks:
+      - nursery_internal
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  nursery_internal:
+    driver: bridge
