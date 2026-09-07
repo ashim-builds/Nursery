@@ -25,6 +25,9 @@ import { notificationRoutes } from './modules/notifications/notification.routes.
 
 const app = express();
 
+// Trust reverse proxy (Nginx) for accurate client IP in rate limiting & logs
+app.set('trust proxy', 1);
+
 // 1. Security Middlewares: Helmet with CSP and strict headers
 app.use(
   helmet({

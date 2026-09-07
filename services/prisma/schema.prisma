@@ -726,7 +726,7 @@ model PushSubscription {
   id        String   @id @default(uuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  endpoint  String   @unique @db.VarChar(1000)
+  endpoint  String   @unique @db.VarChar(500)
   p256dh    String   @db.Text
   auth      String   @db.Text
   userAgent String?

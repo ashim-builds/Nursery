@@ -13,44 +13,67 @@
   html {
     -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
+    overflow-x: hidden;
   }
 
   body {
     background-color: var(--bg-sand);
     color: #1a201c;
     overflow-x: hidden;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Prevent automatic iOS font scaling/zoom on form input focus */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+  @media (min-width: 640px) {
+    input, select, textarea {
+      font-size: 14px !important;
+    }
   }
 
   /* Custom mobile scrollbar */
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
   }
   ::-webkit-scrollbar-track {
-    background: #f4f1ea;
+    background: transparent;
   }
   ::-webkit-scrollbar-thumb {
     background: #c4e0d1;
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #99caaF;
+    background: #99caaf;
   }
 }
 
 @layer utilities {
   .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom, 16px);
+    padding-bottom: max(env(safe-area-inset-bottom), 14px);
+  }
+  .safe-top {
+    padding-top: max(env(safe-area-inset-top), 8px);
+  }
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
   .glass-header {
-    background: rgba(250, 249, 246, 0.88);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: rgba(250, 249, 246, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
   .glass-dark {
-    background: rgba(30, 63, 48, 0.92);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: rgba(30, 63, 48, 0.94);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
@@ -58,5 +81,8 @@
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+  .momentum-scroll {
+    -webkit-overflow-scrolling: touch;
   }
 }

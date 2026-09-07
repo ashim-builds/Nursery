@@ -8,20 +8,20 @@ export const BottomNav: React.FC = () => {
 
   return (
     <nav
-      aria-label="Mobile Navigation"
+      aria-label="Mobile Bottom Navigation"
       className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-forest-100 shadow-mobile-bar safe-bottom"
     >
-      <div className="grid grid-cols-5 h-14 items-center max-w-md mx-auto px-1">
+      <div className="grid grid-cols-5 h-16 items-center max-w-md mx-auto px-1">
         {/* 1. Home */}
         <NavLink
           to="/"
           className={({ isActive }) =>
-            `flex flex-col items-center justify-center gap-0.5 py-1 min-h-[44px] transition-colors ${
-              isActive ? 'text-forest-800 font-bold' : 'text-slate-600 hover:text-forest-700'
+            `flex flex-col items-center justify-center gap-1 py-1 h-full min-h-[48px] touch-target transition-all ${
+              isActive ? 'text-forest-800 font-bold scale-105' : 'text-slate-600 hover:text-forest-700'
             }`
           }
         >
-          <Home size={19} />
+          <Home size={20} />
           <span className="text-[10px] tracking-tight">Home</span>
         </NavLink>
 
@@ -29,25 +29,25 @@ export const BottomNav: React.FC = () => {
         <NavLink
           to="/catalog"
           className={({ isActive }) =>
-            `flex flex-col items-center justify-center gap-0.5 py-1 min-h-[44px] transition-colors ${
-              isActive ? 'text-forest-800 font-bold' : 'text-slate-600 hover:text-forest-700'
+            `flex flex-col items-center justify-center gap-1 py-1 h-full min-h-[48px] touch-target transition-all ${
+              isActive ? 'text-forest-800 font-bold scale-105' : 'text-slate-600 hover:text-forest-700'
             }`
           }
         >
-          <Grid size={19} />
-          <span className="text-[10px] tracking-tight">Categories</span>
+          <Grid size={20} />
+          <span className="text-[10px] tracking-tight">Catalog</span>
         </NavLink>
 
         {/* 3. Wishlist */}
         <NavLink
           to={isAuthenticated ? '/profile?tab=wishlist' : '/login?redirect=/profile?tab=wishlist'}
           className={({ isActive }) =>
-            `flex flex-col items-center justify-center gap-0.5 py-1 min-h-[44px] transition-colors ${
-              isActive ? 'text-forest-800 font-bold' : 'text-slate-600 hover:text-forest-700'
+            `flex flex-col items-center justify-center gap-1 py-1 h-full min-h-[48px] touch-target transition-all ${
+              isActive ? 'text-forest-800 font-bold scale-105' : 'text-slate-600 hover:text-forest-700'
             }`
           }
         >
-          <Heart size={19} className="text-terracotta-500" />
+          <Heart size={20} className="text-terracotta-500" />
           <span className="text-[10px] tracking-tight">Wishlist</span>
         </NavLink>
 
@@ -55,12 +55,12 @@ export const BottomNav: React.FC = () => {
         <NavLink
           to={isAuthenticated ? '/profile?tab=orders' : '/login?redirect=/profile?tab=orders'}
           className={({ isActive }) =>
-            `flex flex-col items-center justify-center gap-0.5 py-1 min-h-[44px] transition-colors ${
-              isActive ? 'text-forest-800 font-bold' : 'text-slate-600 hover:text-forest-700'
+            `flex flex-col items-center justify-center gap-1 py-1 h-full min-h-[48px] touch-target transition-all ${
+              isActive ? 'text-forest-800 font-bold scale-105' : 'text-slate-600 hover:text-forest-700'
             }`
           }
         >
-          <Package size={19} />
+          <Package size={20} />
           <span className="text-[10px] tracking-tight">Orders</span>
         </NavLink>
 
@@ -68,12 +68,12 @@ export const BottomNav: React.FC = () => {
         <NavLink
           to={isAuthenticated ? '/profile' : '/login'}
           className={({ isActive }) =>
-            `flex flex-col items-center justify-center gap-0.5 py-1 min-h-[44px] transition-colors ${
-              isActive ? 'text-forest-800 font-bold' : 'text-slate-600 hover:text-forest-700'
+            `flex flex-col items-center justify-center gap-1 py-1 h-full min-h-[48px] touch-target transition-all ${
+              isActive ? 'text-forest-800 font-bold scale-105' : 'text-slate-600 hover:text-forest-700'
             }`
           }
         >
-          <User size={19} />
+          <User size={20} />
           <span className="text-[10px] tracking-tight">{isAuthenticated ? 'Account' : 'Login'}</span>
         </NavLink>
       </div>

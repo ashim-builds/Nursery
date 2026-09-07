@@ -39,3 +39,9 @@ Thumbs.db
 *.sqlite
 *.sqlite-journal
 prisma/migrations/dev.db
+
+# Media Uploads
+uploads/*
+!uploads/.gitkeep
+!uploads/**/.gitkeep
+

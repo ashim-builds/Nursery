@@ -153,10 +153,11 @@ export const CheckoutPage: React.FC = () => {
                   <input
                     type="text"
                     required
+                    autoComplete="name"
                     placeholder="Recipient's Name"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:border-forest-600 focus:ring-1 focus:ring-forest-600 outline-none"
+                    className="w-full px-3.5 py-3 border border-slate-300 rounded-xl focus:border-forest-600 focus:ring-1 focus:ring-forest-600 outline-none text-base sm:text-xs"
                   />
                 </div>
 
@@ -167,10 +168,12 @@ export const CheckoutPage: React.FC = () => {
                   <input
                     type="tel"
                     required
+                    inputMode="tel"
+                    autoComplete="tel"
                     placeholder="+977-98XXXXXXXX"
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}
-                    className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:border-forest-600 focus:ring-1 focus:ring-forest-600 outline-none"
+                    className="w-full px-3.5 py-3 border border-slate-300 rounded-xl focus:border-forest-600 focus:ring-1 focus:ring-forest-600 outline-none text-base sm:text-xs"
                   />
                 </div>
 
@@ -181,10 +184,12 @@ export const CheckoutPage: React.FC = () => {
                   <input
                     type="email"
                     required
+                    inputMode="email"
+                    autoComplete="email"
                     placeholder="your@email.com"
                     value={customerEmail}
                     onChange={(e) => setCustomerEmail(e.target.value)}
-                    className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:border-forest-600 focus:ring-1 focus:ring-forest-600 outline-none"
+                    className="w-full px-3.5 py-3 border border-slate-300 rounded-xl focus:border-forest-600 focus:ring-1 focus:ring-forest-600 outline-none text-base sm:text-xs"
                   />
                 </div>
 
@@ -195,7 +200,7 @@ export const CheckoutPage: React.FC = () => {
                   <select
                     value={deliveryCity}
                     onChange={(e) => setDeliveryCity(e.target.value)}
-                    className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:border-forest-600 focus:ring-1 focus:ring-forest-600 outline-none bg-white font-medium"
+                    className="w-full px-3.5 py-3 border border-slate-300 rounded-xl focus:border-forest-600 focus:ring-1 focus:ring-forest-600 outline-none bg-white font-medium text-base sm:text-xs min-h-[44px]"
                   >
                     <option value="Kathmandu">Kathmandu</option>
                     <option value="Lalitpur">Lalitpur</option>
@@ -211,7 +216,7 @@ export const CheckoutPage: React.FC = () => {
                     placeholder="e.g. Jhamsikhel, Baluwatar, Baneshwor"
                     value={deliveryArea}
                     onChange={(e) => setDeliveryArea(e.target.value)}
-                    className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:border-forest-600 focus:ring-1 focus:ring-forest-600 outline-none"
+                    className="w-full px-3.5 py-3 border border-slate-300 rounded-xl focus:border-forest-600 focus:ring-1 focus:ring-forest-600 outline-none text-base sm:text-xs"
                   />
                 </div>
 
@@ -220,10 +225,11 @@ export const CheckoutPage: React.FC = () => {
                   <textarea
                     required
                     rows={2}
+                    autoComplete="street-address"
                     placeholder="House number, street name, opposite to bakery, etc."
                     value={deliveryAddress}
                     onChange={(e) => setDeliveryAddress(e.target.value)}
-                    className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:border-forest-600 focus:ring-1 focus:ring-forest-600 outline-none"
+                    className="w-full px-3.5 py-3 border border-slate-300 rounded-xl focus:border-forest-600 focus:ring-1 focus:ring-forest-600 outline-none text-base sm:text-xs"
                   />
                 </div>
               </div>
@@ -232,7 +238,7 @@ export const CheckoutPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="bg-forest-800 hover:bg-forest-900 text-white font-bold text-xs py-3 px-6 rounded-xl flex items-center gap-2 transition-colors shadow-sm"
+                  className="w-full sm:w-auto bg-forest-800 hover:bg-forest-900 active:scale-98 text-white font-bold text-xs py-3.5 px-6 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm min-h-[44px]"
                 >
                   <span>Continue to Gifting & Schedule</span>
                   <ArrowRight size={15} />

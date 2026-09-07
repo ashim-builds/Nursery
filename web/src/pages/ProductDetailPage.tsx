@@ -209,7 +209,7 @@ export const ProductDetailPage: React.FC = () => {
   };
 
   return (
-    <div className="pb-24 sm:pb-16 animate-in fade-in duration-300">
+    <div className="pb-40 sm:pb-16 animate-in fade-in duration-300">
       {/* Dynamic SEO Meta & Structured Data */}
       <SEO
         title={seoTitle}
@@ -721,8 +721,8 @@ export const ProductDetailPage: React.FC = () => {
         </div>
       )}
 
-      {/* Mobile-First Sticky Action Bar (Fixed at viewport bottom on phones) */}
-      <div className="sm:hidden fixed bottom-14 left-0 right-0 z-30 bg-white/98 backdrop-blur-xl border-t border-slate-200 p-3 shadow-mobile-bar flex items-center justify-between gap-3">
+      {/* Mobile-First Sticky Action Bar (Fixed above BottomNav on phones) */}
+      <div className="sm:hidden fixed bottom-16 left-0 right-0 z-30 bg-white/98 backdrop-blur-xl border-t border-slate-200 p-3 shadow-mobile-bar flex items-center justify-between gap-3">
         <div>
           <span className="text-[10px] text-slate-500 block">Total</span>
           <span className="font-serif font-bold text-base text-forest-950">
@@ -731,29 +731,31 @@ export const ProductDetailPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Qty pill */}
+          {/* Qty pill with 44px min touch targets */}
           <div className="flex items-center border border-slate-300 rounded-xl bg-slate-50 px-1 py-0.5">
             <button
               onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              className="p-1 text-slate-600"
+              className="w-8 h-8 flex items-center justify-center text-slate-700 active:scale-90 touch-target"
+              aria-label="Decrease quantity"
             >
-              <Minus size={12} />
+              <Minus size={14} />
             </button>
-            <span className="px-2 text-xs font-bold">{quantity}</span>
+            <span className="px-2 text-xs font-bold text-slate-900">{quantity}</span>
             <button
               onClick={() => setQuantity(quantity + 1)}
-              className="p-1 text-slate-600"
+              className="w-8 h-8 flex items-center justify-center text-slate-700 active:scale-90 touch-target"
+              aria-label="Increase quantity"
             >
-              <Plus size={12} />
+              <Plus size={14} />
             </button>
           </div>
 
           <button
             onClick={handleAddToCart}
             disabled={!selectedVariant || selectedVariant.stockQuantity <= 0}
-            className="bg-forest-800 hover:bg-forest-900 active:scale-95 text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow flex items-center gap-1.5 transition-all"
+            className="bg-forest-800 hover:bg-forest-900 active:scale-95 text-white font-bold text-xs py-3 px-4 rounded-xl shadow flex items-center gap-1.5 transition-all min-h-[44px]"
           >
-            <ShoppingBag size={14} />
+            <ShoppingBag size={15} />
             <span>Add to Cart</span>
           </button>
         </div>

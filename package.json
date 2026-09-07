@@ -14,13 +14,18 @@
     "build": "npm run build --workspace=services && npm run build --workspace=web",
     "build:backend": "npm run build --workspace=services",
     "build:frontend": "npm run build --workspace=web",
+    "test": "npm run test --workspace=services",
     "prisma:generate": "npm run prisma:generate --workspace=services",
     "prisma:migrate": "npm run prisma:migrate --workspace=services",
     "prisma:seed": "npm run prisma:seed --workspace=services",
     "prisma:studio": "npm run prisma:studio --workspace=services",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f"
+    "db:backup": "bash scripts/backup.sh",
+    "db:restore": "bash scripts/restore.sh",
+    "db:migrate": "bash scripts/migrate.sh",
+    "db:seed": "bash scripts/seed.sh",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
   },
   "keywords": [
     "nursery",
