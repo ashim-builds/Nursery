@@ -11,13 +11,13 @@ export const AdminSettingsPage: React.FC = () => {
   const { showToast } = useUI();
 
   // Settings State
-  const [storeName, setStoreName] = useState(() => localStorage.getItem('nursery_store_name') || 'KtmBotanica Nursery & Florist');
-  const [supportPhone, setSupportPhone] = useState(() => localStorage.getItem('nursery_phone') || '+977 9801234567');
-  const [whatsappPhone, setWhatsappPhone] = useState(() => localStorage.getItem('nursery_whatsapp') || '+977 9801234567');
+  const [storeName, setStoreName] = useState(() => localStorage.getItem('nursery_store_name') || 'RJ Flowers');
+  const [supportPhone, setSupportPhone] = useState(() => localStorage.getItem('nursery_phone') || '+977 9815155580');
+  const [whatsappPhone, setWhatsappPhone] = useState(() => localStorage.getItem('nursery_whatsapp') || '+977 9815155580');
   const [supportEmail, setSupportEmail] = useState(() => localStorage.getItem('nursery_email') || 'nursery@gmail.com');
-  const [storeAddress, setStoreAddress] = useState(() => localStorage.getItem('nursery_address') || 'Lazimpat Botanical Row, Kathmandu');
-  const [freeShippingThreshold, setFreeShippingThreshold] = useState<number>(() => Number(localStorage.getItem('nursery_free_shipping')) || 3000);
-  const [deliveryNotice, setDeliveryNotice] = useState(() => localStorage.getItem('nursery_delivery_notice') || 'Plant deliveries scheduled within 24 hours across Kathmandu Valley.');
+  const [storeAddress, setStoreAddress] = useState(() => localStorage.getItem('nursery_address') || 'Pokhara-26, Arghau Chowk, Pokhara');
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState<number>(() => Number(localStorage.getItem('nursery_free_shipping')) || 2000);
+  const [deliveryNotice, setDeliveryNotice] = useState(() => localStorage.getItem('nursery_delivery_notice') || 'Delivery across Pokhara. Rs. 100 below Rs. 2,000; free delivery from Rs. 2,000.');
 
   const [saving, setSaving] = useState(false);
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useUI } from '../context/UIContext';
-import { MapPin, Phone, Mail, Clock, Send, Sprout, ShieldCheck } from 'lucide-react';
+import { Facebook, MapPin, Phone, Clock, Send, Sprout, ShieldCheck } from 'lucide-react';
 
 export const ContactPage: React.FC = () => {
   const { showToast } = useUI();
@@ -22,13 +22,13 @@ export const ContactPage: React.FC = () => {
       <div className="text-center space-y-2 max-w-xl mx-auto">
         <div className="inline-flex items-center gap-1.5 bg-forest-50 text-forest-800 px-3 py-1 rounded-full text-xs font-bold">
           <Sprout size={14} />
-          <span>Kathmandu Botanical Studio</span>
+          <span>RJ Flowers and Nursery</span>
         </div>
         <h1 className="font-serif font-bold text-3xl sm:text-4xl text-slate-900">
           Get in Touch
         </h1>
         <p className="text-xs sm:text-sm text-slate-600">
-          Have questions about plant care, custom bouquet arrangements, or nursery greenhouse visits? We'd love to hear from you.
+          Have questions about flowers, plants, delivery, or nursery visits? We'd love to hear from you.
         </p>
       </div>
 
@@ -45,23 +45,23 @@ export const ContactPage: React.FC = () => {
                 <MapPin size={18} className="text-forest-700 shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-slate-900 block">Main Nursery & Studio:</strong>
-                  <span>Baluwatar-4, Kathmandu (Near Russian Embassy), Nepal</span>
+                  <span>Pokhara-26, Arghau Chowk, Pokhara, Nepal</span>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
                 <Phone size={18} className="text-forest-700 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="text-slate-900 block">Phone & WhatsApp:</strong>
-                  <span>+977-1-4412345 / 9801234567</span>
+                  <strong className="text-slate-900 block">Phone:</strong>
+                  <a href="tel:+9779815155580" className="hover:text-forest-700">+977 9815155580</a>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <Mail size={18} className="text-forest-700 shrink-0 mt-0.5" />
+                <Facebook size={18} className="text-forest-700 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="text-slate-900 block">Botanical Support:</strong>
-                  <span>hello@ktmbotanica.com</span>
+                  <strong className="text-slate-900 block">Facebook:</strong>
+                  <a href="https://www.facebook.com/p/RJ-Flower-Nursery-100038914454450/" target="_blank" rel="noreferrer" className="hover:text-forest-700">RJ Flower Nursery</a>
                 </div>
               </div>
 
@@ -69,8 +69,8 @@ export const ContactPage: React.FC = () => {
                 <Clock size={18} className="text-forest-700 shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-slate-900 block">Opening Hours:</strong>
-                  <span>Sunday – Friday: 8:00 AM – 7:00 PM</span>
-                  <span className="block text-slate-400">Saturday: 9:00 AM – 5:00 PM</span>
+                  <span>Every day: 7:00 AM – 7:00 PM</span>
+                  <span className="block text-slate-400">Closed on festival holidays</span>
                 </div>
               </div>
             </div>

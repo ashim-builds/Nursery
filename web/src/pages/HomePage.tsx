@@ -54,7 +54,7 @@ export const HomePage: React.FC = () => {
     } else {
       // If iOS or PWA prompt unavailable, show browser instruction
       showToast(
-        'To install KtmBotanica on your phone:\n\n• On iPhone/Safari: Tap Share (⎋) and select "Add to Home Screen" (+).\n• On Android/Chrome: Tap the 3 dots menu (⋮) and tap "Install app" or "Add to Home Screen".'
+        'To install RJ Flowers on your phone:\n\n• On iPhone/Safari: Tap Share (⎋) and select "Add to Home Screen" (+).\n• On Android/Chrome: Tap the 3 dots menu (⋮) and tap "Install app" or "Add to Home Screen".'
         , 'info'
       );
     }
@@ -78,7 +78,7 @@ export const HomePage: React.FC = () => {
   const nurserySchema = {
     '@context': 'https://schema.org',
     '@type': 'GardenStore',
-    name: siteSettings?.businessName || 'KtmBotanica Nursery & Florist',
+    name: siteSettings?.businessName || 'RJ Flowers',
     image:
       'https://images.unsplash.com/photo-1545241047-6083a3684587?auto=format&fit=crop&w=1200&q=80',
     url: 'https://ktmbotanica.com',
@@ -86,16 +86,16 @@ export const HomePage: React.FC = () => {
     priceRange: 'रू 200 - रू 25,000',
     address: {
       '@type': 'PostalAddress',
-      streetAddress: siteSettings?.address || 'Lazimpat Botanical Row',
+      streetAddress: siteSettings?.address || 'Pokhara-26, Arghau Chowk',
       addressLocality: siteSettings?.city || 'Pokhara',
-      addressRegion: siteSettings?.province || 'Bagmati',
-      postalCode: '44600',
+      addressRegion: siteSettings?.province || 'Gandaki',
+      postalCode: '33700',
       addressCountry: 'NP',
     },
     geo: {
       '@type': 'GeoCoordinates',
-      latitude: Number(siteSettings?.latitude) || 28.2096,
-      longitude: Number(siteSettings?.longitude) || 83.9595,
+      latitude: Number(siteSettings?.latitude) || 28.2365,
+      longitude: Number(siteSettings?.longitude) || 84.0036,
     },
   };
 
@@ -103,9 +103,9 @@ export const HomePage: React.FC = () => {
     <div className="space-y-8 sm:space-y-12 pb-16">
       {/* Dynamic SEO Meta */}
       <SEO
-        title="KtmBotanica"
-        description="Kathmandu's premier mobile-first plant nursery & florist. Shop indoor foliage, outdoor plants, handmade terracotta planters, and fresh bouquets delivered across Kathmandu Valley."
-        canonical="https://ktmbotanica.com/"
+        title="RJ Flowers | Flowers and Nursery in Pokhara"
+        description="RJ Flowers and Nursery in Pokhara-26, Arghau Chowk. Shop flowers and plants with delivery across Pokhara."
+        canonical="https://rjflowers.com/"
         structuredData={nurserySchema}
       />
 

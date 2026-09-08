@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, Heart, Mail, MapPin, Phone, ShieldCheck, Sprout, Truck } from 'lucide-react';
+import { ArrowUpRight, Facebook, Heart, MapPin, Phone, ShieldCheck, Truck } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 
@@ -13,7 +13,7 @@ export const Footer: React.FC = () => {
     },
   });
 
-  const businessName = siteSettings?.businessName || 'KtmBotanica';
+  const businessName = siteSettings?.businessName || 'RJ Flowers';
 
   return (
     <footer className="bg-forest-950 text-forest-100 pt-14 pb-24 lg:pb-10 mt-16 border-t-4 border-accent">
@@ -21,21 +21,19 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_2fr] gap-12 pb-12">
           <div className="max-w-sm">
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-11 h-11 rounded-2xl bg-accent text-white flex items-center justify-center shadow-lg shadow-black/10">
-                <Sprout size={22} />
-              </div>
+              <img src="/rj-flowers-icon.svg" alt={`${businessName} logo`} className="w-11 h-11 rounded-2xl shadow-lg shadow-black/10" />
               <div>
                 <span className="block font-serif font-bold text-2xl text-white leading-none">{businessName}</span>
                 <span className="text-[10px] uppercase tracking-[0.2em] text-emerald-300">Grow beautifully</span>
               </div>
             </div>
             <p className="text-sm text-forest-300 leading-relaxed mb-6">
-              Plants, flowers, and pottery chosen to make Kathmandu homes feel more alive.
+              Fresh flowers and nursery plants chosen to make Pokhara homes feel more alive.
             </p>
             <div className="space-y-3 text-xs text-forest-300">
-              <div className="flex items-start gap-3"><MapPin size={15} className="text-accent shrink-0 mt-0.5" /><span>{siteSettings?.address || 'Lazimpat Botanical Row, Kathmandu, Nepal'}</span></div>
-              <div className="flex items-center gap-3"><Phone size={15} className="text-accent shrink-0" /><span>+977 {siteSettings?.phone || '9800000000'}</span></div>
-              <div className="flex items-center gap-3"><Mail size={15} className="text-accent shrink-0" /><span>{siteSettings?.email || 'contact@ktmbotanica.com'}</span></div>
+              <div className="flex items-start gap-3"><MapPin size={15} className="text-accent shrink-0 mt-0.5" /><span>{siteSettings?.address || 'Pokhara-26, Arghau Chowk, Pokhara'}</span></div>
+              <a href="tel:+9779815155580" className="flex items-center gap-3 hover:text-white transition-colors"><Phone size={15} className="text-accent shrink-0" /><span>+977 {siteSettings?.phone || '9815155580'}</span></a>
+              <a href="https://www.facebook.com/p/RJ-Flower-Nursery-100038914454450/" target="_blank" rel="noreferrer" className="flex items-center gap-3 hover:text-white transition-colors"><Facebook size={15} className="text-accent shrink-0" /><span>Message us on Facebook</span></a>
             </div>
           </div>
 
@@ -60,7 +58,7 @@ export const Footer: React.FC = () => {
             <div className="col-span-2 sm:col-span-1">
               <h4 className="text-[11px] uppercase tracking-[0.18em] text-emerald-300 mb-4">Visit the nursery</h4>
               <p className="text-sm text-forest-200 leading-relaxed mb-2">{siteSettings?.openingHours || 'Sun - Sat: 8:00 AM - 7:00 PM'}</p>
-              <p className="text-xs text-forest-400 leading-relaxed">Same-day dispatch before 3:00 PM across Kathmandu Valley.</p>
+              <p className="text-xs text-forest-400 leading-relaxed">Delivery across Pokhara. Rs. 100 below Rs. 2,000; free delivery from Rs. 2,000.</p>
             </div>
           </div>
         </div>

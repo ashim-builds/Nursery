@@ -11,11 +11,11 @@ export interface SEOProps {
   noIndex?: boolean;
 }
 
-const DEFAULT_TITLE = "KtmBotanica";
+const DEFAULT_TITLE = "RJ Flowers";
 const DEFAULT_DESCRIPTION =
-  "Kathmandu's premier mobile-first plant nursery & florist. Shop indoor plants, pottery, and flowers delivered across Kathmandu Valley.";
+  "RJ Flowers nursery in Pokhara-26, Arghau Chowk. Shop flowers and plants with delivery across Pokhara.";
 const DEFAULT_IMAGE = "/icon-512.png";
-const SITE_NAME = "KtmBotanica";
+const SITE_NAME = "RJ Flowers";
 
 export const SEO: React.FC<SEOProps> = ({
   title,

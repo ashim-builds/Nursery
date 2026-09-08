@@ -68,7 +68,7 @@ export const CartPage: React.FC = () => {
           <span className="flex items-center gap-1.5">
             <Truck size={16} className="text-emerald-400" />
             {remainingForFree === 0 ? (
-              <span className="text-emerald-300 font-bold">🎉 Free Delivery in Kathmandu Valley unlocked!</span>
+              <span className="text-emerald-300 font-bold">🎉 Free Pokhara delivery unlocked!</span>
             ) : (
               <span>Add <strong>रू {remainingForFree.toLocaleString()}</strong> more for Free Delivery</span>
             )}

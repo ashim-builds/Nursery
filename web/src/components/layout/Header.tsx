@@ -5,6 +5,8 @@ import { useCart } from '../../context/CartContext';
 import { useUI } from '../../context/UIContext';
 import { useAuth } from '../../context/AuthContext';
 import { NotificationCenter } from '../notifications/NotificationCenter';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 
 export const Header: React.FC = () => {
   const { itemCount } = useCart();
@@ -12,6 +14,11 @@ export const Header: React.FC = () => {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const [searchInput, setSearchInput] = useState('');
   const navigate = useNavigate();
+  const { data: siteSettings } = useQuery({
+    queryKey: ['site-settings'],
+    queryFn: async () => (await axios.get('/api/site-settings')).data?.data,
+  });
+  const businessName = siteSettings?.businessName || 'RJ Flowers';
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,16 +36,16 @@ export const Header: React.FC = () => {
           <div className="flex items-center gap-2">
             <Link to="/" className="flex items-center gap-2.5 group">
               <img
-                src="/icon-192.png"
-                alt="KtmBotanica Logo"
+                src="/rj-flowers-icon.svg"
+                alt={`${businessName} logo`}
                 className="w-8 h-8 rounded-xl object-cover shadow-sm group-hover:scale-105 transition-transform border border-emerald-500/20"
               />
               <div className="flex flex-col">
                 <span className="font-serif font-bold text-lg sm:text-xl tracking-tight text-forest-950 leading-none">
-                  KtmBotanica
+                  {businessName}
                 </span>
                 <span className="text-[10px] tracking-widest text-forest-600 uppercase font-semibold">
-                  Nursery & Florist
+                  Flowers & Nursery
                 </span>
               </div>
             </Link>

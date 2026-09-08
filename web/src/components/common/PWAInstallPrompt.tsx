@@ -55,7 +55,7 @@ export const PWAInstallPrompt: React.FC = () => {
             <Smartphone size={20} />
           </div>
           <div>
-            <h4 className="text-xs font-bold leading-tight">Install KtmBotanica</h4>
+            <h4 className="text-xs font-bold leading-tight">Install RJ Flowers</h4>
             <p className="text-[11px] text-forest-200">Add to home screen for faster browsing</p>
           </div>
         </div>

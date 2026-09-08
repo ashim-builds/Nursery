@@ -1,27 +1,27 @@
 {
-  "short_name": "KtmBotanica",
-  "name": "KtmBotanica",
+  "short_name": "RJ Flowers",
+  "name": "RJ Flowers and Nursery",
   "icons": [
     {
-      "src": "/icon-192.png",
-      "type": "image/png",
-      "sizes": "192x192",
+      "src": "/rj-flowers-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
-      "type": "image/png",
-      "sizes": "512x512",
+      "src": "/rj-flowers-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
       "purpose": "any maskable"
     },
     {
-      "src": "/leaf.svg",
+      "src": "/rj-flowers-logo.svg",
       "type": "image/svg+xml",
       "sizes": "any"
     }
   ],
   "start_url": "/",
-  "background_color": "#1e3f30",
+  "background_color": "#fffaf3",
   "theme_color": "#1e3f30",
   "display": "standalone",
   "orientation": "portrait-primary",

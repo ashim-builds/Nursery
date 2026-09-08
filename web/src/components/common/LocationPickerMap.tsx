@@ -13,26 +13,10 @@ interface LocationPickerMapProps {
 }
 
 const POKHARA_LANDMARKS = [
-  { name: 'Lazimpat Botanical Row', city: 'Kathmandu', lat: 27.7215, lng: 85.3206 },
-  { name: 'Baluwatar Prime Avenue', city: 'Kathmandu', lat: 27.7288, lng: 85.3308 },
-  { name: 'Maharajgunj Chakrapath Marg', city: 'Kathmandu', lat: 27.738, lng: 85.334 },
-  { name: 'Thamel Tourism Hub', city: 'Kathmandu', lat: 27.7154, lng: 85.311 },
-  { name: 'New Baneshwor Plaza Road', city: 'Kathmandu', lat: 27.6915, lng: 85.342 },
-  { name: 'Old Baneshwor Chowk', city: 'Kathmandu', lat: 27.702, lng: 85.344 },
-  { name: 'Putalisadak City Center', city: 'Kathmandu', lat: 27.7042, lng: 85.3185 },
-  { name: 'Koteshwor Junction Marg', city: 'Kathmandu', lat: 27.6765, lng: 85.3495 },
-  { name: 'Chabahil Stupa Chowk', city: 'Kathmandu', lat: 27.717, lng: 85.351 },
-  { name: 'Bouddha Stupa Main Gate', city: 'Kathmandu', lat: 27.7215, lng: 85.362 },
-  { name: 'Kalanki Chowk Bypass', city: 'Kathmandu', lat: 27.6938, lng: 85.2818 },
-  { name: 'Sanepa Embassy Lane', city: 'Lalitpur', lat: 27.685, lng: 85.3105 },
-  { name: 'Jhamsikhel Restaurant Row', city: 'Lalitpur', lat: 27.678, lng: 85.308 },
-  { name: 'Pulchowk Engineering Road', city: 'Lalitpur', lat: 27.6785, lng: 85.3175 },
-  { name: 'Patan Durbar Square Heritage Area', city: 'Lalitpur', lat: 27.673, lng: 85.325 },
-  { name: 'Kumaripati Shopping Street', city: 'Lalitpur', lat: 27.669, lng: 85.319 },
-  { name: 'Bhaktapur Durbar Square Gate', city: 'Bhaktapur', lat: 27.671, lng: 85.428 },
-  { name: 'Sallaghari Highway Junction', city: 'Bhaktapur', lat: 27.672, lng: 85.405 },
-  { name: 'Suryabinayak Temple Road', city: 'Bhaktapur', lat: 27.662, lng: 85.427 },
+  { name: 'Arghau Chowk', city: 'Pokhara', lat: 28.2365, lng: 84.0036 },
   { name: 'Lakeside Baidam Area', city: 'Pokhara', lat: 28.2096, lng: 83.9595 },
+  { name: 'Mahendrapul', city: 'Pokhara', lat: 28.2185, lng: 83.9884 },
+  { name: 'Bagar', city: 'Pokhara', lat: 28.237, lng: 83.986 },
 ];
 
 function getClosestLandmark(lat: number, lng: number) {
@@ -53,16 +37,16 @@ function getClosestLandmark(lat: number, lng: number) {
 }
 
 export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
-  latitude = 28.2096,
-  longitude = 83.9595,
+  latitude = 28.2365,
+  longitude = 84.0036,
   onChange,
   onAddressFound,
   label = 'Pin Delivery Location on Map * (Required)',
   readOnly = false,
 }) => {
   const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number }>({
-    lat: latitude || 28.2096,
-    lng: longitude || 83.9595,
+    lat: latitude || 28.2365,
+    lng: longitude || 84.0036,
   });
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
