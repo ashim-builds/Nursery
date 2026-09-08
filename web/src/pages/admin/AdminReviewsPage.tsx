@@ -16,7 +16,7 @@ import {
 export const AdminReviewsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved'>('all');
   const [page, setPage] = useState(1);
-  const { showToast } = useUI();
+  const { showToast, confirmAction } = useUI();
   const queryClient = useQueryClient();
 
   const isApprovedParam =
@@ -204,8 +204,8 @@ export const AdminReviewsPage: React.FC = () => {
                       </button>
                     )}
                     <button
-                      onClick={() => {
-                        if (window.confirm('Delete review permanently?')) {
+                      onClick={async () => {
+                        if (await confirmAction('Delete review permanently?', { title: 'Delete review', confirmLabel: 'Delete' })) {
                           deleteMutation.mutate(r.id);
                         }
                       }}
@@ -271,8 +271,8 @@ export const AdminReviewsPage: React.FC = () => {
 
                 <div className="flex items-center gap-1.5">
                   <button
-                    onClick={() => {
-                      if (window.confirm('Delete review permanently?')) {
+                      onClick={async () => {
+                        if (await confirmAction('Delete review permanently?', { title: 'Delete review', confirmLabel: 'Delete' })) {
                         deleteMutation.mutate(r.id);
                       }
                     }}

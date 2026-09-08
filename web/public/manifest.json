@@ -1,0 +1,29 @@
+{
+  "short_name": "KtmBotanica",
+  "name": "KtmBotanica",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/leaf.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#1e3f30",
+  "theme_color": "#1e3f30",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "scope": "/"
+}

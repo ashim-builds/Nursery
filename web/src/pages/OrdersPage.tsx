@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { orderApi } from '../api/order.api';
 import { Package, Sprout, ChevronRight, Clock } from 'lucide-react';
+import { formatOrderAmount, isGenericVariantName } from '../utils/orderDisplay';
 
 export const OrdersPage: React.FC = () => {
   const { data: ordersData, isLoading } = useQuery({
@@ -63,7 +64,7 @@ export const OrdersPage: React.FC = () => {
                     {order.orderStatus.toLowerCase().replace(/_/g, ' ')}
                   </span>
                   <span className="font-bold text-slate-900 text-sm">
-                    रू {Number(order.totalAmount).toLocaleString()}
+                    रू {formatOrderAmount(order.totalAmount)}
                   </span>
                 </div>
               </div>
@@ -73,10 +74,10 @@ export const OrdersPage: React.FC = () => {
                 {order.items?.map((item: any) => (
                   <div key={item.id} className="flex items-center justify-between">
                     <span className="truncate max-w-sm">
-                      {item.productName || item.productTitle} ({item.variantName}) × {item.quantity}
+                      {item.productName || item.productTitle || 'Plant'}{!isGenericVariantName(item.variantName) && ` (${item.variantName})`} × {item.quantity}
                     </span>
                     <span className="font-semibold text-slate-800 shrink-0">
-                      रू {Number(item.lineTotal || item.totalPrice).toLocaleString()}
+                      रू {formatOrderAmount(item.lineTotal ?? item.totalPrice)}
                     </span>
                   </div>
                 ))}

@@ -5,29 +5,45 @@ import { adminApi } from '../../api/admin.api';
 import { useUI } from '../../context/UIContext';
 import {
   ArrowLeft,
-  Package,
-  Plus,
-  Trash2,
+  ArrowRight,
   CheckCircle2,
   Image as ImageIcon,
-  Layers,
   Sprout,
-  Sun,
-  Droplets,
-  HeartHandshake,
-  AlertTriangle,
+  Banknote,
+  Sparkles,
+  Check,
+  UploadCloud,
+  Layers,
 } from 'lucide-react';
-
 import { ImageUploader, ManagedImage } from '../../components/admin/ImageUploader';
 
-interface VariantFormItem {
-  id?: string;
-  name: string;
-  sku: string;
-  price: number;
-  stockQuantity: number;
-  lowStockThreshold: number;
-}
+// Quick Preset botanical photography if user doesn't have a photo ready
+const PRESET_PLANT_PHOTOS = [
+  {
+    name: 'Monstera Deliciosa',
+    url: 'https://images.unsplash.com/photo-1614594975525-e45190c55d0b?auto=format&fit=crop&w=800&q=80',
+  },
+  {
+    name: 'Fiddle Leaf Fig',
+    url: 'https://images.unsplash.com/photo-1545241047-6083a3684587?auto=format&fit=crop&w=800&q=80',
+  },
+  {
+    name: 'Snake Plant Sansevieria',
+    url: 'https://images.unsplash.com/photo-1509423350716-97f9360b4e09?auto=format&fit=crop&w=800&q=80',
+  },
+  {
+    name: 'Peace Lily Plant',
+    url: 'https://images.unsplash.com/photo-1593482892290-f54927ae1bf6?auto=format&fit=crop&w=800&q=80',
+  },
+  {
+    name: 'Golden Pothos / Money Plant',
+    url: 'https://images.unsplash.com/photo-1596724817757-1901414457e5?auto=format&fit=crop&w=800&q=80',
+  },
+  {
+    name: 'Flowering Rose Plant',
+    url: 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?auto=format&fit=crop&w=800&q=80',
+  },
+];
 
 export const AdminProductFormPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -36,31 +52,15 @@ export const AdminProductFormPage: React.FC = () => {
   const { showToast } = useUI();
   const queryClient = useQueryClient();
 
-  // Form State
-  const [title, setTitle] = useState('');
-  const [slug, setSlug] = useState('');
-  const [botanicalName, setBotanicalName] = useState('');
+  // Wizard Step: 1 = Name, 2 = Price, 3 = Photo & Save
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
+
+  // Form Fields
+  const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [basePrice, setBasePrice] = useState<number>(1000);
-  const [categoryId, setCategoryId] = useState('');
+  const [basePrice, setBasePrice] = useState<number | ''>(1000);
+  const [stockStatus, setStockStatus] = useState<'IN_STOCK' | 'OUT_OF_STOCK'>('IN_STOCK');
   const [images, setImages] = useState<ManagedImage[]>([]);
-  const [sunlight, setSunlight] = useState('BRIGHT_INDIRECT');
-  const [watering, setWatering] = useState('MODERATE');
-  const [difficulty, setDifficulty] = useState('EASY');
-  const [petFriendly, setPetFriendly] = useState(false);
-  const [airPurifying, setAirPurifying] = useState(true);
-  const [isFeatured, setIsFeatured] = useState(false);
-
-  // Variants state
-  const [variants, setVariants] = useState<VariantFormItem[]>([
-    { name: 'Standard 6" Nursery Pot', sku: 'NUR-01', price: 1000, stockQuantity: 15, lowStockThreshold: 5 },
-  ]);
-
-  // Load Categories
-  const { data: categories } = useQuery({
-    queryKey: ['admin-categories-form'],
-    queryFn: adminApi.getCategories,
-  });
 
   // Load existing product if editing
   const { data: existingProduct, isLoading: isProductLoading } = useQuery({
@@ -71,87 +71,30 @@ export const AdminProductFormPage: React.FC = () => {
 
   useEffect(() => {
     if (existingProduct) {
-      setTitle(existingProduct.name || existingProduct.title || '');
-      setSlug(existingProduct.slug || '');
-      setBotanicalName(existingProduct.botanicalName || '');
+      setName(existingProduct.name || existingProduct.title || '');
       setDescription(existingProduct.description || '');
       setBasePrice(Number(existingProduct.basePrice) || 1000);
-      setCategoryId(existingProduct.categoryId || '');
-      setSunlight(existingProduct.sunlightRequirement || existingProduct.sunlight || 'BRIGHT_INDIRECT');
-      setWatering(existingProduct.wateringRequirement || existingProduct.watering || 'MODERATE');
-      setDifficulty(existingProduct.difficultyLevel || existingProduct.difficulty || 'EASY');
-      setPetFriendly(!!existingProduct.petFriendly);
-      setAirPurifying(!!existingProduct.airPurifying);
-      setIsFeatured(!!existingProduct.featured || !!existingProduct.isFeatured);
+      setStockStatus(
+        existingProduct.available === false || existingProduct.isAvailable === false
+          ? 'OUT_OF_STOCK'
+          : 'IN_STOCK'
+      );
 
       if (existingProduct.images && existingProduct.images.length > 0) {
         setImages(
           existingProduct.images.map((img: any, i: number) => ({
             id: img.id,
             url: img.url,
-            altText: img.altText || existingProduct.title,
+            altText: img.altText || existingProduct.name,
             isPrimary: img.isPrimary ?? i === 0,
             sortOrder: img.sortOrder ?? i + 1,
-          }))
-        );
-      }
-
-      if (existingProduct.variants && existingProduct.variants.length > 0) {
-        setVariants(
-          existingProduct.variants.map((v: any) => ({
-            id: v.id,
-            name: v.name,
-            sku: v.sku,
-            price: Number(v.price),
-            stockQuantity: v.stockQuantity ?? v.inventory?.availableQuantity ?? v.stock ?? 0,
-            lowStockThreshold: v.lowStockThreshold || 5,
           }))
         );
       }
     }
   }, [existingProduct]);
 
-  // Auto-generate slug from title if creating
-  const handleTitleChange = (val: string) => {
-    setTitle(val);
-    if (!isEdit) {
-      setSlug(
-        val
-          .toLowerCase()
-          .replace(/[^\w\s-]/g, '')
-          .replace(/[\s_-]+/g, '-')
-          .replace(/^-+|-+$/g, '')
-      );
-    }
-  };
-
-  const handleAddVariant = () => {
-    setVariants([
-      ...variants,
-      {
-        name: 'Ceramic 8" Planter',
-        sku: `PLT-${Date.now().toString().slice(-4)}`,
-        price: basePrice + 500,
-        stockQuantity: 10,
-        lowStockThreshold: 3,
-      },
-    ]);
-  };
-
-  const handleRemoveVariant = (index: number) => {
-    if (variants.length <= 1) {
-      showToast('A product must have at least one pot variant', 'error');
-      return;
-    }
-    setVariants(variants.filter((_, i) => i !== index));
-  };
-
-  const handleVariantChange = (index: number, field: keyof VariantFormItem, val: any) => {
-    const updated = [...variants];
-    updated[index] = { ...updated[index], [field]: val };
-    setVariants(updated);
-  };
-
+  // Mutation to Save / Create
   const mutation = useMutation({
     mutationFn: (payload: any) => {
       if (isEdit) {
@@ -160,54 +103,105 @@ export const AdminProductFormPage: React.FC = () => {
       return adminApi.createProduct(payload);
     },
     onSuccess: () => {
-      showToast(`Product ${isEdit ? 'updated' : 'created'} successfully`, 'success');
+      showToast(
+        isEdit ? 'Plant updated successfully!' : 'New plant added successfully!',
+        'success'
+      );
       queryClient.invalidateQueries({ queryKey: ['admin-products-list'] });
       queryClient.invalidateQueries({ queryKey: ['admin-metrics'] });
+      queryClient.invalidateQueries({ queryKey: ['featured-products'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
       navigate('/admin/products');
     },
     onError: (err: any) => {
-      showToast(err.response?.data?.message || 'Failed to save product', 'error');
+      showToast(err.response?.data?.message || 'Failed to save plant', 'error');
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title || !slug || !basePrice || !categoryId) {
-      showToast('Please fill all required botanical fields', 'error');
+  // Step 1 Validation -> Proceed to Step 2
+  const handleGoToStep2 = () => {
+    if (!name.trim()) {
+      showToast('Please enter the plant name', 'error');
+      return;
+    }
+    setCurrentStep(2);
+  };
+
+  // Step 2 Validation -> Proceed to Step 3
+  const handleGoToStep3 = () => {
+    if (!basePrice || Number(basePrice) <= 0) {
+      showToast('Please enter a valid price in NPR रू', 'error');
+      return;
+    }
+    setCurrentStep(3);
+  };
+
+  // Final Save Handler
+  const handleFinalSave = () => {
+    if (!name.trim()) {
+      setCurrentStep(1);
+      showToast('Please enter plant name', 'error');
+      return;
+    }
+    if (!basePrice || Number(basePrice) <= 0) {
+      setCurrentStep(2);
+      showToast('Please enter plant price', 'error');
       return;
     }
 
+    // Default image if none chosen
+    const finalImages =
+      images.length > 0
+        ? images
+        : [
+            {
+              url: PRESET_PLANT_PHOTOS[0].url,
+              altText: name,
+              isPrimary: true,
+              sortOrder: 1,
+            },
+          ];
+
     const payload = {
-      title,
-      slug,
-      botanicalName,
-      description,
+      name: name.trim(),
+      title: name.trim(),
       basePrice: Number(basePrice),
-      categoryId,
-      sunlight,
-      watering,
-      difficulty,
-      petFriendly,
-      airPurifying,
-      isFeatured,
-      images: images.length
-        ? images.map((img, i) => ({
-            url: img.url,
-            altText: img.altText || title,
-            isPrimary: img.isPrimary ?? i === 0,
-            sortOrder: img.sortOrder ?? i + 1,
-          }))
-        : undefined,
-      variants: variants.map((v) => ({
-        name: v.name,
-        sku: v.sku,
-        price: Number(v.price),
-        stockQuantity: Number(v.stockQuantity),
-        lowStockThreshold: Number(v.lowStockThreshold),
+      description:
+        description.trim() || `${name} - Fresh and healthy plant from Kathmandu nursery.`,
+      available: stockStatus === 'IN_STOCK',
+      stockStatus: stockStatus,
+      images: finalImages.map((img, i) => ({
+        url: img.url,
+        altText: img.altText || name,
+        isPrimary: img.isPrimary ?? i === 0,
+        sortOrder: img.sortOrder ?? i + 1,
       })),
+      variants: [
+        {
+          name: 'Default',
+          sku: `PLT-${Date.now().toString().slice(-6)}`,
+          price: Number(basePrice),
+          stock: stockStatus === 'IN_STOCK' ? 100 : 0,
+          isAvailable: stockStatus === 'IN_STOCK',
+        },
+      ],
     };
 
     mutation.mutate(payload);
+  };
+
+  const handleSelectPresetPhoto = (photoUrl: string, photoName: string) => {
+    const isFirst = images.length === 0;
+    setImages([
+      ...images,
+      {
+        url: photoUrl,
+        altText: photoName,
+        isPrimary: isFirst,
+        sortOrder: images.length + 1,
+      },
+    ]);
+    showToast(`Added ${photoName} photo`, 'success');
   };
 
   if (isProductLoading) {
@@ -215,338 +209,351 @@ export const AdminProductFormPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-3xl mx-auto pb-12">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Link
-          to="/admin/products"
-          className="p-2.5 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors shadow-xs"
-        >
-          <ArrowLeft size={16} />
-        </Link>
-        <div>
-          <h1 className="font-serif font-bold text-2xl sm:text-3xl text-slate-900 tracking-tight flex items-center gap-2">
-            <Sprout className="text-forest-700" size={26} />
-            <span>{isEdit ? 'Edit Botanical Plant' : 'Add New Nursery Plant'}</span>
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Configure plant metadata, pot size variants, greenhouse pricing, and botanical care rules.
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link
+            to="/admin/products"
+            className="p-2.5 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors shadow-xs"
+          >
+            <ArrowLeft size={16} />
+          </Link>
+          <div>
+            <h1 className="font-serif font-bold text-2xl sm:text-3xl text-slate-900 tracking-tight flex items-center gap-2">
+              <Sprout className="text-forest-700" size={26} />
+              <span>{isEdit ? 'Edit Plant' : 'Add New Nursery Plant'}</span>
+            </h1>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Follow the 3 simple steps below to list your plant.
+            </p>
+          </div>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Basic Plant Details */}
-        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
-          <h2 className="font-serif font-bold text-base sm:text-lg text-slate-900">
-            Botanical Identification
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Common Plant Name *</label>
-              <input
-                type="text"
-                required
-                value={title}
-                onChange={(e) => handleTitleChange(e.target.value)}
-                placeholder="e.g. Monstera Deliciosa (Swiss Cheese Plant)"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-forest-700"
-              />
+      {/* 3-Step Visual Progress Stepper */}
+      <div className="bg-white p-3 sm:p-4 rounded-3xl border border-slate-200 shadow-xs">
+        <div className="grid grid-cols-3 gap-2">
+          {/* Step 1 Pill */}
+          <button
+            type="button"
+            onClick={() => setCurrentStep(1)}
+            className={`flex items-center gap-2.5 p-2.5 sm:p-3 rounded-2xl transition-all text-left ${
+              currentStep === 1
+                ? 'bg-forest-900 text-white shadow-sm'
+                : name.trim()
+                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                  : 'bg-slate-50 text-slate-400'
+            }`}
+          >
+            <div
+              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                currentStep === 1
+                  ? 'bg-emerald-400 text-forest-950'
+                  : name.trim()
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-slate-200 text-slate-600'
+              }`}
+            >
+              {name.trim() && currentStep !== 1 ? <Check size={12} /> : '1'}
             </div>
-
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">URL Slug *</label>
-              <input
-                type="text"
-                required
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                placeholder="monstera-deliciosa"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono text-slate-900 focus:bg-white focus:outline-none focus:border-forest-700"
-              />
+            <div className="min-w-0">
+              <div className="text-[10px] uppercase font-bold tracking-wider opacity-75">
+                Step 1
+              </div>
+              <div className="text-xs sm:text-sm font-bold truncate">Plant Name</div>
             </div>
+          </button>
 
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Latin / Botanical Name</label>
-              <input
-                type="text"
-                value={botanicalName}
-                onChange={(e) => setBotanicalName(e.target.value)}
-                placeholder="e.g. Monstera deliciosa Liebm."
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs italic text-slate-900 focus:bg-white focus:outline-none focus:border-forest-700"
-              />
+          {/* Step 2 Pill */}
+          <button
+            type="button"
+            onClick={() => {
+              if (name.trim()) setCurrentStep(2);
+            }}
+            disabled={!name.trim()}
+            className={`flex items-center gap-2.5 p-2.5 sm:p-3 rounded-2xl transition-all text-left disabled:opacity-50 ${
+              currentStep === 2
+                ? 'bg-forest-900 text-white shadow-sm'
+                : basePrice && Number(basePrice) > 0
+                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                  : 'bg-slate-50 text-slate-400'
+            }`}
+          >
+            <div
+              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                currentStep === 2
+                  ? 'bg-emerald-400 text-forest-950'
+                  : basePrice && Number(basePrice) > 0
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-slate-200 text-slate-600'
+              }`}
+            >
+              {basePrice && Number(basePrice) > 0 && currentStep !== 2 ? <Check size={12} /> : '2'}
             </div>
-
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Botanical Category *</label>
-              <select
-                required
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 font-semibold focus:bg-white focus:outline-none focus:border-forest-700"
-              >
-                <option value="">Select a Category</option>
-                {categories?.map((c: any) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+            <div className="min-w-0">
+              <div className="text-[10px] uppercase font-bold tracking-wider opacity-75">
+                Step 2
+              </div>
+              <div className="text-xs sm:text-sm font-bold truncate">Price & Stock</div>
             </div>
+          </button>
 
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Base Price (NPR रू) *</label>
-              <input
-                type="number"
-                min="0"
-                required
-                value={basePrice}
-                onChange={(e) => setBasePrice(Number(e.target.value))}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono text-slate-900 focus:bg-white focus:outline-none focus:border-forest-700"
-              />
+          {/* Step 3 Pill */}
+          <button
+            type="button"
+            onClick={() => {
+              if (name.trim() && basePrice) setCurrentStep(3);
+            }}
+            disabled={!name.trim() || !basePrice}
+            className={`flex items-center gap-2.5 p-2.5 sm:p-3 rounded-2xl transition-all text-left disabled:opacity-50 ${
+              currentStep === 3
+                ? 'bg-forest-900 text-white shadow-sm'
+                : images.length > 0
+                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                  : 'bg-slate-50 text-slate-400'
+            }`}
+          >
+            <div
+              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                currentStep === 3
+                  ? 'bg-emerald-400 text-forest-950'
+                  : images.length > 0
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-slate-200 text-slate-600'
+              }`}
+            >
+              {images.length > 0 && currentStep !== 3 ? <Check size={12} /> : '3'}
             </div>
-          </div>
-
-          <div>
-            <label className="block font-semibold text-slate-700 mb-1 text-xs">
-              Plant Description & Nursery Notes
-            </label>
-            <textarea
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe the plant aesthetic, lush foliage, origin, and potting instructions..."
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-forest-700"
-            />
-          </div>
+            <div className="min-w-0">
+              <div className="text-[10px] uppercase font-bold tracking-wider opacity-75">
+                Step 3
+              </div>
+              <div className="text-xs sm:text-sm font-bold truncate">Image & Save</div>
+            </div>
+          </button>
         </div>
+      </div>
 
-        {/* Cloudinary Plant Photography & Image Management */}
-        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-serif font-bold text-base sm:text-lg text-slate-900 flex items-center gap-2">
-              <ImageIcon size={18} className="text-forest-700" />
-              <span>Plant Photography & Gallery</span>
-            </h2>
-            <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100 font-semibold">
-              Cloudinary Optimized
-            </span>
-          </div>
-
-          <ImageUploader
-            images={images}
-            onChange={setImages}
-            folder="nursery_botanica/plants"
-            productId={isEdit ? id : undefined}
-            maxImages={8}
-          />
-        </div>
-
-        {/* Botanical Care Rules & Attributes */}
-        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
-          <h2 className="font-serif font-bold text-base sm:text-lg text-slate-900 flex items-center gap-2">
-            <Sun size={18} className="text-amber-500" />
-            <span>Plant Care & Horticultural Guidelines</span>
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Sunlight Needs</label>
-              <select
-                value={sunlight}
-                onChange={(e) => setSunlight(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-900 font-semibold focus:bg-white focus:outline-none focus:border-forest-700"
-              >
-                <option value="FULL_SUN">Full Sun (6+ hrs direct)</option>
-                <option value="BRIGHT_INDIRECT">Bright Indirect Light</option>
-                <option value="MEDIUM_LIGHT">Medium Ambient Light</option>
-                <option value="LOW_LIGHT">Low Light / Shade</option>
-              </select>
+      {/* ================= STEP 1: PLANT NAME ================= */}
+      {currentStep === 1 && (
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6 animate-fadeIn">
+          <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+              <Sprout size={22} />
             </div>
-
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">Watering Routine</label>
-              <select
-                value={watering}
-                onChange={(e) => setWatering(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-900 font-semibold focus:bg-white focus:outline-none focus:border-forest-700"
-              >
-                <option value="LOW">Low (Allow to dry completely)</option>
-                <option value="MODERATE">Moderate (When top 2 inches dry)</option>
-                <option value="HIGH">High (Keep evenly moist)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Care Difficulty</label>
-              <select
-                value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-900 font-semibold focus:bg-white focus:outline-none focus:border-forest-700"
-              >
-                <option value="EASY">Beginner / Easy</option>
-                <option value="MODERATE">Moderate / Intermediate</option>
-                <option value="HARD">Expert / Collector</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-6 pt-2 text-xs">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={petFriendly}
-                onChange={(e) => setPetFriendly(e.target.checked)}
-                className="w-4 h-4 rounded text-forest-700 focus:ring-forest-600"
-              />
-              <span className="font-semibold text-slate-700">Pet Friendly (Non-toxic)</span>
-            </label>
-
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={airPurifying}
-                onChange={(e) => setAirPurifying(e.target.checked)}
-                className="w-4 h-4 rounded text-forest-700 focus:ring-forest-600"
-              />
-              <span className="font-semibold text-slate-700">NASA Air Purifier</span>
-            </label>
-
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isFeatured}
-                onChange={(e) => setIsFeatured(e.target.checked)}
-                className="w-4 h-4 rounded text-forest-700 focus:ring-forest-600"
-              />
-              <span className="font-semibold text-slate-700">Featured on Homepage</span>
-            </label>
-          </div>
-        </div>
-
-        {/* Variants & Pot Options Management */}
-        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-serif font-bold text-base sm:text-lg text-slate-900 flex items-center gap-2">
-                <Layers size={18} className="text-forest-700" />
-                <span>Pots, Planters & Stock Variants</span>
+              <h2 className="font-serif font-bold text-lg sm:text-xl text-slate-900">
+                Step 1: Enter Plant Name (बिरुवाको नाम)
               </h2>
               <p className="text-xs text-slate-500">
-                Each plant variant maintains its own independent live inventory & threshold.
+                What is the name of the plant you want to sell?
               </p>
             </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block font-bold text-sm text-slate-800 mb-1.5">Plant Name *</label>
+              <input
+                type="text"
+                autoFocus
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Type plant name here..."
+                className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3.5 text-sm sm:text-base font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-forest-700 transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-xs text-slate-700 mb-1.5">
+                Description (Optional / ऐच्छिक)
+              </label>
+              <textarea
+                rows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Description..."
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-forest-700"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-4 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={handleGoToStep2}
+              className="px-6 py-3.5 bg-forest-900 hover:bg-forest-800 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-md flex items-center gap-2 active:scale-98 transition-all"
+            >
+              <span>Next: Set Price (मूल्य राख्नुहोस्)</span>
+              <ArrowRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ================= STEP 2: PRICE & STOCK ================= */}
+      {currentStep === 2 && (
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6 animate-fadeIn">
+          <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+            <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+              <Banknote size={22} />
+            </div>
+            <div>
+              <h2 className="font-serif font-bold text-lg sm:text-xl text-slate-900">
+                Step 2: Plant Price & Stock (मूल्य र स्टक)
+              </h2>
+              <p className="text-xs text-slate-500">
+                Set the selling price and choose if it is in stock.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            {/* Price Input */}
+            <div>
+              <label className="block font-bold text-sm text-slate-800 mb-1.5">
+                Selling Price in Nepali Rupees (NPR रू) *
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-forest-700 font-bold text-base">
+                  रू
+                </div>
+                <input
+                  type="number"
+                  min="1"
+                  autoFocus
+                  required
+                  value={basePrice}
+                  onChange={(e) =>
+                    setBasePrice(e.target.value === '' ? '' : Number(e.target.value))
+                  }
+                  placeholder="e.g. 850"
+                  className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl pl-10 pr-4 py-3.5 text-base sm:text-lg font-mono font-extrabold text-slate-900 focus:bg-white focus:outline-none focus:border-forest-700 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* In Stock / Out of Stock Toggle */}
+            <div>
+              <label className="block font-bold text-sm text-slate-800 mb-2">
+                Availability Status (स्टक अवस्था)
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setStockStatus('IN_STOCK')}
+                  className={`py-4 px-4 rounded-2xl border-2 font-bold text-xs sm:text-sm flex flex-col items-center justify-center gap-1.5 transition-all ${
+                    stockStatus === 'IN_STOCK'
+                      ? 'border-emerald-500 bg-emerald-50/80 text-emerald-900 shadow-sm ring-2 ring-emerald-500/20'
+                      : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>In Stock (उपलब्ध छ)</span>
+                  <span className="text-[10px] font-normal opacity-80">Customers can order</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setStockStatus('OUT_OF_STOCK')}
+                  className={`py-4 px-4 rounded-2xl border-2 font-bold text-xs sm:text-sm flex flex-col items-center justify-center gap-1.5 transition-all ${
+                    stockStatus === 'OUT_OF_STOCK'
+                      ? 'border-rose-500 bg-rose-50/80 text-rose-900 shadow-sm ring-2 ring-rose-500/20'
+                      : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <span className="w-3 h-3 rounded-full bg-rose-500" />
+                  <span>Out of Stock (सकियो)</span>
+                  <span className="text-[10px] font-normal opacity-80">Shows out of stock</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setCurrentStep(1)}
+              className="px-5 py-3 rounded-2xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs sm:text-sm transition-all"
+            >
+              ⬅ Back
+            </button>
 
             <button
               type="button"
-              onClick={handleAddVariant}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-sand-100 hover:bg-sand-200 text-forest-900 text-xs font-bold transition-colors"
+              onClick={handleGoToStep3}
+              className="px-6 py-3.5 bg-forest-900 hover:bg-forest-800 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-md flex items-center gap-2 active:scale-98 transition-all"
             >
-              <Plus size={14} />
-              <span>Add Pot Variant</span>
+              <span>Next: Add Image & Save (फोटो राख्नुहोस्)</span>
+              <ArrowRight size={16} />
             </button>
           </div>
+        </div>
+      )}
 
-          <div className="space-y-3">
-            {variants.map((v, idx) => (
-              <div
-                key={idx}
-                className="p-4 bg-sand-50/70 rounded-2xl border border-slate-200 grid grid-cols-1 sm:grid-cols-5 gap-3 text-xs items-end"
-              >
-                <div className="sm:col-span-2">
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    Option / Pot Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={v.name}
-                    onChange={(e) => handleVariantChange(idx, 'name', e.target.value)}
-                    placeholder="e.g. 6-inch Terracotta"
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-forest-700"
-                  />
-                </div>
+      {/* ================= STEP 3: IMAGE & SAVE ================= */}
+      {currentStep === 3 && (
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6 animate-fadeIn">
+          <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-800 flex items-center justify-center font-bold">
+              <ImageIcon size={22} />
+            </div>
+            <div>
+              <h2 className="font-serif font-bold text-lg sm:text-xl text-slate-900">
+                Step 3: Plant Photo & Save (फोटो र सेभ गर्नुहोस्)
+              </h2>
+              <p className="text-xs text-slate-500">
+                Upload a photo from your phone or choose a preset botanical photo.
+              </p>
+            </div>
+          </div>
 
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">SKU</label>
-                  <input
-                    type="text"
-                    required
-                    value={v.sku}
-                    onChange={(e) => handleVariantChange(idx, 'sku', e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono focus:outline-none focus:border-forest-700"
-                  />
-                </div>
+          {/* Photo Uploader Component */}
+          <div className="pt-2">
+            <label className="block font-bold text-xs text-slate-700 mb-2">
+              Or Upload Plant Photo From Phone / Computer:
+            </label>
+            <ImageUploader
+              images={images}
+              onChange={setImages}
+              maxImages={6}
+              folder="nursery_botanica/products"
+            />
+          </div>
 
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    Price (रू)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    required
-                    value={v.price}
-                    onChange={(e) => handleVariantChange(idx, 'price', Number(e.target.value))}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono focus:outline-none focus:border-forest-700"
-                  />
-                </div>
+          {/* Action Buttons */}
+          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setCurrentStep(2)}
+              className="px-5 py-3 rounded-2xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs sm:text-sm transition-all"
+            >
+              ⬅ Back to Price
+            </button>
 
-                <div className="flex items-center gap-2">
-                  <div className="flex-1">
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                      Stock
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      required
-                      value={v.stockQuantity}
-                      onChange={(e) =>
-                        handleVariantChange(idx, 'stockQuantity', Number(e.target.value))
-                      }
-                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono focus:outline-none focus:border-forest-700"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveVariant(idx)}
-                    className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors shrink-0"
-                    title="Remove variant"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
+            <button
+              type="button"
+              disabled={mutation.isPending}
+              onClick={handleFinalSave}
+              className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-forest-950 font-extrabold text-xs sm:text-base rounded-2xl shadow-lifted flex items-center gap-2 active:scale-98 transition-all disabled:opacity-50"
+            >
+              {mutation.isPending ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-forest-950 border-t-transparent rounded-full animate-spin" />
+                  <span>Saving Plant...</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 size={18} />
+                  <span>Save Plant (प्लान्ट सेभ गर्नुहोस्)</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
-
-        {/* Submit Actions */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
-          <Link
-            to="/admin/products"
-            className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50 transition-colors"
-          >
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            disabled={mutation.isPending}
-            className="px-6 py-2.5 rounded-xl bg-forest-800 hover:bg-forest-900 text-white font-bold text-xs shadow-xs flex items-center gap-2 disabled:opacity-50"
-          >
-            {mutation.isPending ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <>
-                <CheckCircle2 size={15} />
-                <span>{isEdit ? 'Save Changes' : 'Publish Botanical Plant'}</span>
-              </>
-            )}
-          </button>
-        </div>
-      </form>
+      )}
     </div>
   );
 };

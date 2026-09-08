@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
+import { ConfirmDialog } from '../components/common/ConfirmDialog';
 
 export interface ToastMessage {
   id: string;
@@ -19,6 +20,14 @@ interface UIContextType {
   toasts: ToastMessage[];
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
   removeToast: (id: string) => void;
+  confirmAction: (message: string, options?: { title?: string; confirmLabel?: string }) => Promise<boolean>;
+}
+
+interface ConfirmationState {
+  message: string;
+  title: string;
+  confirmLabel: string;
+  resolve: (confirmed: boolean) => void;
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
@@ -28,6 +37,7 @@ export const UIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [confirmation, setConfirmation] = useState<ConfirmationState | null>(null);
 
   const openCartDrawer = () => setIsCartDrawerOpen(true);
   const closeCartDrawer = () => setIsCartDrawerOpen(false);
@@ -49,6 +59,21 @@ export const UIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
+  const confirmAction = (message: string, options: { title?: string; confirmLabel?: string } = {}) =>
+    new Promise<boolean>((resolve) => {
+      setConfirmation({
+        message,
+        title: options.title || 'Please confirm',
+        confirmLabel: options.confirmLabel || 'Confirm',
+        resolve,
+      });
+    });
+
+  const closeConfirmation = (confirmed: boolean) => {
+    confirmation?.resolve(confirmed);
+    setConfirmation(null);
+  };
+
   return (
     <UIContext.Provider
       value={{
@@ -64,9 +89,20 @@ export const UIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         toasts,
         showToast,
         removeToast,
+        confirmAction,
       }}
     >
       {children}
+      {confirmation && (
+        <ConfirmDialog
+          title={confirmation.title}
+          message={confirmation.message}
+          confirmLabel={confirmation.confirmLabel}
+          cancelLabel="Cancel"
+          onConfirm={() => closeConfirmation(true)}
+          onCancel={() => closeConfirmation(false)}
+        />
+      )}
     </UIContext.Provider>
   );
 };

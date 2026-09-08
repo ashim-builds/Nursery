@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { OrderService } from './order.service.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
+import { ApiError } from '../../utils/ApiError.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { AuthenticatedRequest } from '../../middlewares/auth.middleware.js';
 import { UserRole } from '@prisma/client';
@@ -8,6 +9,9 @@ import { UserRole } from '@prisma/client';
 export class OrderController {
   static createOrder = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user?.id;
+    if (!userId) {
+      throw ApiError.unauthorized('Please log in to place an order. Anonymous checkout is not permitted.');
+    }
     // Extract optional idempotency key from header or body
     const idempotencyKey = (req.headers['idempotency-key'] as string) || req.body.idempotencyKey;
     const order = await OrderService.createOrder({ ...req.body, idempotencyKey }, userId);

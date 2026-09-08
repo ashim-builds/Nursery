@@ -1,6 +1,7 @@
 import React from 'react';
 import { ProductVariant } from '../../types/product';
 import { Check, AlertCircle } from 'lucide-react';
+import { isGenericVariantName } from '../../utils/orderDisplay';
 
 interface VariantSelectorProps {
   variants: ProductVariant[];
@@ -24,7 +25,7 @@ export const VariantSelector: React.FC<VariantSelectorProps> = ({
           Select Option / Pot Size:
         </label>
         <span className="text-xs text-forest-700 font-medium">
-          {selectedVariant.name}
+          {!isGenericVariantName(selectedVariant.name) && selectedVariant.name}
         </span>
       </div>
 
@@ -59,7 +60,7 @@ export const VariantSelector: React.FC<VariantSelectorProps> = ({
                 </div>
                 <div>
                   <span className="text-xs sm:text-sm font-semibold block leading-tight">
-                    {v.name}
+                    {!isGenericVariantName(v.name) ? v.name : 'Available'}
                   </span>
                   {v.dimensions && (
                     <span className="text-[11px] text-slate-500 block">{v.dimensions}</span>

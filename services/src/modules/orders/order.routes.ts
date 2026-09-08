@@ -12,8 +12,8 @@ import { UserRole } from '@prisma/client';
 
 const router = Router();
 
-// Guest or Authenticated Checkout
-router.post('/', optionalAuth, validateRequest(createOrderSchema), OrderController.createOrder);
+// Authenticated Checkout ONLY (No anonymous checkout)
+router.post('/', authenticateJWT, validateRequest(createOrderSchema), OrderController.createOrder);
 
 // Customer / Admin order listing
 router.get('/', optionalAuth, validateRequest(orderQuerySchema), OrderController.getOrders);

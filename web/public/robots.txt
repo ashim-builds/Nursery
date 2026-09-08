@@ -6,8 +6,6 @@ Allow: /products/
 Allow: /category/
 Allow: /categories/
 Allow: /catalog
-Allow: /plant-doctor/
-Allow: /plant-doctor
 Allow: /search
 Allow: /contact
 Allow: /privacy

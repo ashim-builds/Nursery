@@ -3,38 +3,33 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { adminApi } from '../../api/admin.api';
 import { useUI } from '../../context/UIContext';
-import { OrderStatus } from '../../types/order';
+import { OrderStatus, PaymentStatus } from '../../types/order';
 import {
   ShoppingBag,
   Search,
-  Filter,
-  Eye,
   RotateCw,
   Clock,
   CheckCircle2,
-  Truck,
-  AlertCircle,
   XCircle,
-  Calendar,
-  ChevronRight,
+  MapPin,
+  Eye,
+  DollarSign,
+  AlertCircle,
+  ExternalLink,
 } from 'lucide-react';
 
-const STATUS_FILTERS = [
-  'ALL',
-  'PENDING',
-  'CONFIRMED',
-  'PROCESSING',
-  'READY',
-  'OUT_FOR_DELIVERY',
-  'DELIVERED',
-  'CANCELLED',
+const SIMPLE_STATUS_FILTERS = [
+  { id: 'ALL', label: 'All Orders' },
+  { id: 'PENDING', label: 'Pending' },
+  { id: 'DELIVERED', label: 'Delivered' },
+  { id: 'CANCELLED', label: 'Cancelled' },
 ];
 
 export const AdminOrdersPage: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const { showToast } = useUI();
+  const { showToast, confirmAction } = useUI();
   const queryClient = useQueryClient();
 
   const { data, isLoading, refetch } = useQuery({
@@ -44,62 +39,123 @@ export const AdminOrdersPage: React.FC = () => {
         status: selectedStatus === 'ALL' ? undefined : selectedStatus,
         search: search.trim() || undefined,
         page,
-        limit: 20,
+        limit: 30,
       }),
   });
 
-  const statusMutation = useMutation({
-    mutationFn: ({ orderId, status }: { orderId: string; status: OrderStatus }) =>
-      adminApi.updateOrderStatus(orderId, { orderStatus: status }),
-    onSuccess: () => {
-      showToast('Order status updated successfully', 'success');
+  const updateStatusMutation = useMutation({
+    mutationFn: ({
+      orderId,
+      orderStatus,
+      paymentStatus,
+    }: {
+      orderId: string;
+      orderStatus?: OrderStatus;
+      paymentStatus?: PaymentStatus;
+    }) => adminApi.updateOrderStatus(orderId, { orderStatus, paymentStatus }),
+    onSuccess: (_, variables) => {
+      if (variables.paymentStatus) {
+        showToast(`Payment marked as ${variables.paymentStatus}`, 'success');
+      } else if (variables.orderStatus) {
+        showToast(`Order marked as ${variables.orderStatus}`, 'success');
+      }
       queryClient.invalidateQueries({ queryKey: ['admin-orders-list'] });
       queryClient.invalidateQueries({ queryKey: ['admin-metrics'] });
     },
     onError: (err: any) => {
-      showToast(err.response?.data?.message || 'Failed to update order status', 'error');
+      showToast(err.response?.data?.message || 'Failed to update order', 'error');
     },
   });
 
-  const getStatusBadge = (status: OrderStatus | string) => {
-    switch (status) {
-      case 'PENDING':
-        return 'bg-amber-100 text-amber-800 border-amber-200';
-      case 'CONFIRMED':
-      case 'PROCESSING':
-        return 'bg-sky-100 text-sky-800 border-sky-200';
-      case 'READY':
-      case 'OUT_FOR_DELIVERY':
-        return 'bg-indigo-100 text-indigo-800 border-indigo-200';
-      case 'DELIVERED':
-      case 'COMPLETED':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-      case 'CANCELLED':
-        return 'bg-rose-100 text-rose-800 border-rose-200';
-      default:
-        return 'bg-slate-100 text-slate-700 border-slate-200';
+  const cancelMutation = useMutation({
+    mutationFn: ({ orderId }: { orderId: string }) =>
+      adminApi.cancelOrder(orderId, 'Cancelled by store manager'),
+    onSuccess: () => {
+      showToast('Order cancelled and inventory restored', 'success');
+      queryClient.invalidateQueries({ queryKey: ['admin-orders-list'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-metrics'] });
+    },
+    onError: (err: any) => {
+      showToast(err.response?.data?.message || 'Failed to cancel order', 'error');
+    },
+  });
+
+  const handleTogglePayment = async (order: any) => {
+    const nextStatus: PaymentStatus = order.paymentStatus === 'PAID' ? 'PENDING' : 'PAID';
+    const confirmMessage =
+      nextStatus === 'PAID'
+        ? `Are you sure you want to mark Order #${order.orderNumber} as PAID?`
+        : `Are you sure you want to mark Order #${order.orderNumber} as UNPAID?`;
+
+    if (await confirmAction(confirmMessage, { title: 'Update payment status' })) {
+      updateStatusMutation.mutate({
+        orderId: order.id,
+        paymentStatus: nextStatus,
+      });
+    }
+  };
+
+  const handleToggleDeliveryStatus = async (order: any) => {
+    const nextStatus: OrderStatus = order.orderStatus === 'DELIVERED' ? 'PENDING' : 'DELIVERED';
+    const confirmMessage =
+      nextStatus === 'DELIVERED'
+        ? `Mark Order #${order.orderNumber} as DELIVERED in 1-click?`
+        : `Change Order #${order.orderNumber} back to PENDING?`;
+
+    if (await confirmAction(confirmMessage, { title: 'Update delivery status' })) {
+      updateStatusMutation.mutate({
+        orderId: order.id,
+        orderStatus: nextStatus,
+      });
+    }
+  };
+
+  const handleCancelOrder = async (order: any) => {
+    if (order.orderStatus === 'CANCELLED') {
+      showToast('This order is already cancelled.', 'info');
+      return;
+    }
+    if (
+      await confirmAction(
+        `Are you sure you want to CANCEL Order #${order.orderNumber}?\nThis will clear the order and return plants to stock.`
+        , { title: 'Cancel order', confirmLabel: 'Cancel order' }
+      )
+    ) {
+      cancelMutation.mutate({ orderId: order.id });
+    }
+  };
+
+  const openMapLocation = (order: any) => {
+    if (order.deliveryLatitude && order.deliveryLongitude) {
+      window.open(
+        `https://www.google.com/maps/search/?api=1&query=${order.deliveryLatitude},${order.deliveryLongitude}`,
+        '_blank'
+      );
+    } else {
+      const query = encodeURIComponent(`${order.deliveryAddress}, ${order.deliveryCity || 'Kathmandu'}`);
+      window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-16">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-serif font-bold text-2xl sm:text-3xl text-slate-900 tracking-tight flex items-center gap-2.5">
             <ShoppingBag className="text-forest-700" size={28} />
-            <span>Orders & Dispatch Management</span>
+            <span>Manage Orders</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Review live order requests, assign riders, change statuses, and track deliveries.
+            Easy 1-click delivery status, payment toggles, and live customer map tracking.
           </p>
         </div>
 
         <button
           onClick={() => refetch()}
-          className="self-start sm:self-auto flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-colors shadow-xs"
+          className="self-start sm:self-auto flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-colors shadow-xs"
         >
-          <RotateCw size={14} />
+          <RotateCw size={14} className={isLoading ? 'animate-spin' : ''} />
           <span>Refresh</span>
         </button>
       </div>
@@ -112,7 +168,7 @@ export const AdminOrdersPage: React.FC = () => {
             <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search by order #, customer name, phone, city..."
+              placeholder="Search by customer name, phone number, order #, or location..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -123,22 +179,22 @@ export const AdminOrdersPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Status Pills Carousel */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-          {STATUS_FILTERS.map((st) => (
+        {/* Simplified Status Filter Buttons */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {SIMPLE_STATUS_FILTERS.map((st) => (
             <button
-              key={st}
+              key={st.id}
               onClick={() => {
-                setSelectedStatus(st);
+                setSelectedStatus(st.id);
                 setPage(1);
               }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                selectedStatus === st
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                selectedStatus === st.id
                   ? 'bg-forest-800 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
-              {st.replace('_', ' ')}
+              {st.label}
             </button>
           ))}
         </div>
@@ -147,8 +203,8 @@ export const AdminOrdersPage: React.FC = () => {
       {/* Loading state */}
       {isLoading && (
         <div className="space-y-3">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-20 bg-white rounded-2xl border border-slate-200 animate-pulse" />
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-28 bg-white rounded-2xl border border-slate-200 animate-pulse" />
           ))}
         </div>
       )}
@@ -159,205 +215,308 @@ export const AdminOrdersPage: React.FC = () => {
           <ShoppingBag size={40} className="mx-auto text-slate-300" />
           <h3 className="font-serif font-bold text-lg text-slate-800">No Orders Found</h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            No orders match the selected filters or search keyword.
+            No customer orders found matching your search.
           </p>
         </div>
       )}
 
-      {/* DESKTOP TABLE VIEW (Visible md and up) */}
+      {/* DESKTOP TABLE VIEW */}
       {!isLoading && data?.orders && data.orders.length > 0 && (
-        <div className="hidden md:block bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs">
+        <div className="hidden lg:block bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-sand-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                <th className="py-3.5 px-4">Order ID & Date</th>
-                <th className="py-3.5 px-4">Customer</th>
-                <th className="py-3.5 px-4">Items</th>
-                <th className="py-3.5 px-4">Total</th>
-                <th className="py-3.5 px-4">Payment</th>
-                <th className="py-3.5 px-4">Status & Action</th>
-                <th className="py-3.5 px-4 text-right">Details</th>
+              <tr className="bg-sand-50/90 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                <th className="py-3.5 px-4">Order # & Date</th>
+                <th className="py-3.5 px-4">Customer & Phone</th>
+                <th className="py-3.5 px-4">Location & Map</th>
+                <th className="py-3.5 px-4">Items & Total</th>
+                <th className="py-3.5 px-4 text-center">Payment (1-Click)</th>
+                <th className="py-3.5 px-4 text-center">Delivery (1-Click)</th>
+                <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
-              {data.orders.map((order: any) => (
-                <tr key={order.id} className="hover:bg-sand-50/40 transition-colors">
-                  <td className="py-3.5 px-4">
-                    <span className="font-mono font-bold text-slate-900 block">{order.orderNumber}</span>
-                    <span className="text-[11px] text-slate-400">
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </span>
-                  </td>
+              {data.orders.map((order: any) => {
+                const isDelivered = order.orderStatus === 'DELIVERED';
+                const isCancelled = order.orderStatus === 'CANCELLED';
+                const isPaid = order.paymentStatus === 'PAID';
 
-                  <td className="py-3.5 px-4">
-                    <div className="font-semibold text-slate-900">{order.customerName}</div>
-                    <div className="text-[11px] text-slate-500">{order.customerPhone}</div>
-                    <div className="text-[10px] text-forest-700">{order.deliveryCity}</div>
-                  </td>
+                return (
+                  <tr
+                    key={order.id}
+                    className={`hover:bg-sand-50/40 transition-colors ${
+                      isCancelled ? 'bg-rose-50/30 opacity-70' : ''
+                    }`}
+                  >
+                    {/* Order ID */}
+                    <td className="py-3.5 px-4">
+                      <span className="font-mono font-bold text-slate-900 block text-xs">
+                        {order.orderNumber}
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </span>
+                    </td>
 
-                  <td className="py-3.5 px-4">
-                    <span className="font-semibold text-slate-800">
-                      {order.items?.length || 0} item(s)
-                    </span>
-                    <p className="text-[11px] text-slate-400 truncate max-w-[160px]">
-                      {order.items?.map((i: any) => i.productTitle).join(', ')}
-                    </p>
-                  </td>
+                    {/* Customer */}
+                    <td className="py-3.5 px-4">
+                      <div className="font-bold text-slate-900">{order.customerName}</div>
+                      <a
+                        href={`tel:${order.customerPhone}`}
+                        className="text-[11px] text-forest-700 hover:underline font-mono"
+                      >
+                        {order.customerPhone}
+                      </a>
+                    </td>
 
-                  <td className="py-3.5 px-4">
-                    <span className="font-bold text-slate-900 font-mono">
-                      रू {Number(order.totalAmount).toLocaleString()}
-                    </span>
-                  </td>
+                    {/* Location & Map Track */}
+                    <td className="py-3.5 px-4 max-w-[200px]">
+                      <div className="text-[11px] text-slate-700 truncate">
+                        {order.deliveryAddress}
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className="text-[10px] font-bold text-slate-500">
+                          {order.deliveryCity || 'Kathmandu'}
+                        </span>
+                        <button
+                          onClick={() => openMapLocation(order)}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[10px] font-bold transition-colors"
+                          title="Open map delivery location"
+                        >
+                          <MapPin size={11} className="text-emerald-600" />
+                          <span>View Map</span>
+                        </button>
+                      </div>
+                    </td>
 
-                  <td className="py-3.5 px-4">
-                    <div className="font-semibold text-slate-800">{order.paymentMethod}</div>
-                    <span
-                      className={`inline-block text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                        order.paymentStatus === 'PAID'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-amber-100 text-amber-800'
-                      }`}
-                    >
-                      {order.paymentStatus}
-                    </span>
-                  </td>
+                    {/* Items & Amount */}
+                    <td className="py-3.5 px-4">
+                      <div className="font-bold text-forest-950 font-mono text-sm">
+                        रू {Number(order.totalAmount).toLocaleString()}
+                      </div>
+                      <p className="text-[11px] text-slate-500 truncate max-w-[150px]">
+                        {order.items?.length || 0} item(s):{' '}
+                        {order.items?.map((i: any) => i.productTitle).join(', ')}
+                      </p>
+                    </td>
 
-                  <td className="py-3.5 px-4">
-                    <select
-                      value={order.orderStatus}
-                      onChange={(e) =>
-                        statusMutation.mutate({
-                          orderId: order.id,
-                          status: e.target.value as OrderStatus,
-                        })
-                      }
-                      className={`text-xs font-bold px-2.5 py-1.5 rounded-xl border focus:outline-none cursor-pointer ${getStatusBadge(
-                        order.orderStatus
-                      )}`}
-                    >
-                      <option value="PENDING">PENDING</option>
-                      <option value="CONFIRMED">CONFIRMED</option>
-                      <option value="PROCESSING">PROCESSING</option>
-                      <option value="READY">READY</option>
-                      <option value="OUT_FOR_DELIVERY">OUT FOR DELIVERY</option>
-                      <option value="DELIVERED">DELIVERED</option>
-                      <option value="COMPLETED">COMPLETED</option>
-                      <option value="CANCELLED">CANCELLED</option>
-                    </select>
-                  </td>
+                    {/* 1-Click Payment Status */}
+                    <td className="py-3.5 px-4 text-center">
+                      <button
+                        onClick={() => handleTogglePayment(order)}
+                        disabled={isCancelled}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs transition-all shadow-xs cursor-pointer active:scale-95 ${
+                          isPaid
+                            ? 'bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border border-emerald-300'
+                            : 'bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300'
+                        }`}
+                        title="Click to toggle Paid / Unpaid (with confirmation)"
+                      >
+                        {isPaid ? (
+                          <>
+                            <CheckCircle2 size={13} className="text-emerald-700" />
+                            <span>PAID</span>
+                          </>
+                        ) : (
+                          <>
+                            <Clock size={13} className="text-amber-700" />
+                            <span>UNPAID (COD)</span>
+                          </>
+                        )}
+                      </button>
+                    </td>
 
-                  <td className="py-3.5 px-4 text-right">
-                    <Link
-                      to={`/admin/orders/${order.id}`}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-sand-100 hover:bg-sand-200 text-forest-900 font-bold text-xs transition-colors"
-                    >
-                      <Eye size={13} />
-                      <span>View</span>
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+                    {/* 1-Click Order Status: Pending vs Delivered */}
+                    <td className="py-3.5 px-4 text-center">
+                      {isCancelled ? (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-rose-100 text-rose-800 text-xs font-bold border border-rose-200">
+                          <XCircle size={13} />
+                          <span>CANCELLED</span>
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleToggleDeliveryStatus(order)}
+                          className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl font-bold text-xs transition-all shadow-xs cursor-pointer active:scale-95 ${
+                            isDelivered
+                              ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                              : 'bg-amber-500 hover:bg-amber-600 text-white'
+                          }`}
+                          title="Click to switch between Pending and Delivered"
+                        >
+                          {isDelivered ? (
+                            <>
+                              <CheckCircle2 size={13} />
+                              <span>DELIVERED ✓</span>
+                            </>
+                          ) : (
+                            <>
+                              <Clock size={13} />
+                              <span>PENDING</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </td>
+
+                    {/* Actions: Cancel (X) & View Details */}
+                    <td className="py-3.5 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Link
+                          to={`/admin/orders/${order.id}`}
+                          className="p-1.5 rounded-lg bg-sand-100 hover:bg-sand-200 text-slate-700 transition-colors"
+                          title="View order details"
+                        >
+                          <Eye size={15} />
+                        </Link>
+
+                        {!isCancelled && (
+                          <button
+                            onClick={() => handleCancelOrder(order)}
+                            className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors"
+                            title="Cancel & clear order"
+                          >
+                            <XCircle size={15} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
 
-      {/* MOBILE CARD VIEW (Visible on phones & small viewports < 768px) */}
+      {/* MOBILE / TABLET CARD VIEW */}
       {!isLoading && data?.orders && data.orders.length > 0 && (
-        <div className="md:hidden space-y-3">
-          {data.orders.map((order: any) => (
-            <div
-              key={order.id}
-              className="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs space-y-3 text-xs"
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                <div>
-                  <span className="font-mono font-bold text-sm text-slate-900 block">
-                    {order.orderNumber}
-                  </span>
-                  <span className="text-[11px] text-slate-400">
-                    {new Date(order.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
+        <div className="lg:hidden space-y-3">
+          {data.orders.map((order: any) => {
+            const isDelivered = order.orderStatus === 'DELIVERED';
+            const isCancelled = order.orderStatus === 'CANCELLED';
+            const isPaid = order.paymentStatus === 'PAID';
 
-                <span
-                  className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${getStatusBadge(
-                    order.orderStatus
-                  )}`}
-                >
-                  {order.orderStatus.replace('_', ' ')}
-                </span>
-              </div>
-
-              {/* Customer & Location */}
-              <div className="space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Customer:</span>
-                  <span className="font-semibold text-slate-900">{order.customerName}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Phone:</span>
-                  <span className="font-mono text-slate-700">{order.customerPhone}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">City / Zone:</span>
-                  <span className="font-semibold text-forest-800">{order.deliveryCity}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Payment:</span>
-                  <span className="font-semibold text-slate-800">
-                    {order.paymentMethod} ({order.paymentStatus})
-                  </span>
-                </div>
-              </div>
-
-              {/* Items summary */}
-              <div className="bg-sand-50/70 p-2.5 rounded-2xl border border-slate-100">
-                <span className="text-[11px] text-slate-500 block mb-1 font-semibold">
-                  Items ({order.items?.length || 0}):
-                </span>
-                <div className="space-y-1">
-                  {order.items?.slice(0, 3).map((item: any) => (
-                    <div key={item.id} className="flex justify-between text-[11px]">
-                      <span className="text-slate-700 truncate max-w-[200px]">
-                        {item.quantity}× {item.productTitle} ({item.variantName})
-                      </span>
-                      <span className="font-mono font-semibold text-slate-900">
-                        रू {Number(item.totalPrice).toLocaleString()}
-                      </span>
-                    </div>
-                  ))}
-                  {(order.items?.length || 0) > 3 && (
-                    <span className="text-[10px] text-slate-400 italic block">
-                      +{order.items.length - 3} more items...
+            return (
+              <div
+                key={order.id}
+                className={`bg-white p-4 rounded-3xl border border-slate-200 shadow-xs space-y-3 text-xs ${
+                  isCancelled ? 'bg-rose-50/20' : ''
+                }`}
+              >
+                {/* Header: Order # & Cancel Cross */}
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                  <div>
+                    <span className="font-mono font-bold text-sm text-slate-900 block">
+                      {order.orderNumber}
                     </span>
+                    <span className="text-[11px] text-slate-400">
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to={`/admin/orders/${order.id}`}
+                      className="p-1.5 rounded-xl bg-sand-100 text-slate-700"
+                      title="View Details"
+                    >
+                      <Eye size={15} />
+                    </Link>
+                    {!isCancelled && (
+                      <button
+                        onClick={() => handleCancelOrder(order)}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-800 text-[11px] font-bold"
+                        title="Cancel order"
+                      >
+                        <XCircle size={13} />
+                        <span>Cancel</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Customer Details */}
+                <div className="space-y-1 bg-sand-50/60 p-2.5 rounded-2xl border border-slate-100">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500 font-medium">Customer:</span>
+                    <span className="font-bold text-slate-900">{order.customerName}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500 font-medium">Phone:</span>
+                    <a
+                      href={`tel:${order.customerPhone}`}
+                      className="font-mono font-bold text-forest-800 underline"
+                    >
+                      {order.customerPhone}
+                    </a>
+                  </div>
+                  <div className="flex justify-between items-center pt-1 border-t border-slate-200/50">
+                    <span className="text-slate-500 font-medium">Delivery Street:</span>
+                    <span className="font-semibold text-slate-800 text-right truncate max-w-[180px]">
+                      {order.deliveryAddress}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Map Location Tracker Button */}
+                <button
+                  onClick={() => openMapLocation(order)}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-200 transition-colors"
+                >
+                  <MapPin size={15} className="text-emerald-700" />
+                  <span>Track Delivery on Map 📍</span>
+                  <ExternalLink size={12} className="opacity-60" />
+                </button>
+
+                {/* Items & Total */}
+                <div className="flex items-center justify-between py-1">
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                      Total ({order.items?.length || 0} items)
+                    </span>
+                    <span className="font-serif font-bold text-base text-forest-950">
+                      रू {Number(order.totalAmount).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 1-Click Action Buttons for Operator */}
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                  {/* Payment Button */}
+                  <button
+                    onClick={() => handleTogglePayment(order)}
+                    disabled={isCancelled}
+                    className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-2xl text-xs font-extrabold shadow-xs transition-transform active:scale-95 ${
+                      isPaid
+                        ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                        : 'bg-amber-100 text-amber-900 border border-amber-300'
+                    }`}
+                  >
+                    {isPaid ? <CheckCircle2 size={14} /> : <Clock size={14} />}
+                    <span>{isPaid ? 'PAID ✓' : 'UNPAID (COD)'}</span>
+                  </button>
+
+                  {/* Delivery Status Button */}
+                  {isCancelled ? (
+                    <div className="flex items-center justify-center gap-1 py-2.5 px-2 rounded-2xl bg-rose-100 text-rose-800 font-bold text-xs">
+                      <XCircle size={14} />
+                      <span>CANCELLED</span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleToggleDeliveryStatus(order)}
+                      className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-2xl text-xs font-extrabold text-white shadow-xs transition-transform active:scale-95 ${
+                        isDelivered ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-amber-500 hover:bg-amber-600'
+                      }`}
+                    >
+                      {isDelivered ? <CheckCircle2 size={14} /> : <Clock size={14} />}
+                      <span>{isDelivered ? 'DELIVERED ✓' : 'PENDING'}</span>
+                    </button>
                   )}
                 </div>
               </div>
-
-              {/* Action and Total */}
-              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                <div>
-                  <span className="text-[10px] text-slate-400 block uppercase font-bold">Total Amount</span>
-                  <span className="font-serif font-bold text-base text-forest-950">
-                    रू {Number(order.totalAmount).toLocaleString()}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Link
-                    to={`/admin/orders/${order.id}`}
-                    className="flex items-center gap-1 px-4 py-2 rounded-xl bg-forest-800 text-white font-bold text-xs shadow-xs"
-                  >
-                    <span>Manage</span>
-                    <ChevronRight size={13} />
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -3,31 +3,21 @@ import { useUI } from '../../context/UIContext';
 import {
   Settings,
   Store,
-  Phone,
-  Mail,
-  MapPin,
-  FileText,
-  ShieldCheck,
-  CheckCircle2,
-  AlertCircle,
-  Bell,
   Clock,
+  CheckCircle2,
 } from 'lucide-react';
 
 export const AdminSettingsPage: React.FC = () => {
   const { showToast } = useUI();
 
-  // Settings State (stored in localStorage or backend config)
-  const [storeName, setStoreName] = useState(() => localStorage.getItem('nursery_store_name') || 'Nursery Botanical Nepal');
+  // Settings State
+  const [storeName, setStoreName] = useState(() => localStorage.getItem('nursery_store_name') || 'KtmBotanica Nursery & Florist');
   const [supportPhone, setSupportPhone] = useState(() => localStorage.getItem('nursery_phone') || '+977 9801234567');
   const [whatsappPhone, setWhatsappPhone] = useState(() => localStorage.getItem('nursery_whatsapp') || '+977 9801234567');
-  const [supportEmail, setSupportEmail] = useState(() => localStorage.getItem('nursery_email') || 'support@nursery.com.np');
-  const [storeAddress, setStoreAddress] = useState(() => localStorage.getItem('nursery_address') || 'Baluwatar, Kathmandu 44600, Nepal');
-  const [panNumber, setPanNumber] = useState(() => localStorage.getItem('nursery_pan') || '609823412');
-  const [defaultThreshold, setDefaultThreshold] = useState<number>(() => Number(localStorage.getItem('nursery_threshold')) || 5);
+  const [supportEmail, setSupportEmail] = useState(() => localStorage.getItem('nursery_email') || 'nursery@gmail.com');
+  const [storeAddress, setStoreAddress] = useState(() => localStorage.getItem('nursery_address') || 'Lazimpat Botanical Row, Kathmandu');
   const [freeShippingThreshold, setFreeShippingThreshold] = useState<number>(() => Number(localStorage.getItem('nursery_free_shipping')) || 3000);
-  const [deliveryNotice, setDeliveryNotice] = useState(() => localStorage.getItem('nursery_delivery_notice') || 'Monsoon planting season deliveries scheduled within 24 hours across Kathmandu Valley.');
-  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [deliveryNotice, setDeliveryNotice] = useState(() => localStorage.getItem('nursery_delivery_notice') || 'Plant deliveries scheduled within 24 hours across Kathmandu Valley.');
 
   const [saving, setSaving] = useState(false);
 
@@ -41,14 +31,12 @@ export const AdminSettingsPage: React.FC = () => {
     localStorage.setItem('nursery_whatsapp', whatsappPhone);
     localStorage.setItem('nursery_email', supportEmail);
     localStorage.setItem('nursery_address', storeAddress);
-    localStorage.setItem('nursery_pan', panNumber);
-    localStorage.setItem('nursery_threshold', defaultThreshold.toString());
     localStorage.setItem('nursery_free_shipping', freeShippingThreshold.toString());
     localStorage.setItem('nursery_delivery_notice', deliveryNotice);
 
     setTimeout(() => {
       setSaving(false);
-      showToast('Store settings and dispatch parameters updated!', 'success');
+      showToast('Store settings updated successfully!', 'success');
     }, 400);
   };
 
@@ -61,7 +49,7 @@ export const AdminSettingsPage: React.FC = () => {
           <span>Nursery & Store Settings</span>
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 mt-1">
-          Configure business details, PAN/VAT credentials, dispatch policies, and default thresholds.
+          Configure business contact details, delivery announcement, and store rules.
         </p>
       </div>
 
@@ -70,7 +58,7 @@ export const AdminSettingsPage: React.FC = () => {
         <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
           <h2 className="font-serif font-bold text-base sm:text-lg text-slate-900 flex items-center gap-2">
             <Store size={18} className="text-forest-700" />
-            <span>Store Profile & Official PAN Details</span>
+            <span>Store Contact & Location</span>
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -82,16 +70,6 @@ export const AdminSettingsPage: React.FC = () => {
                 value={storeName}
                 onChange={(e) => setStoreName(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-forest-700 font-semibold"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Nepal PAN / VAT Number</label>
-              <input
-                type="text"
-                value={panNumber}
-                onChange={(e) => setPanNumber(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono text-slate-900 focus:bg-white focus:outline-none focus:border-forest-700"
               />
             </div>
 
@@ -116,18 +94,7 @@ export const AdminSettingsPage: React.FC = () => {
               />
             </div>
 
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Official Support Email</label>
-              <input
-                type="email"
-                required
-                value={supportEmail}
-                onChange={(e) => setSupportEmail(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-forest-700"
-              />
-            </div>
-
-            <div>
+            <div className="sm:col-span-2">
               <label className="block font-semibold text-slate-700 mb-1">Physical Nursery Location</label>
               <input
                 type="text"
@@ -139,14 +106,14 @@ export const AdminSettingsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Fulfillment & Inventory Rules */}
+        {/* Fulfillment Rules */}
         <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
           <h2 className="font-serif font-bold text-base sm:text-lg text-slate-900 flex items-center gap-2">
             <Clock size={18} className="text-forest-700" />
-            <span>Shipping Rules & Low Stock Thresholds</span>
+            <span>Shipping & Announcements</span>
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div className="space-y-4 text-xs">
             <div>
               <label className="block font-semibold text-slate-700 mb-1">
                 Free Shipping Threshold (NPR रू)
@@ -164,32 +131,16 @@ export const AdminSettingsPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">
-                Default Low Stock Alert Threshold
+              <label className="block font-semibold text-slate-700 mb-1 text-xs">
+                Storefront Header Delivery Announcement Banner
               </label>
-              <input
-                type="number"
-                min="1"
-                value={defaultThreshold}
-                onChange={(e) => setDefaultThreshold(Number(e.target.value))}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-forest-700"
+              <textarea
+                rows={2}
+                value={deliveryNotice}
+                onChange={(e) => setDeliveryNotice(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-forest-700"
               />
-              <span className="text-[10px] text-slate-400 mt-1 block">
-                Trigger inventory warning when plant variant stock drops to or below this unit count.
-              </span>
             </div>
-          </div>
-
-          <div>
-            <label className="block font-semibold text-slate-700 mb-1 text-xs">
-              Storefront Header Delivery Announcement Banner
-            </label>
-            <textarea
-              rows={2}
-              value={deliveryNotice}
-              onChange={(e) => setDeliveryNotice(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-forest-700"
-            />
           </div>
         </div>
 

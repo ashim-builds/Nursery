@@ -11,11 +11,11 @@ export interface SEOProps {
   noIndex?: boolean;
 }
 
-const DEFAULT_TITLE = "KtmBotanica | Nepal's Premier Botanical Nursery & Floral Studio";
+const DEFAULT_TITLE = "KtmBotanica";
 const DEFAULT_DESCRIPTION =
-  "Kathmandu's premier mobile-first plant nursery & florist. Shop indoor air-purifiers, exotic monsteras, seasonal Sayapatri blooms, handmade terracotta planters, and expert Kathmandu plant care.";
-const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1545241047-6083a3684587?auto=format&fit=crop&w=1200&q=80";
-const SITE_NAME = "KtmBotanica Nursery Kathmandu";
+  "Kathmandu's premier mobile-first plant nursery & florist. Shop indoor plants, pottery, and flowers delivered across Kathmandu Valley.";
+const DEFAULT_IMAGE = "/icon-512.png";
+const SITE_NAME = "KtmBotanica";
 
 export const SEO: React.FC<SEOProps> = ({
   title,

@@ -8,6 +8,8 @@ import { ToastContainer } from './components/common/Toast';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { StorefrontLayout } from './components/layout/StorefrontLayout';
 
+import { ScrollToTop } from './components/common/ScrollToTop';
+
 // Storefront Pages
 import { HomePage } from './pages/HomePage';
 import { CategoriesPage } from './pages/CategoriesPage';
@@ -29,12 +31,14 @@ import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { ContactPage } from './pages/ContactPage';
 import { PrivacyPage } from './pages/PrivacyPage';
 import { TermsPage } from './pages/TermsPage';
-import { PlantDoctorPage } from './pages/PlantDoctorPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+
+import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
 
 // Admin Components & Pages
 import { AdminLayout } from './components/admin/AdminLayout';
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
+import { AdminSetupWizardPage } from './pages/admin/AdminSetupWizardPage';
 import { AdminOverviewPage } from './pages/admin/AdminOverviewPage';
 import { AdminOrdersPage } from './pages/admin/AdminOrdersPage';
 import { AdminOrderDetailPage } from './pages/admin/AdminOrderDetailPage';
@@ -49,7 +53,6 @@ import { AdminReviewsPage } from './pages/admin/AdminReviewsPage';
 import { AdminDeliveryZonesPage } from './pages/admin/AdminDeliveryZonesPage';
 import { AdminNotificationsPage } from './pages/admin/AdminNotificationsPage';
 import { AdminAuditLogsPage } from './pages/admin/AdminAuditLogsPage';
-import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -68,6 +71,7 @@ export const App: React.FC = () => {
         <CartProvider>
           <UIProvider>
             <BrowserRouter>
+              <ScrollToTop />
               <Routes>
                 {/* 1. PUBLIC STOREFRONT & CUSTOMER ROUTES */}
                 <Route element={<StorefrontLayout />}>
@@ -81,9 +85,6 @@ export const App: React.FC = () => {
                   <Route path="/cart" element={<CartPage />} />
                   <Route path="/checkout" element={<CheckoutPage />} />
                   <Route path="/order-success/:id" element={<OrderConfirmationPage />} />
-                  <Route path="/plant-doctor" element={<PlantDoctorPage />} />
-                  <Route path="/plant-doctor/:slug" element={<PlantDoctorPage />} />
-
                   {/* Customer Account & Orders (Protected) */}
                   <Route
                     path="/orders"
@@ -144,8 +145,16 @@ export const App: React.FC = () => {
                   <Route path="/terms" element={<TermsPage />} />
                 </Route>
 
-                {/* 2. DEDICATED ADMIN LOGIN */}
+                {/* 2. DEDICATED ADMIN LOGIN & SETUP */}
                 <Route path="/admin/login" element={<AdminLoginPage />} />
+                <Route
+                  path="/admin/setup"
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <AdminSetupWizardPage />
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* 3. SECURE ADMIN OPERATIONS CONSOLE (PROTECTED) */}
                 <Route
@@ -171,7 +180,6 @@ export const App: React.FC = () => {
                   <Route path="delivery-zones" element={<AdminDeliveryZonesPage />} />
                   <Route path="notifications" element={<AdminNotificationsPage />} />
                   <Route path="audit-logs" element={<AdminAuditLogsPage />} />
-                  <Route path="settings" element={<AdminSettingsPage />} />
                 </Route>
 
                 {/* 4. 404 CATCH-ALL */}
@@ -185,6 +193,7 @@ export const App: React.FC = () => {
                 </Route>
               </Routes>
 
+              <PWAInstallPrompt />
               <ToastContainer />
             </BrowserRouter>
           </UIProvider>

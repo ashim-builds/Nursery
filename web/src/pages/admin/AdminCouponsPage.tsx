@@ -24,7 +24,7 @@ export const AdminCouponsPage: React.FC = () => {
   const [usageLimit, setUsageLimit] = useState<number>(100);
   const [expiresAt, setExpiresAt] = useState('');
 
-  const { showToast } = useUI();
+  const { showToast, confirmAction } = useUI();
   const queryClient = useQueryClient();
 
   const { data: coupons, isLoading, refetch } = useQuery({
@@ -201,8 +201,8 @@ export const AdminCouponsPage: React.FC = () => {
 
                   <td className="py-3.5 px-4 text-right">
                     <button
-                      onClick={() => {
-                        if (window.confirm(`Delete coupon "${c.code}"?`)) {
+                      onClick={async () => {
+                        if (await confirmAction(`Delete coupon "${c.code}"?`, { title: 'Delete coupon', confirmLabel: 'Delete' })) {
                           deleteMutation.mutate(c.id);
                         }
                       }}
@@ -270,8 +270,8 @@ export const AdminCouponsPage: React.FC = () => {
 
               <div className="flex justify-end pt-1">
                 <button
-                  onClick={() => {
-                    if (window.confirm(`Delete coupon "${c.code}"?`)) {
+                  onClick={async () => {
+                    if (await confirmAction(`Delete coupon "${c.code}"?`, { title: 'Delete coupon', confirmLabel: 'Delete' })) {
                       deleteMutation.mutate(c.id);
                     }
                   }}

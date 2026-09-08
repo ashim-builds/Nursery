@@ -3,21 +3,19 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { adminApi } from '../../api/admin.api';
 import {
-  TrendingUp,
   ShoppingBag,
-  Clock,
-  AlertTriangle,
-  ArrowRight,
-  Package,
-  Layers,
-  Users,
+  PlusCircle,
   CreditCard,
-  RotateCw,
-  Sparkles,
-  ChevronRight,
+  Users,
+  Package,
+  Clock,
+  ArrowRight,
+  Phone,
   Truck,
-  CheckCircle2,
+  RotateCw,
+  CheckCircle,
 } from 'lucide-react';
+import axios from 'axios';
 
 export const AdminOverviewPage: React.FC = () => {
   const { data: metrics, isLoading, refetch } = useQuery({
@@ -26,334 +24,264 @@ export const AdminOverviewPage: React.FC = () => {
     refetchInterval: 30000,
   });
 
+  const { data: siteSettings } = useQuery({
+    queryKey: ['site-settings'],
+    queryFn: async () => {
+      const res = await axios.get('/api/site-settings');
+      return res.data?.data;
+    },
+  });
+
   if (isLoading) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-8 bg-slate-200 rounded-xl w-48" />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="space-y-4 animate-pulse">
+        <div className="h-10 bg-slate-200 rounded-2xl w-60" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="h-28 bg-slate-200 rounded-2xl" />
           ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="h-80 bg-slate-200 rounded-3xl lg:col-span-2" />
-          <div className="h-80 bg-slate-200 rounded-3xl" />
         </div>
       </div>
     );
   }
 
-  // Simulated chart points for visual analytics
-  const revenueTrend = [
-    { day: 'Sun', amount: 14500, height: '45%' },
-    { day: 'Mon', amount: 22800, height: '70%' },
-    { day: 'Tue', amount: 18900, height: '58%' },
-    { day: 'Wed', amount: 31200, height: '95%' },
-    { day: 'Thu', amount: 26400, height: '80%' },
-    { day: 'Fri', amount: 29000, height: '88%' },
-    { day: 'Sat', amount: 34500, height: '100%' },
-  ];
-
-  const orderStatusBreakdown = [
-    { label: 'Pending / New', count: metrics?.pendingOrders || 0, color: 'bg-amber-500' },
-    { label: 'Completed', count: metrics?.completedOrders || 0, color: 'bg-emerald-500' },
-    { label: 'Total Placed', count: metrics?.totalOrders || 0, color: 'bg-forest-800' },
-  ];
+  const pendingCount = metrics?.pendingOrders || 0;
+  const todaySales = Number(metrics?.todaySales || 0);
+  const totalRevenue = Number(metrics?.totalRevenue || 0);
 
   return (
-    <div className="space-y-6 sm:space-y-8">
-      {/* Top Banner / Welcome */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-xs">
+    <div className="space-y-5 sm:space-y-6">
+      {/* Top Welcome Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
         <div>
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-xs font-bold text-emerald-800 mb-2">
-            <Sparkles size={13} className="text-emerald-600" />
-            <span>Botanical Dispatch Dashboard</span>
-          </div>
-          <h1 className="font-serif font-bold text-2xl sm:text-3xl text-slate-900 tracking-tight">
-            Nursery Command Center
+          <h1 className="font-serif font-bold text-xl sm:text-2xl text-slate-900">
+            {siteSettings?.businessName || 'Nursery'} Manager
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Real-time sales, order fulfillment queue, live stock alerts, and customer activity.
+          <p className="text-xs text-slate-500 mt-0.5">
+            Simple store control: manage orders, update plants, and check payments.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => refetch()}
-            className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors"
+            className="flex items-center gap-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors"
           >
             <RotateCw size={14} />
-            <span>Refresh Metrics</span>
+            <span>Refresh</span>
           </button>
           <Link
             to="/admin/products/new"
-            className="flex items-center gap-1.5 px-4 py-2 bg-forest-800 hover:bg-forest-900 text-white rounded-xl text-xs font-bold transition-colors shadow-xs"
+            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition-colors shadow-xs"
           >
-            <span>+ Add New Plant</span>
+            <PlusCircle size={15} />
+            <span>Add New Product</span>
           </Link>
         </div>
       </div>
 
-      {/* Primary KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Sales Card */}
-        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2 relative overflow-hidden">
-          <div className="flex items-center justify-between text-slate-500">
-            <span className="text-xs font-semibold">Total Revenue</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <TrendingUp size={16} />
-            </div>
-          </div>
-          <div>
-            <span className="font-serif font-bold text-xl sm:text-3xl text-slate-900 block">
-              रू {Number(metrics?.totalRevenue || 0).toLocaleString()}
-            </span>
-            <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 mt-1">
-              <span>Today: रू {Number(metrics?.todaySales || 0).toLocaleString()}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Orders Card */}
-        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2 relative overflow-hidden">
-          <div className="flex items-center justify-between text-slate-500">
-            <span className="text-xs font-semibold">Total Orders</span>
-            <div className="w-8 h-8 rounded-xl bg-forest-50 text-forest-700 flex items-center justify-center">
-              <ShoppingBag size={16} />
-            </div>
-          </div>
-          <div>
-            <span className="font-serif font-bold text-xl sm:text-3xl text-slate-900 block">
-              {metrics?.totalOrders || 0}
-            </span>
-            <div className="flex items-center gap-1 text-[11px] font-semibold text-forest-700 mt-1">
-              <span>Today: {metrics?.todayOrders || 0} orders placed</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Pending Orders Card */}
-        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2 relative overflow-hidden">
-          <div className="flex items-center justify-between text-slate-500">
-            <span className="text-xs font-semibold">Pending Fulfillment</span>
-            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Clock size={16} />
-            </div>
-          </div>
-          <div>
-            <span className="font-serif font-bold text-xl sm:text-3xl text-amber-600 block">
-              {metrics?.pendingOrders || 0}
-            </span>
-            <Link
-              to="/admin/orders?status=PENDING"
-              className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 hover:underline mt-1"
-            >
-              <span>Process Pending Queue</span>
-              <ChevronRight size={12} />
-            </Link>
-          </div>
-        </div>
-
-        {/* Low Stock Card */}
-        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2 relative overflow-hidden">
-          <div className="flex items-center justify-between text-slate-500">
-            <span className="text-xs font-semibold">Low Stock Items</span>
-            <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-              <AlertTriangle size={16} />
-            </div>
-          </div>
-          <div>
-            <span className="font-serif font-bold text-xl sm:text-3xl text-rose-600 block">
-              {metrics?.lowStockCount || 0}
-            </span>
-            <Link
-              to="/admin/inventory"
-              className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 hover:underline mt-1"
-            >
-              <span>Restock Inventory</span>
-              <ChevronRight size={12} />
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Visual Analytics Grid: Revenue Bars + Top Products */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Revenue Analytics Chart (2 Columns) */}
-        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-xs lg:col-span-2 space-y-5">
+      {/* 4 Compact Action Cards in Responsive 2x2 Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        {/* 1. Orders & Tracking */}
+        <Link
+          to="/admin/orders"
+          className="p-3.5 sm:p-5 rounded-2xl bg-amber-50/90 border border-amber-200 hover:border-amber-400 hover:shadow-md transition-all flex flex-col justify-between group"
+        >
           <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-serif font-bold text-base sm:text-lg text-slate-900">
-                Revenue & Velocity
-              </h2>
-              <p className="text-xs text-slate-500">7-day gross sales trend in NPR (रू)</p>
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs">
+              <ShoppingBag size={18} />
             </div>
-            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
-              +14.2% vs last week
-            </span>
-          </div>
-
-          {/* Bar Chart Visualization */}
-          <div className="pt-4 pb-2">
-            <div className="h-48 flex items-end justify-between gap-2 sm:gap-4 px-2 border-b border-slate-200 pb-2">
-              {revenueTrend.map((item, idx) => (
-                <div key={idx} className="flex-1 flex flex-col items-center gap-2 group">
-                  <span className="text-[10px] font-mono text-slate-400 group-hover:text-forest-900 group-hover:font-bold transition-colors">
-                    {Math.round(item.amount / 1000)}k
-                  </span>
-                  <div className="w-full max-w-[38px] bg-sand-100 group-hover:bg-sand-200 rounded-t-xl overflow-hidden flex items-end h-36">
-                    <div
-                      style={{ height: item.height }}
-                      className="w-full bg-forest-800 group-hover:bg-emerald-600 transition-all rounded-t-xl"
-                    />
-                  </div>
-                  <span className="text-xs font-bold text-slate-600">{item.day}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Order Metrics Summary Row */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-2 border-t border-slate-100 text-center">
-            {orderStatusBreakdown.map((item, i) => (
-              <div key={i} className="p-2 sm:p-3 bg-sand-50 rounded-2xl">
-                <span className="text-[11px] text-slate-500 block">{item.label}</span>
-                <span className="font-serif font-bold text-sm sm:text-lg text-slate-900 block mt-0.5">
-                  {item.count}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Top Selling Botanical Products */}
-        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-serif font-bold text-base sm:text-lg text-slate-900">
-              Top Products
-            </h2>
-            <Link to="/admin/products" className="text-xs font-bold text-forest-700 hover:underline">
-              View All
-            </Link>
-          </div>
-
-          <div className="space-y-3">
-            {metrics?.topProducts && metrics.topProducts.length > 0 ? (
-              metrics.topProducts.slice(0, 5).map((p, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between p-3 bg-sand-50/60 rounded-2xl border border-slate-100 text-xs"
-                >
-                  <div className="flex items-center gap-2.5 truncate">
-                    <span className="w-5 h-5 rounded-full bg-forest-800 text-emerald-300 font-bold text-[10px] flex items-center justify-center shrink-0">
-                      {idx + 1}
-                    </span>
-                    <span className="font-semibold text-slate-800 truncate">{p.productName}</span>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <span className="font-bold text-slate-900 block">{p.unitsSold} sold</span>
-                    <span className="text-[10px] text-slate-500 font-mono">रू {Number(p.revenue).toLocaleString()}</span>
-                  </div>
-                </div>
-              ))
+            {pendingCount > 0 ? (
+              <span className="bg-amber-600 text-white text-[10px] sm:text-xs font-extrabold px-2 py-0.5 rounded-full animate-bounce">
+                {pendingCount} NEW
+              </span>
             ) : (
-              <div className="p-6 text-center text-xs text-slate-400">
-                <Package size={24} className="mx-auto mb-2 text-slate-300" />
-                <span>No order sales recorded yet</span>
-              </div>
+              <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                Active
+              </span>
             )}
           </div>
-        </div>
+          <div className="mt-2.5 sm:mt-3 text-left">
+            <span className="text-[10px] sm:text-xs font-bold text-amber-950 uppercase tracking-wide block truncate">
+              Manage Orders
+            </span>
+            <div className="font-serif font-bold text-base sm:text-xl text-amber-900 mt-0.5 leading-tight">
+              {pendingCount} Deliveries
+            </div>
+            <p className="text-[10px] sm:text-[11px] text-amber-800 mt-1 flex items-center gap-1 font-medium">
+              <span>View & track</span>
+              <ArrowRight size={11} className="group-hover:translate-x-1 transition-transform" />
+            </p>
+          </div>
+        </Link>
+
+        {/* 2. Add / Edit Products */}
+        <Link
+          to="/admin/products"
+          className="p-3.5 sm:p-5 rounded-2xl bg-emerald-50/90 border border-emerald-200 hover:border-emerald-400 hover:shadow-md transition-all flex flex-col justify-between group"
+        >
+          <div className="flex items-center justify-between">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+              <Package size={18} />
+            </div>
+            <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-md">
+              In Stock
+            </span>
+          </div>
+          <div className="mt-2.5 sm:mt-3 text-left">
+            <span className="text-[10px] sm:text-xs font-bold text-emerald-950 uppercase tracking-wide block truncate">
+              Plants & Catalog
+            </span>
+            <div className="font-serif font-bold text-base sm:text-xl text-emerald-900 mt-0.5 leading-tight">
+              Manage Items
+            </div>
+            <p className="text-[10px] sm:text-[11px] text-emerald-800 mt-1 flex items-center gap-1 font-medium">
+              <span>Edit catalog</span>
+              <ArrowRight size={11} className="group-hover:translate-x-1 transition-transform" />
+            </p>
+          </div>
+        </Link>
+
+        {/* 3. Payments & COD */}
+        <Link
+          to="/admin/payments"
+          className="p-3.5 sm:p-5 rounded-2xl bg-blue-50/90 border border-blue-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between group"
+        >
+          <div className="flex items-center justify-between">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs">
+              <CreditCard size={18} />
+            </div>
+            <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-md">
+              COD
+            </span>
+          </div>
+          <div className="mt-2.5 sm:mt-3 text-left">
+            <span className="text-[10px] sm:text-xs font-bold text-blue-950 uppercase tracking-wide block truncate">
+              Total Revenue
+            </span>
+            <div className="font-serif font-bold text-base sm:text-xl text-blue-900 mt-0.5 leading-tight font-mono">
+              रू {totalRevenue.toLocaleString()}
+            </div>
+            <p className="text-[10px] sm:text-[11px] text-blue-800 mt-1 font-medium truncate">
+              Today: <strong>रू {todaySales.toLocaleString()}</strong>
+            </p>
+          </div>
+        </Link>
+
+        {/* 4. Customers */}
+        <Link
+          to="/admin/customers"
+          className="p-3.5 sm:p-5 rounded-2xl bg-purple-50/90 border border-purple-200 hover:border-purple-400 hover:shadow-md transition-all flex flex-col justify-between group"
+        >
+          <div className="flex items-center justify-between">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-xs">
+              <Users size={18} />
+            </div>
+            <span className="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded-md">
+              Buyers
+            </span>
+          </div>
+          <div className="mt-2.5 sm:mt-3 text-left">
+            <span className="text-[10px] sm:text-xs font-bold text-purple-950 uppercase tracking-wide block truncate">
+              Customers
+            </span>
+            <div className="font-serif font-bold text-base sm:text-xl text-purple-900 mt-0.5 leading-tight">
+              View Buyers
+            </div>
+            <p className="text-[10px] sm:text-[11px] text-purple-800 mt-1 flex items-center gap-1 font-medium">
+              <span>Phone list</span>
+              <ArrowRight size={11} className="group-hover:translate-x-1 transition-transform" />
+            </p>
+          </div>
+        </Link>
       </div>
 
-      {/* Urgent Operations Split: Recent Orders & Urgent Low Stock */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Orders Queue (Card stack for mobile, table for desktop) */}
-        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
+      {/* Recent Orders - Simple, Clean & Easy to Read */}
+      <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
             <h2 className="font-serif font-bold text-base sm:text-lg text-slate-900 flex items-center gap-2">
-              <ShoppingBag size={18} className="text-forest-700" />
-              <span>Recent Orders</span>
+              <Truck size={18} className="text-forest-700" />
+              <span>Orders to Pack & Deliver</span>
             </h2>
-            <Link to="/admin/orders" className="text-xs font-bold text-forest-700 hover:underline">
-              Manage Orders →
-            </Link>
+            <p className="text-xs text-slate-500">Click any order to view details or change status</p>
           </div>
+          <Link
+            to="/admin/orders"
+            className="text-xs font-bold text-emerald-700 hover:text-emerald-900 flex items-center gap-1"
+          >
+            <span>See All Orders</span>
+            <ArrowRight size={14} />
+          </Link>
+        </div>
 
-          <div className="space-y-3">
-            {metrics?.recentOrders && metrics.recentOrders.length > 0 ? (
-              metrics.recentOrders.slice(0, 4).map((order: any) => (
+        <div className="space-y-3">
+          {metrics?.recentOrders && metrics.recentOrders.length > 0 ? (
+            metrics.recentOrders.slice(0, 6).map((order: any) => {
+              const statusColors: Record<string, string> = {
+                PENDING: 'bg-amber-100 text-amber-800 border-amber-200',
+                CONFIRMED: 'bg-blue-100 text-blue-800 border-blue-200',
+                PROCESSING: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+                OUT_FOR_DELIVERY: 'bg-purple-100 text-purple-800 border-purple-200',
+                DELIVERED: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                CANCELLED: 'bg-rose-100 text-rose-800 border-rose-200',
+              };
+
+              return (
                 <Link
                   key={order.id}
                   to={`/admin/orders/${order.id}`}
-                  className="block p-3.5 bg-sand-50/70 hover:bg-sand-100/70 rounded-2xl border border-slate-200/80 transition-all text-xs"
+                  className="p-3.5 sm:p-4 rounded-xl border border-slate-200 hover:border-forest-700 hover:bg-forest-50/30 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 group block"
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono font-bold text-slate-900">{order.orderNumber}</span>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        order.orderStatus === 'DELIVERED'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : order.orderStatus === 'PENDING'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-sky-100 text-sky-800'
-                      }`}
-                    >
-                      {order.orderStatus}
-                    </span>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-slate-900 text-sm">
+                        Order #{order.orderNumber || order.id.slice(-6)}
+                      </span>
+                      <span
+                        className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${
+                          statusColors[order.status] || 'bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        {order.status.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3 text-xs text-slate-600 flex-wrap">
+                      <span className="font-medium text-slate-800">
+                        👤 {order.user?.fullName || order.recipientName || 'Customer'}
+                      </span>
+                      {(order.user?.phone || order.recipientPhone) && (
+                        <span className="flex items-center gap-1 text-slate-500 font-mono">
+                          <Phone size={12} />
+                          {order.user?.phone || order.recipientPhone}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between text-slate-500 mt-2 text-[11px]">
-                    <span>{order.customerName} ({order.deliveryCity})</span>
-                    <span className="font-bold text-slate-900">रू {Number(order.totalAmount).toLocaleString()}</span>
+
+                  <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                    <div className="text-left sm:text-right">
+                      <span className="font-serif font-bold text-base text-slate-900 block">
+                        रू {Number(order.totalAmount || 0).toLocaleString()}
+                      </span>
+                      <span className="text-[11px] text-slate-500">
+                        {order.items?.length || 1} item(s) • COD
+                      </span>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-slate-100 group-hover:bg-forest-800 group-hover:text-white flex items-center justify-center text-slate-500 transition-colors">
+                      <ArrowRight size={14} />
+                    </div>
                   </div>
                 </Link>
-              ))
-            ) : (
-              <p className="text-xs text-slate-400 text-center py-6">No recent orders found</p>
-            )}
-          </div>
-        </div>
-
-        {/* Low Stock Alerts */}
-        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-serif font-bold text-base sm:text-lg text-slate-900 flex items-center gap-2">
-              <AlertTriangle size={18} className="text-amber-500" />
-              <span>Low Stock Alerts</span>
-            </h2>
-            <Link to="/admin/inventory" className="text-xs font-bold text-rose-700 hover:underline">
-              Full Inventory →
-            </Link>
-          </div>
-
-          <div className="space-y-3">
-            {metrics?.lowStockProducts && metrics.lowStockProducts.length > 0 ? (
-              metrics.lowStockProducts.slice(0, 4).map((item, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between p-3.5 bg-rose-50/40 rounded-2xl border border-rose-100 text-xs"
-                >
-                  <div>
-                    <span className="font-bold text-slate-900 block">{item.productName}</span>
-                    <span className="text-[11px] text-slate-500">
-                      {item.variantName} • SKU: {item.sku}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-bold text-rose-600 block">
-                      {item.availableStock} left
-                    </span>
-                    <span className="text-[10px] text-slate-400">Threshold: {item.threshold}</span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="p-6 text-center text-xs text-emerald-700 bg-emerald-50/60 rounded-2xl border border-emerald-100">
-                <CheckCircle2 size={24} className="mx-auto mb-1.5 text-emerald-600" />
-                <span>All botanical pots and variants are adequately stocked.</span>
-              </div>
-            )}
-          </div>
+              );
+            })
+          ) : (
+            <div className="p-8 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+              <Clock size={28} className="mx-auto mb-2 text-slate-300" />
+              <span>No orders received yet</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

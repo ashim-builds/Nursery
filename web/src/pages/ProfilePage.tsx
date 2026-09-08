@@ -3,13 +3,12 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { orderApi } from '../api/order.api';
-import { wishlistApi } from '../api/wishlist.api';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
+import { formatOrderAmount, isGenericVariantName } from '../utils/orderDisplay';
 import {
   User,
   Package,
-  Heart,
   Phone,
   Mail,
   LogOut,
@@ -32,20 +31,6 @@ export const ProfilePage: React.FC = () => {
     queryKey: ['my-orders'],
     queryFn: () => orderApi.getMyOrders(1),
     enabled: isAuthenticated,
-  });
-
-  const { data: wishlistData, isLoading: wishlistLoading } = useQuery({
-    queryKey: ['my-wishlist'],
-    queryFn: () => wishlistApi.getWishlist(),
-    enabled: isAuthenticated,
-  });
-
-  const removeWishlistMutation = useMutation({
-    mutationFn: (productId: string) => wishlistApi.removeFromWishlist(productId),
-    onSuccess: () => {
-      showToast('Removed from wishlist', 'info');
-      queryClient.invalidateQueries({ queryKey: ['my-wishlist'] });
-    },
   });
 
   if (!isAuthenticated || !user) {
@@ -115,18 +100,6 @@ export const ProfilePage: React.FC = () => {
           <Package size={16} />
           <span>Orders ({ordersData?.orders.length || 0})</span>
         </button>
-
-        <button
-          onClick={() => setSearchParams({ tab: 'wishlist' })}
-          className={`flex items-center gap-2 py-3 px-4 font-bold text-xs sm:text-sm border-b-2 min-h-[44px] transition-colors whitespace-nowrap ${
-            currentTab === 'wishlist'
-              ? 'border-forest-800 text-forest-900'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Heart size={16} className="text-terracotta-500" />
-          <span>Wishlist ({wishlistData?.items.length || 0})</span>
-        </button>
       </div>
 
       {/* 3. Orders Tab Content */}
@@ -172,7 +145,7 @@ export const ProfilePage: React.FC = () => {
                         {order.orderStatus.toLowerCase().replace(/_/g, ' ')}
                       </span>
                       <span className="font-bold text-slate-900 text-sm">
-                        रू {Number(order.totalAmount).toLocaleString()}
+                        रू {formatOrderAmount(order.totalAmount)}
                       </span>
                     </div>
                   </div>
@@ -182,10 +155,10 @@ export const ProfilePage: React.FC = () => {
                     {order.items?.map((item: any) => (
                       <div key={item.id} className="flex items-center justify-between text-xs text-slate-700">
                         <span className="font-medium truncate max-w-xs">
-                          {item.productName || item.productTitle} ({item.variantName}) × {item.quantity}
+                          {item.productName || item.productTitle || 'Plant'}{!isGenericVariantName(item.variantName) && ` (${item.variantName})`} × {item.quantity}
                         </span>
                         <span className="font-semibold text-slate-900 shrink-0">
-                          रू {Number(item.lineTotal || item.totalPrice).toLocaleString()}
+                          रू {formatOrderAmount(item.lineTotal ?? item.totalPrice)}
                         </span>
                       </div>
                     ))}
@@ -198,74 +171,6 @@ export const ProfilePage: React.FC = () => {
                     >
                       View Receipt & Tracking →
                     </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 4. Wishlist Tab Content */}
-      {currentTab === 'wishlist' && (
-        <div className="space-y-4">
-          {wishlistLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-48 bg-slate-100 rounded-2xl animate-pulse" />
-              ))}
-            </div>
-          ) : wishlistData?.items.length === 0 ? (
-            <div className="p-8 bg-white rounded-3xl border border-slate-200 text-center space-y-3 shadow-soft">
-              <div className="w-12 h-12 rounded-full bg-forest-50 text-terracotta-500 flex items-center justify-center mx-auto">
-                <Heart size={24} />
-              </div>
-              <h3 className="font-semibold text-sm text-slate-800">Your wishlist is empty</h3>
-              <p className="text-xs text-slate-500">Tap the heart icon on any botanical specimen to save it for later!</p>
-              <Link
-                to="/catalog"
-                className="inline-flex items-center bg-forest-800 text-white text-xs font-semibold px-5 py-2.5 rounded-xl min-h-[44px]"
-              >
-                Browse Catalog
-              </Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
-              {wishlistData?.items.map((item) => (
-                <div
-                  key={item.wishlistItemId}
-                  className="bg-white rounded-2xl border border-forest-100 overflow-hidden shadow-soft flex flex-col justify-between"
-                >
-                  <Link to={`/products/${item.slug}`} className="block relative aspect-square bg-forest-50/50">
-                    <img
-                      src={item.imageUrl || 'https://images.unsplash.com/photo-1545241047-6083a3684587?auto=format&fit=crop&w=600&q=80'}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        removeWishlistMutation.mutate(item.productId);
-                      }}
-                      className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/90 text-rose-500 flex items-center justify-center shadow-xs"
-                      title="Remove from wishlist"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </Link>
-
-                  <div className="p-3 space-y-1">
-                    <Link to={`/products/${item.slug}`} className="block font-semibold text-xs text-slate-900 truncate">
-                      {item.name}
-                    </Link>
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="font-bold text-xs text-forest-950">
-                        रू {item.basePrice.toLocaleString()}
-                      </span>
-                      <span className="text-[10px] text-emerald-600 font-bold">
-                        {item.inStock ? 'In Stock' : 'Out of Stock'}
-                      </span>
-                    </div>
                   </div>
                 </div>
               ))}

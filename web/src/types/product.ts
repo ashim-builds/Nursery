@@ -38,6 +38,7 @@ export interface ProductVariant {
   dimensions?: string;
   isDefault: boolean;
   isActive: boolean;
+  stockStatus?: 'IN_STOCK' | 'OUT_OF_STOCK';
 }
 
 export interface Category {
@@ -91,8 +92,11 @@ export interface Product {
   careSummary?: string;
 
   averageRating: number | string;
+  rating?: number;
   reviewCount: number;
+  reviewsCount?: number;
   totalSold: number;
+  stockStatus?: 'IN_STOCK' | 'OUT_OF_STOCK';
 
   categoryId: string;
   category?: Category;

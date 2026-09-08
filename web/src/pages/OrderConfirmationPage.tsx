@@ -3,6 +3,7 @@ import { useLocation, useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { orderApi } from '../api/order.api';
 import { CheckCircle2, Package, MapPin, Calendar, ArrowRight, Sprout, Phone } from 'lucide-react';
+import { formatOrderAmount, isGenericVariantName } from '../utils/orderDisplay';
 
 export const OrderConfirmationPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -115,11 +116,13 @@ export const OrderConfirmationPage: React.FC = () => {
                 className="flex items-center justify-between p-3 bg-sand-50/60 rounded-xl border border-slate-200/60 text-xs"
               >
                 <div>
-                  <h4 className="font-semibold text-slate-900">{item.productTitle}</h4>
-                  <span className="text-[11px] text-forest-700">{item.variantName} × {item.quantity}</span>
+                  <h4 className="font-semibold text-slate-900">{item.productName || item.productTitle || 'Plant'}</h4>
+                  <span className="text-[11px] text-forest-700">
+                    {!isGenericVariantName(item.variantName) && `${item.variantName} `}× {item.quantity}
+                  </span>
                 </div>
                 <span className="font-bold text-slate-900">
-                  रू {Number(item.totalPrice).toLocaleString()}
+                  रू {formatOrderAmount(item.lineTotal ?? item.totalPrice)}
                 </span>
               </div>
             ))}
@@ -130,7 +133,7 @@ export const OrderConfirmationPage: React.FC = () => {
         <div className="pt-3 border-t border-slate-100 flex justify-between items-center text-sm font-bold text-slate-900">
           <span>Total Paid / Due:</span>
           <span className="font-serif text-lg text-forest-900">
-            रू {Number(order.totalAmount).toLocaleString()}
+            रू {formatOrderAmount(order.totalAmount)}
           </span>
         </div>
       </div>

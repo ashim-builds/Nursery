@@ -90,11 +90,11 @@ export class OrderService {
           // Fetch product
           const product = await tx.product.findUnique({
             where: { id: item.productId },
-            select: { id: true, name: true, sku: true, available: true, published: true },
+            select: { id: true, name: true, sku: true, available: true, published: true, stockStatus: true },
           });
 
-          if (!product || !product.available || !product.published) {
-            throw ApiError.badRequest(`Product "${product?.name || item.productId}" is not available for purchase`);
+          if (!product || !product.available || !product.published || product.stockStatus === 'OUT_OF_STOCK') {
+            throw ApiError.badRequest(`Product "${product?.name || item.productId}" is currently Out of Stock`);
           }
 
           // Fetch variant and its inventory
@@ -103,8 +103,8 @@ export class OrderService {
             include: { inventory: true },
           });
 
-          if (!variant || !variant.isAvailable || variant.productId !== item.productId) {
-            throw ApiError.badRequest(`Selected variant for "${product.name}" is no longer available`);
+          if (!variant || !variant.isAvailable || variant.stockStatus === 'OUT_OF_STOCK' || variant.productId !== item.productId) {
+            throw ApiError.badRequest(`Selected option for "${product.name}" is currently Out of Stock`);
           }
 
           // Ensure inventory record exists

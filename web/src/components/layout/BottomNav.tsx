@@ -1,23 +1,29 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { Home, Grid, Heart, Package, User } from 'lucide-react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { Home, Grid, Package, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export const BottomNav: React.FC = () => {
   const { isAuthenticated } = useAuth();
+  const location = useLocation();
+
+  // Hide general bottom nav on product detail pages so product's dedicated sticky bar fits cleanly without double-stacking
+  if (location.pathname.startsWith('/product/') || location.pathname.startsWith('/products/')) {
+    return null;
+  }
 
   return (
     <nav
       aria-label="Mobile Bottom Navigation"
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-forest-100 shadow-mobile-bar safe-bottom"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/98 backdrop-blur-xl border-t border-slate-200 shadow-2xl safe-bottom"
     >
-      <div className="grid grid-cols-5 h-16 items-center max-w-md mx-auto px-1">
+      <div className="grid grid-cols-4 h-14 items-center max-w-md mx-auto px-2">
         {/* 1. Home */}
         <NavLink
           to="/"
           className={({ isActive }) =>
-            `flex flex-col items-center justify-center gap-1 py-1 h-full min-h-[48px] touch-target transition-all ${
-              isActive ? 'text-forest-800 font-bold scale-105' : 'text-slate-600 hover:text-forest-700'
+            `flex flex-col items-center justify-center gap-0.5 py-1 h-full touch-target transition-all ${
+              isActive ? 'text-forest-800 font-bold scale-105' : 'text-slate-500 hover:text-forest-700'
             }`
           }
         >
@@ -29,8 +35,8 @@ export const BottomNav: React.FC = () => {
         <NavLink
           to="/catalog"
           className={({ isActive }) =>
-            `flex flex-col items-center justify-center gap-1 py-1 h-full min-h-[48px] touch-target transition-all ${
-              isActive ? 'text-forest-800 font-bold scale-105' : 'text-slate-600 hover:text-forest-700'
+            `flex flex-col items-center justify-center gap-0.5 py-1 h-full touch-target transition-all ${
+              isActive ? 'text-forest-800 font-bold scale-105' : 'text-slate-500 hover:text-forest-700'
             }`
           }
         >
@@ -38,25 +44,12 @@ export const BottomNav: React.FC = () => {
           <span className="text-[10px] tracking-tight">Catalog</span>
         </NavLink>
 
-        {/* 3. Wishlist */}
+        {/* 3. Orders */}
         <NavLink
-          to={isAuthenticated ? '/profile?tab=wishlist' : '/login?redirect=/profile?tab=wishlist'}
+          to={isAuthenticated ? '/orders' : '/login?redirect=/orders'}
           className={({ isActive }) =>
-            `flex flex-col items-center justify-center gap-1 py-1 h-full min-h-[48px] touch-target transition-all ${
-              isActive ? 'text-forest-800 font-bold scale-105' : 'text-slate-600 hover:text-forest-700'
-            }`
-          }
-        >
-          <Heart size={20} className="text-terracotta-500" />
-          <span className="text-[10px] tracking-tight">Wishlist</span>
-        </NavLink>
-
-        {/* 4. Orders */}
-        <NavLink
-          to={isAuthenticated ? '/profile?tab=orders' : '/login?redirect=/profile?tab=orders'}
-          className={({ isActive }) =>
-            `flex flex-col items-center justify-center gap-1 py-1 h-full min-h-[48px] touch-target transition-all ${
-              isActive ? 'text-forest-800 font-bold scale-105' : 'text-slate-600 hover:text-forest-700'
+            `flex flex-col items-center justify-center gap-0.5 py-1 h-full touch-target transition-all ${
+              isActive ? 'text-forest-800 font-bold scale-105' : 'text-slate-500 hover:text-forest-700'
             }`
           }
         >
@@ -64,12 +57,12 @@ export const BottomNav: React.FC = () => {
           <span className="text-[10px] tracking-tight">Orders</span>
         </NavLink>
 
-        {/* 5. Account / Profile */}
+        {/* 4. Account / Profile */}
         <NavLink
           to={isAuthenticated ? '/profile' : '/login'}
           className={({ isActive }) =>
-            `flex flex-col items-center justify-center gap-1 py-1 h-full min-h-[48px] touch-target transition-all ${
-              isActive ? 'text-forest-800 font-bold scale-105' : 'text-slate-600 hover:text-forest-700'
+            `flex flex-col items-center justify-center gap-0.5 py-1 h-full touch-target transition-all ${
+              isActive ? 'text-forest-800 font-bold scale-105' : 'text-slate-500 hover:text-forest-700'
             }`
           }
         >

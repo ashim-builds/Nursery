@@ -11,6 +11,8 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-nursery_secure_pass_2026}
     volumes:
       - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
     networks:
       - nursery_internal
     healthcheck:
@@ -35,12 +37,19 @@ services:
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-secret_jwt_ktmbotanica_refresh_token_key_2026}
       JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-30d}
-      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-demo_nursery_cloud}
-      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-123456789012345}
-      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-your_cloudinary_api_secret}
+      COOKIE_SECRET: ${COOKIE_SECRET:-secret_cookie_ktmbotanica_2026}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:5000}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+      UPLOAD_DIR: /app/uploads
+      UPLOAD_BASE_URL: /uploads
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-http://localhost/api/auth/google/callback}
       ESEWA_PRODUCT_CODE: ${ESEWA_PRODUCT_CODE:-EPAYTEST}
       ESEWA_SECRET_KEY: ${ESEWA_SECRET_KEY:-8gBm/:&EnhH.1/q}
+    volumes:
+      - ./uploads:/app/uploads
     depends_on:
       mysql:
         condition: service_healthy

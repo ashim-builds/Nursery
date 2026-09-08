@@ -30,8 +30,7 @@ export class ProductService {
     const skip = (page - 1) * limit;
 
     const where: Prisma.ProductWhereInput = {
-      published: true,
-      available: true,
+          published: true,
     };
 
     const searchTerm = query.search || query.q;
@@ -259,8 +258,8 @@ export class ProductService {
 
   static async getBySlug(slug: string) {
     const product = await prisma.product.findUnique({
-      where: { slug },
-      select: {
+          where: { slug, published: true },
+          select: {
         id: true,
         name: true,
         slug: true,
@@ -430,22 +429,53 @@ export class ProductService {
 
   // Admin Methods
   static async createProduct(data: any, userId?: string) {
-    const slug = (data.name || data.title)
+    const name = data.name || data.title || 'Botanical Plant';
+    const slug = name
       .toLowerCase()
       .replace(/[^\w\s-]/g, '')
       .replace(/[\s_-]+/g, '-') + '-' + Date.now().toString().slice(-4);
 
+    let categoryId = data.categoryId;
+    if (!categoryId) {
+      const existingCategory = await prisma.category.findFirst();
+      if (existingCategory) {
+        categoryId = existingCategory.id;
+      } else {
+        const newCat = await prisma.category.create({
+          data: {
+            name: 'Plants & Flora',
+            slug: 'plants',
+            description: 'Nursery plants and foliage',
+          },
+        });
+        categoryId = newCat.id;
+      }
+    }
+
+    const sku = data.sku || ('PLT-' + Date.now().toString().slice(-6));
+    const rawVariants = (data.variants && data.variants.length > 0)
+      ? data.variants
+      : [
+          {
+            name: 'Standard Plant Pot',
+            sku: sku,
+            price: Number(data.basePrice),
+            stock: data.available !== false ? 100 : 0,
+            isAvailable: data.available !== false,
+          },
+        ];
+
     const product = await prisma.product.create({
       data: {
-        name: data.name || data.title,
+        name,
         slug,
-        sku: data.sku,
-        shortDescription: data.shortDescription,
-        description: data.description || data.fullDescription,
-        categoryId: data.categoryId,
-        basePrice: data.basePrice,
-        compareAtPrice: data.compareAtPrice,
-        costPrice: data.costPrice,
+        sku,
+        shortDescription: data.shortDescription || name,
+        description: data.description || data.fullDescription || `${name} - Fresh and healthy nursery plant from Kathmandu nursery.`,
+        categoryId,
+        basePrice: Number(data.basePrice),
+        compareAtPrice: data.compareAtPrice ? Number(data.compareAtPrice) : null,
+        costPrice: data.costPrice ? Number(data.costPrice) : null,
         available: data.available !== undefined ? data.available : true,
         featured: data.featured || false,
         published: data.published !== undefined ? data.published : true,
@@ -461,7 +491,7 @@ export class ProductService {
           ? {
               create: data.images.map((img: any, i: number) => ({
                 url: img.url,
-                altText: img.altText || data.name,
+                altText: img.altText || name,
                 isPrimary: img.isPrimary || i === 0,
                 sortOrder: img.sortOrder || i + 1,
               })),
@@ -475,26 +505,24 @@ export class ProductService {
               })),
             }
           : undefined,
-        variants: data.variants?.length
-          ? {
-              create: data.variants.map((v: any, i: number) => ({
-                name: v.name,
-                sku: v.sku,
-                price: v.price || Number(data.basePrice),
-                stock: v.stock || 0,
-                weight: v.weight,
-                isAvailable: v.isAvailable !== undefined ? v.isAvailable : true,
-                sortOrder: v.sortOrder || i + 1,
-                inventory: {
-                  create: {
-                    stockQuantity: v.stock || 0,
-                    reservedQuantity: 0,
-                    availableQuantity: v.stock || 0,
-                  },
-                },
-              })),
-            }
-          : undefined,
+        variants: {
+          create: rawVariants.map((v: any, i: number) => ({
+            name: v.name || 'Standard Pot',
+            sku: v.sku || `${sku}-${i + 1}`,
+            price: v.price ? Number(v.price) : Number(data.basePrice),
+            stock: v.stockStatus === 'OUT_OF_STOCK' ? 0 : (v.stock !== undefined ? v.stock : 100),
+            weight: v.weight,
+            isAvailable: v.stockStatus === 'OUT_OF_STOCK' ? false : (v.isAvailable !== undefined ? v.isAvailable : true),
+            sortOrder: v.sortOrder || i + 1,
+            inventory: {
+              create: {
+                stockQuantity: v.stockStatus === 'OUT_OF_STOCK' ? 0 : (v.stock !== undefined ? v.stock : 100),
+                reservedQuantity: 0,
+                availableQuantity: v.stockStatus === 'OUT_OF_STOCK' ? 0 : (v.stock !== undefined ? v.stock : 100),
+              },
+            },
+          })),
+        },
       },
       include: {
         images: true,

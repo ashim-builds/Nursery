@@ -148,6 +148,7 @@ export const ProductDetailPage: React.FC = () => {
   const discountPriceNum = product.discountPrice ? Number(product.discountPrice) : null;
   const currentPrice = (discountPriceNum !== null ? discountPriceNum : basePriceNum) + Number(selectedVariant?.priceAdjustment || 0);
   const totalItemPrice = currentPrice * quantity;
+  const isProductOutOfStock = product.isAvailable === false || product.stockStatus === 'OUT_OF_STOCK';
 
   // Images fallback
   const images = Array.isArray(product.images) && product.images.length > 0
@@ -155,7 +156,7 @@ export const ProductDetailPage: React.FC = () => {
     : [{ url: 'https://images.unsplash.com/photo-1545241047-6083a3684587?auto=format&fit=crop&w=800&q=80', isPrimary: true }];
 
   const handleAddToCart = () => {
-    if (!selectedVariant) return;
+    if (!selectedVariant || isProductOutOfStock || selectedVariant.stockQuantity <= 0) return;
     addToCart(product, selectedVariant, quantity);
     showToast(`Added ${quantity}x "${product.title}" to cart!`, 'success');
     openCartDrawer();
@@ -274,25 +275,6 @@ export const ProductDetailPage: React.FC = () => {
                 ))}
               </div>
             )}
-
-            {/* Trust Badges */}
-            <div className="hidden sm:grid grid-cols-3 gap-2.5 pt-3 border-t border-slate-100 text-center">
-              <div className="bg-sand-50 p-2.5 rounded-xl border border-slate-200/60">
-                <Truck size={18} className="mx-auto text-forest-700 mb-1" />
-                <span className="text-[11px] font-bold text-slate-800 block">Valley Delivery</span>
-                <span className="text-[10px] text-slate-500">Same-day available</span>
-              </div>
-              <div className="bg-sand-50 p-2.5 rounded-xl border border-slate-200/60">
-                <ShieldCheck size={18} className="mx-auto text-emerald-600 mb-1" />
-                <span className="text-[11px] font-bold text-slate-800 block">Healthy Arrival</span>
-                <span className="text-[10px] text-slate-500">7-day guarantee</span>
-              </div>
-              <div className="bg-sand-50 p-2.5 rounded-xl border border-slate-200/60">
-                <HeartHandshake size={18} className="mx-auto text-terracotta-600 mb-1" />
-                <span className="text-[11px] font-bold text-slate-800 block">Free Care Advice</span>
-                <span className="text-[10px] text-slate-500">Doctor on call</span>
-              </div>
-            </div>
           </div>
 
           {/* Right Column: Product Info & Actions */}
@@ -305,9 +287,6 @@ export const ProductDetailPage: React.FC = () => {
                     {product.category.name}
                   </span>
                 )}
-                <a href="#reviews-section" className="hover:opacity-80 transition-opacity">
-                  <RatingStars rating={numAvg} reviewCount={reviewStats.reviewCount} size={14} />
-                </a>
               </div>
 
               <h1 className="font-serif font-bold text-2xl sm:text-3xl text-slate-900 tracking-tight leading-tight">
@@ -376,16 +355,25 @@ export const ProductDetailPage: React.FC = () => {
               {/* Add to Cart Button */}
               <button
                 onClick={handleAddToCart}
-                disabled={!selectedVariant || selectedVariant.stockQuantity <= 0}
+                disabled={isProductOutOfStock || !selectedVariant || selectedVariant.stockQuantity <= 0}
                 className="flex-1 bg-forest-800 hover:bg-forest-900 active:scale-[0.99] text-white font-bold text-xs uppercase tracking-wider py-3.5 px-6 rounded-xl shadow flex items-center justify-center gap-2 transition-all disabled:opacity-50"
               >
                 <ShoppingBag size={16} />
                 <span>
-                  {!selectedVariant || selectedVariant.stockQuantity <= 0
+                  {isProductOutOfStock || !selectedVariant || selectedVariant.stockQuantity <= 0
                     ? 'Currently Out of Stock'
                     : `Add to Cart • रू ${totalItemPrice.toLocaleString()}`}
                 </span>
               </button>
+            </div>
+            
+                {/* Trust Badges */}
+            <div className="hidden sm:grid grid-cols-3 gap-2.5 pt-3 border-t border-slate-100 text-center">
+              <div className="bg-sand-50 p-2.5 rounded-xl border border-slate-200/60">
+                <Truck size={18} className="mx-auto text-forest-700 mb-1" />
+                <span className="text-[11px] font-bold text-slate-800 block">Valley Delivery</span>
+                <span className="text-[10px] text-slate-500">Same-day available</span>
+              </div>
             </div>
 
             {/* Full Botanical Care Guide Snippet */}
@@ -396,12 +384,6 @@ export const ProductDetailPage: React.FC = () => {
                     <span>🌿 Species Care Blueprint:</span>
                     <span className="text-emerald-700">{product.careGuide.title}</span>
                   </span>
-                  <Link
-                    to={`/plant-doctor`}
-                    className="text-xs font-bold text-forest-700 hover:underline"
-                  >
-                    Full Clinic →
-                  </Link>
                 </div>
                 {product.careGuide.summary && (
                   <p className="text-xs text-slate-600 leading-relaxed">{product.careGuide.summary}</p>
@@ -412,7 +394,7 @@ export const ProductDetailPage: React.FC = () => {
             {/* ======================================================== */}
             {/* CUSTOMER REVIEWS & RATINGS SECTION                       */}
             {/* ======================================================== */}
-            <div id="reviews-section" className="space-y-5 pt-6 border-t border-slate-200">
+            {false && <div id="reviews-section" className="space-y-5 pt-6 border-t border-slate-200">
               {/* Header */}
               <div className="flex items-center justify-between">
                 <h3 className="font-serif font-bold text-lg text-slate-900 flex items-center gap-2">
@@ -694,7 +676,7 @@ export const ProductDetailPage: React.FC = () => {
                   ))
                 )}
               </div>
-            </div>
+            </div>}
           </div>
         </div>
       </div>
@@ -721,11 +703,11 @@ export const ProductDetailPage: React.FC = () => {
         </div>
       )}
 
-      {/* Mobile-First Sticky Action Bar (Fixed above BottomNav on phones) */}
-      <div className="sm:hidden fixed bottom-16 left-0 right-0 z-30 bg-white/98 backdrop-blur-xl border-t border-slate-200 p-3 shadow-mobile-bar flex items-center justify-between gap-3">
+      {/* Mobile-First Sticky Action Bar (Cleanly anchored at bottom of screen on phones) */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-forest-900/98 backdrop-blur-xl border-t border-forest-700 px-4 py-3 shadow-2xl flex items-center justify-between gap-3 safe-bottom">
         <div>
-          <span className="text-[10px] text-slate-500 block">Total</span>
-          <span className="font-serif font-bold text-base text-forest-950">
+          <span className="text-[10px] text-emerald-200 block uppercase font-bold">Total</span>
+          <span className="font-serif font-bold text-base text-white font-mono">
             रू {totalItemPrice.toLocaleString()}
           </span>
         </div>
@@ -752,7 +734,7 @@ export const ProductDetailPage: React.FC = () => {
 
           <button
             onClick={handleAddToCart}
-            disabled={!selectedVariant || selectedVariant.stockQuantity <= 0}
+            disabled={isProductOutOfStock || !selectedVariant || selectedVariant.stockQuantity <= 0}
             className="bg-forest-800 hover:bg-forest-900 active:scale-95 text-white font-bold text-xs py-3 px-4 rounded-xl shadow flex items-center gap-1.5 transition-all min-h-[44px]"
           >
             <ShoppingBag size={15} />

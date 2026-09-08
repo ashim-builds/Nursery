@@ -22,7 +22,7 @@ export const AdminProductsPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [page, setPage] = useState(1);
-  const { showToast } = useUI();
+  const { showToast, confirmAction } = useUI();
   const queryClient = useQueryClient();
 
   const { data: productsData, isLoading, refetch } = useQuery({
@@ -53,8 +53,21 @@ export const AdminProductsPage: React.FC = () => {
     },
   });
 
-  const handleDelete = (id: string, title: string) => {
-    if (window.confirm(`Are you sure you want to remove/archive "${title}"?`)) {
+  const availabilityMutation = useMutation({
+    mutationFn: ({ id, available }: { id: string; available: boolean }) =>
+      adminApi.updateProduct(id, { available }),
+    onSuccess: (_, variables) => {
+      showToast(variables.available ? 'Product marked In Stock' : 'Product marked Out of Stock', 'success');
+      queryClient.invalidateQueries({ queryKey: ['admin-products-list'] });
+      queryClient.invalidateQueries({ queryKey: ['latest-products'] });
+    },
+    onError: (err: any) => {
+      showToast(err.response?.data?.message || 'Failed to update product availability', 'error');
+    },
+  });
+
+  const handleDelete = async (id: string, title: string) => {
+    if (await confirmAction(`Are you sure you want to remove/archive "${title}"?`, { title: 'Archive product', confirmLabel: 'Archive' })) {
       deleteMutation.mutate(id);
     }
   };
@@ -162,16 +175,12 @@ export const AdminProductsPage: React.FC = () => {
                 <th className="py-3.5 px-4">Plant & Botanical Name</th>
                 <th className="py-3.5 px-4">Category</th>
                 <th className="py-3.5 px-4">Price</th>
-                <th className="py-3.5 px-4">Variants / Pots</th>
-                <th className="py-3.5 px-4">Total Stock</th>
+                <th className="py-3.5 px-4">Availability</th>
                 <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
               {productsData.products.map((p: any) => {
-                const totalStock = p.variants?.reduce((sum: number, v: any) => sum + (v.stockQuantity || 0), 0) ?? 0;
-                const isLowStock = p.variants?.some((v: any) => (v.stockQuantity || 0) <= (v.lowStockThreshold || 5));
-
                 return (
                   <tr key={p.id} className="hover:bg-sand-50/40 transition-colors">
                     <td className="py-3.5 px-4">
@@ -202,20 +211,15 @@ export const AdminProductsPage: React.FC = () => {
                     </td>
 
                     <td className="py-3.5 px-4">
-                      <span className="font-semibold text-slate-700">
-                        {p.variants?.length || 0} pot option(s)
-                      </span>
-                    </td>
-
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold font-mono text-slate-900">{totalStock} units</span>
-                        {isLowStock && (
-                          <span className="text-[10px] bg-rose-100 text-rose-800 font-bold px-1.5 py-0.5 rounded">
-                            Low
-                          </span>
-                        )}
-                      </div>
+                      <button
+                        onClick={() => availabilityMutation.mutate({ id: p.id, available: !p.isAvailable })}
+                        disabled={availabilityMutation.isPending}
+                        className={`rounded-xl px-3 py-1.5 text-[11px] font-bold transition-colors disabled:opacity-50 ${
+                          p.isAvailable ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-rose-100 text-rose-800 hover:bg-rose-200'
+                        }`}
+                      >
+                        {p.isAvailable ? 'In Stock' : 'Out of Stock'}
+                      </button>
                     </td>
 
                     <td className="py-3.5 px-4 text-right space-x-2">
@@ -254,9 +258,6 @@ export const AdminProductsPage: React.FC = () => {
       {!isLoading && productsData?.products && productsData.products.length > 0 && (
         <div className="md:hidden space-y-3">
           {productsData.products.map((p: any) => {
-            const totalStock = p.variants?.reduce((sum: number, v: any) => sum + (v.stockQuantity || 0), 0) ?? 0;
-            const isLowStock = p.variants?.some((v: any) => (v.stockQuantity || 0) <= (v.lowStockThreshold || 5));
-
             return (
               <div
                 key={p.id}
@@ -284,14 +285,15 @@ export const AdminProductsPage: React.FC = () => {
                     <span className="text-slate-400 block text-[10px]">Price</span>
                     <span className="font-bold text-slate-900 font-mono">रू {Number(p.basePrice).toLocaleString()}</span>
                   </div>
-                  <div>
-                    <span className="text-slate-400 block text-[10px]">Total Stock</span>
-                    <span className="font-bold text-slate-900 font-mono">{totalStock} units</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-[10px]">Pots / Variants</span>
-                    <span className="font-bold text-slate-900">{p.variants?.length || 0}</span>
-                  </div>
+                  <button
+                    onClick={() => availabilityMutation.mutate({ id: p.id, available: !p.isAvailable })}
+                    disabled={availabilityMutation.isPending}
+                    className={`rounded-xl px-3 py-2 text-[11px] font-bold transition-colors disabled:opacity-50 ${
+                      p.isAvailable ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                    }`}
+                  >
+                    {p.isAvailable ? 'In Stock' : 'Out of Stock'}
+                  </button>
                 </div>
 
                 <div className="flex items-center justify-between pt-1">

@@ -3,13 +3,26 @@ import { z } from 'zod';
 export const createOrderSchema = z.object({
   body: z.object({
     idempotencyKey: z.string().optional(),
-    customerName: z.string().min(2, 'Customer name is required'),
-    customerEmail: z.string().email('Valid email required'),
-    customerPhone: z.string().min(7, 'Valid phone number required'),
+    customerName: z
+      .string()
+      .min(2, 'Customer name must be at least 2 characters')
+      .max(70, 'Customer name must not exceed 70 characters')
+      .regex(/^[a-zA-Z\s\.\'-]+$/, 'Customer name cannot contain numbers or special symbols'),
+    customerEmail: z
+      .string()
+      .email('Please provide a valid email address')
+      .transform((val) => val.toLowerCase().trim()),
+    customerPhone: z
+      .string()
+      .regex(/^[9][0-9]{9}$/, 'Phone number must be exactly 10 digits and start with 9'),
     deliveryAddress: z.string().min(5, 'Delivery address is required'),
+    deliveryProvince: z.string().optional(),
+    deliveryDistrict: z.string().optional(),
     deliveryCity: z.string().default('Kathmandu'),
     deliveryArea: z.string().optional(),
     deliveryPostalCode: z.string().optional(),
+    deliveryLatitude: z.number().optional(),
+    deliveryLongitude: z.number().optional(),
     deliveryZoneCode: z.string().optional(),
     deliveryZoneId: z.string().uuid().optional(),
     couponCode: z.string().trim().optional(),

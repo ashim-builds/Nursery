@@ -54,7 +54,7 @@ export function registerProductTests() {
         ],
         images: [
           {
-            url: 'https://res.cloudinary.com/ktmbotanica/image/upload/v1/jasmine.jpg',
+            url: '/hero-plant.jpg',
             altText: 'Kathmandu Jasmine Star Bloom in nursery pot',
             isPrimary: true,
           },

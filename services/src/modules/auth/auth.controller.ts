@@ -18,6 +18,13 @@ export class AuthController {
     res.status(200).json(ApiResponse.success(result, 'Logged in successfully'));
   });
 
+  static adminPasswordLogin = asyncHandler(async (req: Request, res: Response) => {
+    const { password } = req.body;
+    const ipAddress = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress;
+    const result = await AuthService.adminPasswordLogin(password, ipAddress);
+    res.status(200).json(ApiResponse.success(result, 'Admin authenticated successfully'));
+  });
+
   static logout = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const refreshToken = req.body?.refreshToken || (req.headers['x-refresh-token'] as string);
     const userId = req.user?.id;

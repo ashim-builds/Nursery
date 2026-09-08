@@ -1,117 +1,82 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sprout, Phone, Mail, MapPin, ShieldCheck, Truck, RefreshCw } from 'lucide-react';
+import { ArrowUpRight, Heart, Mail, MapPin, Phone, ShieldCheck, Sprout, Truck } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 
 export const Footer: React.FC = () => {
+  const { data: siteSettings } = useQuery({
+    queryKey: ['site-settings'],
+    queryFn: async () => {
+      const res = await axios.get('/api/site-settings');
+      return res.data?.data;
+    },
+  });
+
+  const businessName = siteSettings?.businessName || 'KtmBotanica';
+
   return (
-    <footer className="bg-forest-950 text-forest-100 pt-12 pb-24 lg:pb-12 mt-16 border-t border-forest-900">
-      {/* Service Highlights */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10 pb-10 border-b border-forest-900/80">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center sm:text-left">
-          <div className="flex items-center gap-3.5 justify-center sm:justify-start">
-            <div className="w-10 h-10 rounded-xl bg-forest-900 flex items-center justify-center text-emerald-400 shrink-0">
-              <Truck size={20} />
+    <footer className="bg-forest-950 text-forest-100 pt-14 pb-24 lg:pb-10 mt-16 border-t-4 border-accent">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_2fr] gap-12 pb-12">
+          <div className="max-w-sm">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-11 h-11 rounded-2xl bg-accent text-white flex items-center justify-center shadow-lg shadow-black/10">
+                <Sprout size={22} />
+              </div>
+              <div>
+                <span className="block font-serif font-bold text-2xl text-white leading-none">{businessName}</span>
+                <span className="text-[10px] uppercase tracking-[0.2em] text-emerald-300">Grow beautifully</span>
+              </div>
             </div>
-            <div>
-              <h4 className="font-semibold text-white text-sm">Kathmandu Valley Delivery</h4>
-              <p className="text-xs text-forest-300">Free delivery on plant orders above Rs. 2000</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3.5 justify-center sm:justify-start">
-            <div className="w-10 h-10 rounded-xl bg-forest-900 flex items-center justify-center text-emerald-400 shrink-0">
-              <ShieldCheck size={20} />
-            </div>
-            <div>
-              <h4 className="font-semibold text-white text-sm">7-Day Plant Health Guarantee</h4>
-              <p className="text-xs text-forest-300">Free replacement if your plant arrives unhealthy</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3.5 justify-center sm:justify-start">
-            <div className="w-10 h-10 rounded-xl bg-forest-900 flex items-center justify-center text-emerald-400 shrink-0">
-              <RefreshCw size={20} />
-            </div>
-            <div>
-              <h4 className="font-semibold text-white text-sm">Free Plant Doctor Support</h4>
-              <p className="text-xs text-forest-300">WhatsApp our botanists anytime for care tips</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Footer Links */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
-        {/* Brand Info */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-forest-800 flex items-center justify-center text-emerald-400">
-              <Sprout size={18} />
-            </div>
-            <span className="font-serif font-bold text-xl text-white">KtmBotanica</span>
-          </div>
-          <p className="text-xs text-forest-300 leading-relaxed">
-            Kathmandu Valley's premier boutique nursery, connecting plant lovers with locally-grown indoor foliage, festive blooms, fresh bouquets, and handcrafted terracotta pottery.
-          </p>
-          <div className="pt-2 flex flex-col gap-2 text-xs text-forest-300">
-            <div className="flex items-center gap-2">
-              <MapPin size={14} className="text-emerald-400 shrink-0" />
-              <span>Jhamsikhel & Sanepa, Lalitpur, Nepal</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Phone size={14} className="text-emerald-400 shrink-0" />
-              <span>+977 9841-BOTANICA (268264)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Mail size={14} className="text-emerald-400 shrink-0" />
-              <span>support@ktmbotanica.com</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Links */}
-        <div>
-          <h4 className="font-serif text-white font-semibold mb-3 text-sm">Botanical Collections</h4>
-          <ul className="space-y-2 text-xs text-forest-300">
-            <li><Link to="/catalog?category=indoor-plants" className="hover:text-white transition-colors">Indoor Foliage</Link></li>
-            <li><Link to="/catalog?category=flowering-plants" className="hover:text-white transition-colors">Sayapatri & Festive Flowers</Link></li>
-            <li><Link to="/catalog?category=flower-bouquets" className="hover:text-white transition-colors">Rose & Gift Bouquets</Link></li>
-            <li><Link to="/catalog?category=succulents-cacti" className="hover:text-white transition-colors">Lucky Jade & Succulents</Link></li>
-            <li><Link to="/catalog?category=pots-planters" className="hover:text-white transition-colors">Bhaktapur Clay Planters</Link></li>
-            <li><Link to="/catalog?category=soil-fertilizers" className="hover:text-white transition-colors">Himalayan Vermicompost</Link></li>
-          </ul>
-        </div>
-
-        {/* Customer Care */}
-        <div>
-          <h4 className="font-serif text-white font-semibold mb-3 text-sm">Customer Care</h4>
-          <ul className="space-y-2 text-xs text-forest-300">
-            <li><Link to="/plant-doctor" className="hover:text-white transition-colors">Plant Care Guides & Doctor</Link></li>
-            <li><Link to="/catalog?petFriendly=true" className="hover:text-white transition-colors">Pet-Friendly Plants</Link></li>
-            <li><Link to="/catalog?sunlight=LOW_LIGHT" className="hover:text-white transition-colors">Low-Light Apartment Plants</Link></li>
-            <li><Link to="/profile" className="hover:text-white transition-colors">Order Tracking</Link></li>
-            <li><span className="text-forest-400">Cash on Delivery / eSewa / Khalti</span></li>
-          </ul>
-        </div>
-
-        {/* Newsletter & Valley Hours */}
-        <div>
-          <h4 className="font-serif text-white font-semibold mb-3 text-sm">Nursery Hours</h4>
-          <p className="text-xs text-forest-300 mb-2">
-            Open 7 Days a Week<br />
-            <strong>Sun – Sat:</strong> 7:00 AM – 7:30 PM
-          </p>
-          <div className="mt-4 p-3 rounded-xl bg-forest-900 border border-forest-800">
-            <span className="text-xs font-semibold text-emerald-400 block mb-1">Live Delivery Active</span>
-            <p className="text-[11px] text-forest-300">
-              Same-day delivery across Kathmandu, Lalitpur & Bhaktapur for orders placed before 3 PM.
+            <p className="text-sm text-forest-300 leading-relaxed mb-6">
+              Plants, flowers, and pottery chosen to make Kathmandu homes feel more alive.
             </p>
+            <div className="space-y-3 text-xs text-forest-300">
+              <div className="flex items-start gap-3"><MapPin size={15} className="text-accent shrink-0 mt-0.5" /><span>{siteSettings?.address || 'Lazimpat Botanical Row, Kathmandu, Nepal'}</span></div>
+              <div className="flex items-center gap-3"><Phone size={15} className="text-accent shrink-0" /><span>+977 {siteSettings?.phone || '9800000000'}</span></div>
+              <div className="flex items-center gap-3"><Mail size={15} className="text-accent shrink-0" /><span>{siteSettings?.email || 'contact@ktmbotanica.com'}</span></div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-8">
+            <div>
+              <h4 className="text-[11px] uppercase tracking-[0.18em] text-emerald-300 mb-4">Explore</h4>
+              <nav className="space-y-3 text-sm text-forest-200">
+                <Link to="/catalog" className="flex items-center gap-1 hover:text-white transition-colors">Shop all <ArrowUpRight size={13} /></Link>
+                <Link to="/categories" className="flex items-center gap-1 hover:text-white transition-colors">Categories <ArrowUpRight size={13} /></Link>
+                <Link to="/wishlist" className="flex items-center gap-1 hover:text-white transition-colors">Wishlist <ArrowUpRight size={13} /></Link>
+              </nav>
+            </div>
+            <div>
+              <h4 className="text-[11px] uppercase tracking-[0.18em] text-emerald-300 mb-4">Help</h4>
+              <nav className="space-y-3 text-sm text-forest-200">
+                <Link to="/contact" className="flex items-center gap-1 hover:text-white transition-colors">Contact us <ArrowUpRight size={13} /></Link>
+                <Link to="/orders" className="flex items-center gap-1 hover:text-white transition-colors">Track an order <ArrowUpRight size={13} /></Link>
+                <Link to="/privacy" className="flex items-center gap-1 hover:text-white transition-colors">Privacy <ArrowUpRight size={13} /></Link>
+                <Link to="/terms" className="flex items-center gap-1 hover:text-white transition-colors">Terms <ArrowUpRight size={13} /></Link>
+              </nav>
+            </div>
+            <div className="col-span-2 sm:col-span-1">
+              <h4 className="text-[11px] uppercase tracking-[0.18em] text-emerald-300 mb-4">Visit the nursery</h4>
+              <p className="text-sm text-forest-200 leading-relaxed mb-2">{siteSettings?.openingHours || 'Sun - Sat: 8:00 AM - 7:00 PM'}</p>
+              <p className="text-xs text-forest-400 leading-relaxed">Same-day dispatch before 3:00 PM across Kathmandu Valley.</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 pt-6 border-t border-forest-900 text-center text-xs text-forest-400">
-        <p>© {new Date().getFullYear()} KtmBotanica Pvt. Ltd. All rights reserved. Made with 🌿 for Nepali plant lovers.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-y border-forest-900 py-5 mb-6">
+          <div className="flex items-center gap-3"><Truck size={18} className="text-accent" /><span className="text-xs text-forest-200">Careful valley-wide delivery</span></div>
+          <div className="flex items-center gap-3"><ShieldCheck size={18} className="text-accent" /><span className="text-xs text-forest-200">Healthy, acclimatized plants</span></div>
+          <div className="flex items-center gap-3"><Heart size={18} className="text-accent" /><span className="text-xs text-forest-200">Made with local craft</span></div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <p className="text-xs text-forest-400">© {new Date().getFullYear()} {businessName}. All rights reserved.</p>
+          <Link to="/admin/login" className="text-[11px] text-forest-400 hover:text-emerald-400 transition-colors inline-flex items-center gap-1">
+            Admin staff login <ArrowUpRight size={12} />
+          </Link>
+        </div>
       </div>
     </footer>
   );

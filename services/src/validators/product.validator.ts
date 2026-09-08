@@ -29,11 +29,12 @@ export const productQuerySchema = z.object({
 
 export const createProductSchema = z.object({
   body: z.object({
-    name: z.string().min(2, 'Product name is required'),
-    sku: z.string().min(2, 'SKU is required'),
-    shortDescription: z.string().min(5, 'Short description is required'),
-    description: z.string().min(10, 'Full description is required'),
-    categoryId: z.string().uuid('Valid category ID required'),
+    name: z.string().min(1, 'Product name is required'),
+    title: z.string().optional(),
+    sku: z.string().optional(),
+    shortDescription: z.string().optional(),
+    description: z.string().optional(),
+    categoryId: z.string().optional(),
     basePrice: z.number().positive('Base price must be greater than 0'),
     compareAtPrice: z.number().positive().optional().nullable(),
     costPrice: z.number().positive().optional().nullable(),
@@ -50,7 +51,7 @@ export const createProductSchema = z.object({
     weight: z.number().optional(),
     images: z.array(
       z.object({
-        url: z.string().url(),
+        url: z.string(),
         altText: z.string().optional(),
         isPrimary: z.boolean().default(false),
         sortOrder: z.number().int().default(0),

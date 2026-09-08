@@ -17,7 +17,7 @@ export const AdminNotificationsPage: React.FC = () => {
   const [message, setMessage] = useState('');
   const [type, setType] = useState<'ANNOUNCEMENT' | 'PROMOTION' | 'CARE_REMINDER'>('ANNOUNCEMENT');
   const [linkUrl, setLinkUrl] = useState('');
-  const { showToast } = useUI();
+  const { showToast, confirmAction } = useUI();
 
   const broadcastMutation = useMutation({
     mutationFn: (payload: any) => adminApi.broadcastNotification(payload),
@@ -32,14 +32,14 @@ export const AdminNotificationsPage: React.FC = () => {
     },
   });
 
-  const handleBroadcast = (e: React.FormEvent) => {
+  const handleBroadcast = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !message) {
       showToast('Please enter both title and message', 'error');
       return;
     }
 
-    if (window.confirm(`Broadcast notification "${title}" to all customers?`)) {
+    if (await confirmAction(`Broadcast notification "${title}" to all customers?`, { title: 'Broadcast notification', confirmLabel: 'Broadcast' })) {
       broadcastMutation.mutate({
         title,
         message,

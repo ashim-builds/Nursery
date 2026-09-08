@@ -25,7 +25,7 @@ export const AdminCategoriesPage: React.FC = () => {
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
 
-  const { showToast } = useUI();
+  const { showToast, confirmAction } = useUI();
   const queryClient = useQueryClient();
 
   const { data: categories, isLoading, refetch } = useQuery({
@@ -106,8 +106,8 @@ export const AdminCategoriesPage: React.FC = () => {
     });
   };
 
-  const handleDelete = (id: string, catName: string) => {
-    if (window.confirm(`Are you sure you want to delete category "${catName}"?`)) {
+  const handleDelete = async (id: string, catName: string) => {
+    if (await confirmAction(`Are you sure you want to delete category "${catName}"?`, { title: 'Delete category', confirmLabel: 'Delete' })) {
       deleteMutation.mutate(id);
     }
   };

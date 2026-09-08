@@ -15,10 +15,11 @@ import {
   AlertCircle,
   ShieldCheck,
 } from 'lucide-react';
+import { formatOrderAmount, isGenericVariantName } from '../utils/orderDisplay';
 
 export const OrderDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { showToast } = useUI();
+  const { showToast, confirmAction } = useUI();
   const queryClient = useQueryClient();
 
   const { data: order, isLoading, error } = useQuery({
@@ -94,8 +95,8 @@ export const OrderDetailPage: React.FC = () => {
         {isCancellable && (
           <div className="pt-2 flex justify-end">
             <button
-              onClick={() => {
-                if (window.confirm('Are you sure you want to cancel this order? Reserved items will be restored.')) {
+              onClick={async () => {
+                if (await confirmAction('Are you sure you want to cancel this order? Reserved items will be restored.', { title: 'Cancel order', confirmLabel: 'Cancel order' })) {
                   cancelMutation.mutate();
                 }
               }}
@@ -149,14 +150,14 @@ export const OrderDetailPage: React.FC = () => {
             <div key={item.id} className="py-3 flex items-center justify-between text-xs">
               <div className="space-y-0.5">
                 <span className="font-semibold text-slate-900 block">
-                  {item.productName || item.productTitle}
+                  {item.productName || item.productTitle || 'Plant'}
                 </span>
                 <span className="text-slate-500 block">
-                  Variant: {item.variantName} × {item.quantity}
+                  {!isGenericVariantName(item.variantName) && `Variant: ${item.variantName} `}× {item.quantity}
                 </span>
               </div>
               <span className="font-bold text-slate-900">
-                रू {Number(item.lineTotal || item.totalPrice).toLocaleString()}
+                रू {formatOrderAmount(item.lineTotal ?? item.totalPrice)}
               </span>
             </div>
           ))}
@@ -165,21 +166,21 @@ export const OrderDetailPage: React.FC = () => {
         <div className="border-t border-slate-100 pt-3 space-y-1.5 text-xs text-slate-600">
           <div className="flex justify-between">
             <span>Subtotal</span>
-            <span>रू {Number(order.subtotal).toLocaleString()}</span>
+            <span>रू {formatOrderAmount(order.subtotal)}</span>
           </div>
           {Number(order.discountAmount) > 0 && (
             <div className="flex justify-between text-emerald-600 font-medium">
               <span>Coupon Discount</span>
-              <span>- रू {Number(order.discountAmount).toLocaleString()}</span>
+              <span>- रू {formatOrderAmount(order.discountAmount)}</span>
             </div>
           )}
           <div className="flex justify-between">
             <span>Delivery Charge</span>
-            <span>{Number(order.deliveryFee) === 0 ? 'FREE' : `रू ${Number(order.deliveryFee).toLocaleString()}`}</span>
+            <span>{Number(order.deliveryFee) === 0 ? 'FREE' : `रू ${formatOrderAmount(order.deliveryFee)}`}</span>
           </div>
           <div className="border-t border-slate-100 pt-2 flex justify-between font-bold text-sm text-slate-900">
             <span>Grand Total</span>
-            <span className="font-serif text-forest-950">रू {Number(order.totalAmount).toLocaleString()}</span>
+            <span className="font-serif text-forest-950">रू {formatOrderAmount(order.totalAmount)}</span>
           </div>
         </div>
       </div>

@@ -9,6 +9,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isCareExpert: boolean;
   login: (email: string, password: string) => Promise<void>;
+  adminPasswordLogin: (password: string) => Promise<void>;
   register: (data: any) => Promise<void>;
   logout: () => void;
   refreshProfile: () => Promise<void>;
@@ -50,6 +51,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(response.user);
   };
 
+  const adminPasswordLogin = async (password: string) => {
+    const res = await fetch('/api/auth/admin-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || 'Incorrect admin password');
+    }
+    const { accessToken, refreshToken, user: authUser } = data.data;
+    localStorage.setItem('ktm_access_token', accessToken);
+    localStorage.setItem('ktm_refresh_token', refreshToken);
+    setUser(authUser);
+  };
+
   const register = async (data: any) => {
     const response = await authApi.register(data);
     localStorage.setItem('ktm_access_token', response.accessToken);
@@ -76,6 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAdmin: user?.role === 'ADMIN',
         isCareExpert: user?.role === 'CARE_EXPERT' || user?.role === 'ADMIN',
         login,
+        adminPasswordLogin,
         register,
         logout,
         refreshProfile,

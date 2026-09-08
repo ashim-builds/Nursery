@@ -60,6 +60,11 @@ export const adminApi = {
     return res.data.data;
   },
 
+  cancelOrder: async (orderId: string, reason = 'Cancelled by Admin'): Promise<any> => {
+    const res = await apiClient.post(`/orders/${orderId}/cancel`, { reason });
+    return res.data.data;
+  },
+
   // Products & Variants
   getProducts: async (params?: { page?: number; limit?: number; search?: string; category?: string }) => {
     const res = await apiClient.get('/products', { params });

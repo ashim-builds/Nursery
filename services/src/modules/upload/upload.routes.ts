@@ -5,11 +5,7 @@ import { UserRole } from '@prisma/client';
 
 const router = Router();
 
-// 1. Signature generation (Public for authorized client or admin)
-router.get('/signature', UploadController.getUploadSignature);
-router.post('/signature', UploadController.getUploadSignature);
-
-// 2. Direct server-side upload with multer file validation
+// 1. Direct server-side upload with Multer file validation to MySQL storage
 router.post(
   '/image',
   authenticateJWT,
@@ -18,7 +14,10 @@ router.post(
   UploadController.uploadImage
 );
 
-// 3. Delete from Cloudinary storage
+// Public image bytes are served from MySQL.
+router.get('/image/:id', UploadController.getImage);
+
+// 2. Delete from MySQL storage
 router.post(
   '/delete',
   authenticateJWT,
@@ -27,7 +26,7 @@ router.post(
 );
 
 router.delete(
-  '/:publicId',
+  '/:id',
   authenticateJWT,
   requireRole(UserRole.ADMIN, UserRole.STAFF),
   UploadController.deleteImage

@@ -1,34 +1,15 @@
 import { apiClient } from './client';
 
 export interface UploadResponse {
-  publicId: string;
+  id?: string;
   url: string;
-  secureUrl: string;
-  width: number;
-  height: number;
-  format: string;
-  bytes: number;
-  transformations: {
-    thumbnail: string;
-    card: string;
-    detail: string;
-    zoom: string;
-    srcset?: string;
-  };
-}
-
-export interface UploadSignatureResponse {
-  timestamp: number;
-  folder: string;
-  cloudName: string;
-  apiKey: string;
-  signature: string;
-  isDemo: boolean;
+  mimeType?: string;
+  fileSize?: number;
 }
 
 export const uploadApi = {
-  // 1. Direct server-side upload with file buffer
-  uploadImage: async (file: File, folder = 'nursery_botanica/products'): Promise<UploadResponse> => {
+  // Direct upload
+  uploadImage: async (file: File, folder = 'products'): Promise<UploadResponse> => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('folder', folder);
@@ -41,24 +22,7 @@ export const uploadApi = {
     return res.data.data;
   },
 
-  // 2. Upload from remote URL
-  uploadFromUrl: async (url: string, folder = 'nursery_botanica/products'): Promise<UploadResponse> => {
-    const res = await apiClient.post('/upload/image', { url, folder });
-    return res.data.data;
-  },
-
-  // 3. Get signed upload signature for direct Cloudinary upload
-  getSignature: async (folder = 'nursery_botanica/products'): Promise<UploadSignatureResponse> => {
-    const res = await apiClient.get('/upload/signature', { params: { folder } });
-    return res.data.data;
-  },
-
-  // 4. Delete image
-  deleteImage: async (publicId: string): Promise<void> => {
-    await apiClient.post('/upload/delete', { publicId });
-  },
-
-  // 5. Product Image Operations
+  // Product Image Operations
   addProductImage: async (
     productId: string,
     imageData: { url: string; altText?: string; isPrimary?: boolean; sortOrder?: number }

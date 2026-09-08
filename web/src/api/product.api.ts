@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import { Product, Category, Review } from '../types/product';
+import { Product, Category } from '../types/product';
 
 export interface ProductQueryParams {
   page?: number;
@@ -18,7 +18,7 @@ export interface ProductQueryParams {
   size?: string;
   minPrice?: number;
   maxPrice?: number;
-  sortBy?: 'price_asc' | 'price_desc' | 'newest' | 'rating' | 'popular' | 'relevance';
+  sortBy?: 'price_asc' | 'price_desc' | 'newest' | 'popular' | 'relevance';
 }
 
 export const productApi = {
@@ -42,14 +42,4 @@ export const productApi = {
     return res.data.data;
   },
 
-  submitReview: async (reviewData: {
-    productId: string;
-    customerName: string;
-    rating: number;
-    comment: string;
-    plantPhotoUrl?: string;
-  }): Promise<Review> => {
-    const res = await apiClient.post('/reviews', reviewData);
-    return res.data.data;
-  },
 };

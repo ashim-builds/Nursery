@@ -17,6 +17,11 @@ enum UserRole {
   ADMIN
 }
 
+enum StockStatus {
+  IN_STOCK
+  OUT_OF_STOCK
+}
+
 enum SunlightRequirement {
   FULL_SUN
   BRIGHT_INDIRECT
@@ -133,6 +138,7 @@ model User {
   updatedAt    DateTime @updatedAt
 
   addresses           Address[]
+  oauthAccounts       OAuthAccount[]
   refreshTokens       RefreshToken[]
   staffProfile        StaffProfile?
   orders              Order[]
@@ -151,17 +157,36 @@ model User {
   @@map("users")
 }
 
+model OAuthAccount {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider       String // e.g. "google", "apple"
+  providerUserId String
+  email          String?
+  createdAt      DateTime @default(now())
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+  @@map("oauth_accounts")
+}
+
 model Address {
   id            String   @id @default(uuid())
   userId        String
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  label         String?  @default("Home") // Home, Work, Greenhouse, etc.
+  label         String?  @default("Home") // Home, Work, Other
   fullName      String
   phoneNumber   String
+  province      String?  @default("Bagmati")
+  district      String?  @default("Kathmandu")
   streetAddress String   @db.Text
   city          String   @default("Kathmandu")
   area          String?
+  landmark      String?
   postalCode    String?
+  latitude      Decimal? @db.Decimal(10, 8)
+  longitude     Decimal? @db.Decimal(10, 8)
   isDefault     Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -208,7 +233,7 @@ model Category {
   name         String     @unique
   slug         String     @unique
   description  String?    @db.Text
-  imageUrl     String?
+  imageUrl     String?    @db.LongText
   parentId     String?
   parent       Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
   children     Category[] @relation("CategoryHierarchy")
@@ -241,11 +266,13 @@ model Product {
   costPrice      Decimal? @db.Decimal(10, 2)
 
   // Status & Flags
-  available         Boolean @default(true)
-  featured          Boolean @default(false)
-  published         Boolean @default(true)
-  seasonal          Boolean @default(false)
-  lowStockThreshold Int     @default(5)
+  stockStatus       StockStatus @default(IN_STOCK)
+  available         Boolean     @default(true)
+  featured          Boolean     @default(false)
+  bestSeller        Boolean     @default(false)
+  published         Boolean     @default(true)
+  seasonal          Boolean     @default(false)
+  lowStockThreshold Int         @default(5)
 
   // Botanical & Plant Attributes
   careInstructions    String?              @db.Text
@@ -271,24 +298,28 @@ model Product {
   @@index([categoryId])
   @@index([published])
   @@index([featured])
+  @@index([bestSeller])
   @@index([available])
+  @@index([stockStatus])
   @@index([seasonal])
   @@map("products")
 }
 
 model ProductVariant {
-  id          String   @id @default(uuid())
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  name        String // e.g. Small, Medium, Large, 6 inch, 8 inch, 10 inch, 12 Stems
-  sku         String   @unique
-  price       Decimal  @db.Decimal(10, 2)
-  stock       Int      @default(0)
-  weight      Decimal? @db.Decimal(8, 2)
-  isAvailable Boolean  @default(true)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String      @id @default(uuid())
+  productId      String
+  product        Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name           String // e.g. Small, Medium, Large, 6 inch, 8 inch, 10 inch
+  sku            String      @unique
+  price          Decimal     @db.Decimal(10, 2)
+  compareAtPrice Decimal?    @db.Decimal(10, 2)
+  stockStatus    StockStatus @default(IN_STOCK)
+  stock          Int         @default(100)
+  weight         Decimal?    @db.Decimal(8, 2)
+  isAvailable    Boolean     @default(true)
+  sortOrder      Int         @default(0)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
   inventory             Inventory?
   cartItems             CartItem[]
@@ -297,23 +328,39 @@ model ProductVariant {
 
   @@index([productId])
   @@index([sku])
-  @@index([stock])
+  @@index([stockStatus])
   @@index([isAvailable])
   @@map("product_variants")
 }
 
 model ProductImage {
-  id        String   @id @default(uuid())
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  url       String
-  altText   String?
-  isPrimary Boolean  @default(false)
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  filename    String   @default("image.webp")
+  storagePath String   @default("database")
+  mimeType    String?  @default("image/jpeg")
+  fileSize    Int?     @default(0)
+  url         String   @db.LongText
+  altText     String?
+  isPrimary   Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
 
   @@index([productId])
   @@map("product_images")
+}
+
+model ImageAsset {
+  id          String   @id @default(uuid())
+  filename    String
+  mimeType    String
+  fileSize    Int
+  data        Bytes    @db.LongBlob
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("image_assets")
 }
 
 model ProductAttribute {
@@ -756,4 +803,28 @@ model AuditLog {
   @@index([resource])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+model SiteSettings {
+  id                     String   @id @default("default")
+  businessName           String   @default("KtmBotanica Nursery & Florist")
+  logo                   String?
+  favicon                String?
+  phone                  String   @default("9800000000")
+  email                  String   @default("contact@ktmbotanica.com")
+  address                String   @default("Lakeside Botanical Row, Pokhara")
+  province               String?  @default("Bagmati")
+  district               String   @default("Kaski")
+  city                   String   @default("Pokhara")
+  area                   String?  @default("Lakeside")
+  latitude               Decimal? @default(27.72150000) @db.Decimal(10, 8)
+  longitude              Decimal? @default(85.32060000) @db.Decimal(10, 8)
+  openingHours           String?  @default("Sun - Sat: 8:00 AM - 7:00 PM")
+  socialLinks            Json?
+  defaultDeliveryMessage String?  @default("Standard delivery across Kathmandu Valley within 24 hours.")
+  setupCompleted         Boolean  @default(false)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@map("site_settings")
 }

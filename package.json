@@ -8,7 +8,7 @@
     "web"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace=services & npm run dev --workspace=web",
+    "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"green,cyan\" \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "npm run dev --workspace=services",
     "dev:frontend": "npm run dev --workspace=web",
     "build": "npm run build --workspace=services && npm run build --workspace=web",
@@ -23,6 +23,9 @@
     "db:restore": "bash scripts/restore.sh",
     "db:migrate": "bash scripts/migrate.sh",
     "db:seed": "bash scripts/seed.sh",
+    "start": "docker compose up -d",
+    "docker:start": "docker compose up -d --build",
+    "docker:stop": "docker compose down",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f"
@@ -39,5 +42,8 @@
     "mysql"
   ],
   "author": "Nursery Platform Team",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  }
 }

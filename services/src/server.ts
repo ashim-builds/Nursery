@@ -7,7 +7,6 @@ import { ENV } from './config/env.js';
 import { connectDB, prisma } from './config/database.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 
-// Route Imports
 import { authRoutes } from './modules/auth/auth.routes.js';
 import { productRoutes } from './modules/products/product.routes.js';
 import { categoryRoutes } from './modules/categories/category.routes.js';
@@ -17,11 +16,11 @@ import { wishlistRoutes } from './modules/wishlist/wishlist.routes.js';
 import { orderRoutes } from './modules/orders/order.routes.js';
 import { paymentRoutes } from './modules/payments/payment.routes.js';
 import { deliveryRoutes } from './modules/delivery/delivery.routes.js';
-import { careRoutes } from './modules/care-guides/care.routes.js';
 import { reviewRoutes } from './modules/reviews/review.routes.js';
 import { adminRoutes } from './modules/admin/admin.routes.js';
 import { uploadRoutes } from './modules/upload/upload.routes.js';
 import { notificationRoutes } from './modules/notifications/notification.routes.js';
+import { siteSettingsRoutes } from './modules/site-settings/site-settings.routes.js';
 
 const app = express();
 
@@ -34,11 +33,11 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        imgSrc: ["'self'", 'data:', 'blob:', 'https://res.cloudinary.com', 'https://images.unsplash.com'],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
-        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        imgSrc: ["'self'", 'data:', 'blob:', 'https://images.unsplash.com', 'https://*.tile.openstreetmap.org', 'https://unpkg.com'],
+        scriptSrc: ["'self'", "'unsafe-inline'", 'https://unpkg.com'],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://unpkg.com'],
         fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-        connectSrc: ["'self'", ENV.FRONTEND_URL || 'http://localhost:5173', 'https://api.cloudinary.com'],
+        connectSrc: ["'self'", ENV.FRONTEND_URL || 'http://localhost:5173', 'https://*.tile.openstreetmap.org'],
       },
     },
     crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -122,8 +121,9 @@ const checkoutLimiter = rateLimit({
 app.use(['/api/orders', '/api/v1/orders'], checkoutLimiter);
 
 // Health Endpoint
-app.get('/api/health', (req: Request, res: Response) => {
+app.get(['/health', '/api/health'], (req: Request, res: Response) => {
   res.status(200).json({
+    status: 'ok',
     success: true,
     message: 'Nursery API is running',
   });
@@ -139,7 +139,6 @@ Allow: /products/
 Allow: /category/
 Allow: /categories/
 Allow: /catalog
-Allow: /plant-doctor/
 Allow: /search
 Disallow: /admin/
 Disallow: /checkout
@@ -179,7 +178,6 @@ app.get(['/sitemap.xml', '/api/sitemap.xml'], async (req: Request, res: Response
       { loc: `${baseUrl}/`, priority: '1.0', changefreq: 'daily' },
       { loc: `${baseUrl}/catalog`, priority: '0.9', changefreq: 'daily' },
       { loc: `${baseUrl}/categories`, priority: '0.8', changefreq: 'weekly' },
-      { loc: `${baseUrl}/plant-doctor`, priority: '0.8', changefreq: 'weekly' },
       { loc: `${baseUrl}/search`, priority: '0.7', changefreq: 'weekly' },
       { loc: `${baseUrl}/contact`, priority: '0.5', changefreq: 'monthly' },
       { loc: `${baseUrl}/privacy`, priority: '0.3', changefreq: 'yearly' },
@@ -221,10 +219,10 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/delivery-zones', deliveryRoutes);
 app.use('/api/admin/delivery-zones', deliveryRoutes);
 app.use('/api/inventory', inventoryRoutes);
-app.use('/api/care-guides', careRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/site-settings', siteSettingsRoutes);
 
 // Versioned `/api/v1/...` Routes
 app.use('/api/v1/auth', authRoutes);
@@ -238,10 +236,10 @@ app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/delivery-zones', deliveryRoutes);
 app.use('/api/v1/admin/delivery-zones', deliveryRoutes);
 app.use('/api/v1/inventory', inventoryRoutes);
-app.use('/api/v1/care-guides', careRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/upload', uploadRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/site-settings', siteSettingsRoutes);
 
 // 404 API Handler for unmatched routes
 app.use((req: Request, res: Response) => {

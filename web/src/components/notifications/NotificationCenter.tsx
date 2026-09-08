@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { notificationApi, AppNotification, NotificationType } from '../../api/notification.api';
 import { useAuth } from '../../context/AuthContext';
+import { useUI } from '../../context/UIContext';
 
 interface NotificationCenterProps {
   variant?: 'customer' | 'admin';
@@ -27,6 +28,7 @@ interface NotificationCenterProps {
 
 export const NotificationCenter: React.FC<NotificationCenterProps> = ({ variant = 'customer' }) => {
   const { isAuthenticated } = useAuth();
+  const { showToast } = useUI();
   const [isOpen, setIsOpen] = useState(false);
   const [pushStatus, setPushStatus] = useState<'default' | 'granted' | 'denied' | 'unsupported'>('default');
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -95,7 +97,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ variant 
   // Web Push Subscription Helper
   const handleEnablePush = async () => {
     if (!('Notification' in window)) {
-      alert('This browser does not support web notifications.');
+      showToast('This browser does not support web notifications.', 'info');
       return;
     }
 

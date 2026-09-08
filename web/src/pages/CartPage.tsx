@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { Plus, Minus, Trash2, ShoppingBag, ArrowRight, Truck, Sprout, ShieldCheck } from 'lucide-react';
+import { isGenericVariantName } from '../utils/orderDisplay';
 
 export const CartPage: React.FC = () => {
   const {
@@ -105,9 +106,9 @@ export const CartPage: React.FC = () => {
                 <Link to={`/products/${item.product.slug}`} className="block font-semibold text-xs sm:text-sm text-slate-900 hover:text-forest-800 truncate">
                   {item.product.title}
                 </Link>
-                <span className="text-[11px] text-slate-500 block">
-                  Variant: {item.variant.name}
-                </span>
+                {!isGenericVariantName(item.variant.name) && (
+                  <span className="text-[11px] text-slate-500 block">Variant: {item.variant.name}</span>
+                )}
                 <span className="font-bold text-xs sm:text-sm text-forest-950 block">
                   रू {item.unitPrice.toLocaleString()}
                 </span>
