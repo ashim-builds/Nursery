@@ -1,18 +1,19 @@
 {
+  "id": "/",
   "short_name": "RJ Flowers",
-  "name": "RJ Flowers and Nursery",
+  "name": "RJ Flowers",
   "icons": [
     {
-      "src": "/rj-flowers-icon.svg",
-      "type": "image/svg+xml",
-      "sizes": "any",
-      "purpose": "any maskable"
+      "src": "/rj-flowers-icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
     },
     {
-      "src": "/rj-flowers-icon.svg",
-      "type": "image/svg+xml",
-      "sizes": "any",
-      "purpose": "any maskable"
+      "src": "/rj-flowers-icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     },
     {
       "src": "/rj-flowers-logo.svg",

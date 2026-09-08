@@ -1,9 +1,12 @@
-const CACHE_NAME = 'ktmbotanica-static-v1';
+const CACHE_NAME = 'rj-flowers-static-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/leaf.svg',
-  '/manifest.json'
+  '/manifest.json',
+  '/rj-flowers-icon-192.png',
+  '/rj-flowers-icon-512.png',
+  '/rj-flowers-icon.svg',
+  '/rj-flowers-logo.svg'
 ];
 
 self.addEventListener('install', (event) => {

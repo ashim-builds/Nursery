@@ -64,7 +64,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       <div className="p-4 border-b border-forest-800/80 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2.5">
           <img
-            src="/icon-192.png"
+            src="/rj-flowers-icon-192.png"
             alt="RJ Flowers Logo"
             className="w-9 h-9 rounded-xl object-cover border border-emerald-500/40 shadow-inner"
           />

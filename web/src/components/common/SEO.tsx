@@ -14,7 +14,7 @@ export interface SEOProps {
 const DEFAULT_TITLE = "RJ Flowers";
 const DEFAULT_DESCRIPTION =
   "RJ Flowers nursery in Pokhara-26, Arghau Chowk. Shop flowers and plants with delivery across Pokhara.";
-const DEFAULT_IMAGE = "/icon-512.png";
+const DEFAULT_IMAGE = "/rj-flowers-icon-512.png";
 const SITE_NAME = "RJ Flowers";
 
 export const SEO: React.FC<SEOProps> = ({
