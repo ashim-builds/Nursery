@@ -51,7 +51,7 @@ export const CatalogPage: React.FC = () => {
       <SEO
         title={search ? `Search: "${search}" | RJ Flowers Shop` : 'Shop All Plants & Flowers | RJ Flowers'}
         description="Browse our collection of healthy plants, flowers, and nursery products available for delivery across Pokhara."
-        canonical="https://rjflowers.com/catalog"
+        canonical={typeof window !== 'undefined' ? `${window.location.origin}/catalog` : '/catalog'}
       />
 
       {/* Header Title & Search */}

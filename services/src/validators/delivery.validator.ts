@@ -33,7 +33,7 @@ export const updateZoneSchema = z.object({
 
 export const calculateZoneSchema = z.object({
   body: z.object({
-    city: z.string().default('Kathmandu'),
+    city: z.string().default('Pokhara'),
     area: z.string().optional(),
     streetAddress: z.string().optional(),
     subtotal: z.number().min(0).default(0),

@@ -18,7 +18,7 @@ export const createOrderSchema = z.object({
     deliveryAddress: z.string().min(5, 'Delivery address is required'),
     deliveryProvince: z.string().optional(),
     deliveryDistrict: z.string().optional(),
-    deliveryCity: z.string().default('Kathmandu'),
+    deliveryCity: z.string().default('Pokhara'),
     deliveryArea: z.string().optional(),
     deliveryPostalCode: z.string().optional(),
     deliveryLatitude: z.number().optional(),

@@ -92,20 +92,20 @@ export class DeliveryService {
     if (!zone) {
       zone = await prisma.deliveryZone.findFirst({
         where: {
-          OR: [{ code: 'KTM_RING' }, { name: { contains: 'Kathmandu' } }],
+          OR: [{ code: 'POKHARA_CORE' }, { name: { contains: 'Pokhara' } }],
           isActive: true,
         },
       });
     }
 
     // Default fallback if table is empty
-    const zoneName = zone?.name || 'Kathmandu Valley Ring Road';
-    const zoneCode = zone?.code || 'KTM_RING';
+    const zoneName = zone?.name || 'Pokhara Delivery Area';
+    const zoneCode = zone?.code || 'POKHARA_CORE';
     const baseCharge = zone ? Number(zone.baseDeliveryCharge) : 100;
     const minOrder = zone ? Number(zone.minimumOrder || 0) : 0;
     const estTime = zone?.estimatedDeliveryTime || 'Within 24 Hours';
 
-    // Free shipping calculation policy (Rs. 2,000 threshold for Kathmandu Valley)
+    // Free shipping calculation policy (Rs. 2,000 threshold for Pokhara)
     const isFreeDeliveryEligible = data.subtotal >= 2000 && zoneCode !== 'OUTSIDE_VALLEY';
     const calculatedDeliveryCharge = isFreeDeliveryEligible ? 0 : baseCharge;
 

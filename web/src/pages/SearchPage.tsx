@@ -147,7 +147,7 @@ export const SearchPage: React.FC = () => {
       <SEO
         title={seoTitle}
         description={`Find healthy plants and planters matching ${query || 'flowers and greenery'} in Pokhara with local delivery.`}
-        canonical={`https://rjflowers.com/search${query ? '?q=' + encodeURIComponent(query) : ''}`}
+        canonical={`${typeof window !== 'undefined' ? window.location.origin : ''}/search${query ? '?q=' + encodeURIComponent(query) : ''}`}
       />
       {/* Search Input Bar */}
       <form onSubmit={handleSearchSubmit} className="relative max-w-2xl mx-auto">

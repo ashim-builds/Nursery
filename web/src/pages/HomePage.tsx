@@ -81,7 +81,7 @@ export const HomePage: React.FC = () => {
     name: siteSettings?.businessName || 'RJ Flowers',
     image:
       'https://images.unsplash.com/photo-1545241047-6083a3684587?auto=format&fit=crop&w=1200&q=80',
-    url: 'https://rjflowers.com',
+    url: typeof window !== 'undefined' ? window.location.origin : '/',
     telephone: siteSettings?.phone ? `+977-${siteSettings.phone}` : '+977-9800000000',
     priceRange: 'रू 200 - रू 25,000',
     address: {
@@ -105,7 +105,7 @@ export const HomePage: React.FC = () => {
       <SEO
         title="RJ Flowers | Flowers and Nursery in Pokhara"
         description="RJ Flowers and Nursery in Pokhara-26, Arghau Chowk. Shop flowers and plants with delivery across Pokhara."
-        canonical="https://rjflowers.com/"
+        canonical={typeof window !== 'undefined' ? `${window.location.origin}/` : '/'}
         structuredData={nurserySchema}
       />
 

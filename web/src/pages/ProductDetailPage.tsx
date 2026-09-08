@@ -189,7 +189,7 @@ export const ProductDetailPage: React.FC = () => {
     },
     offers: {
       '@type': 'Offer',
-      url: `https://rjflowers.com/product/${product.slug}`,
+      url: `${typeof window !== 'undefined' ? window.location.origin : ''}/product/${product.slug}`,
       priceCurrency: 'NPR',
       price: currentPrice,
       priceValidUntil: '2027-12-31',
@@ -217,7 +217,7 @@ export const ProductDetailPage: React.FC = () => {
         description={seoDescription}
         ogType="product"
         ogImage={primaryImageUrl}
-        canonical={`https://rjflowers.com/product/${product.slug}`}
+        canonical={`${typeof window !== 'undefined' ? window.location.origin : ''}/product/${product.slug}`}
         structuredData={productSchema}
       />
 
