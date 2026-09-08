@@ -117,7 +117,7 @@ export const ProfilePage: React.FC = () => {
                 <Sprout size={24} />
               </div>
               <h3 className="font-semibold text-sm text-slate-800">No plant orders yet</h3>
-              <p className="text-xs text-slate-500">Explore our indoor greenery and blooming bouquets for Kathmandu delivery!</p>
+              <p className="text-xs text-slate-500">Explore our indoor greenery and blooming bouquets for Pokhara delivery!</p>
               <Link
                 to="/catalog"
                 className="inline-flex items-center bg-forest-800 text-white text-xs font-semibold px-5 py-2.5 rounded-xl min-h-[44px]"

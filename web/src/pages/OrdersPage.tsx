@@ -20,7 +20,7 @@ export const OrdersPage: React.FC = () => {
           <span>Your Orders</span>
         </h1>
         <p className="text-xs text-slate-500 mt-1">
-          Track fulfillment status, view receipts, and scheduled Kathmandu deliveries.
+          Track fulfillment status, view receipts, and scheduled Pokhara deliveries.
         </p>
       </div>
 

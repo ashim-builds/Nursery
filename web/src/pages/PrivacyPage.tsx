@@ -20,7 +20,7 @@ export const PrivacyPage: React.FC = () => {
 
       <div className="space-y-4 text-xs sm:text-sm leading-relaxed">
         <p>
-          At <strong>KtmBotanica</strong>, we value the trust you place in us when sharing your personal details for botanical orders and Kathmandu Valley deliveries.
+          At <strong>RJ Flowers</strong>, we value the trust you place in us when sharing your personal details for flower and plant orders delivered across Pokhara.
         </p>
 
         <h2 className="font-serif font-bold text-base text-slate-900 pt-2">1. Information We Collect</h2>

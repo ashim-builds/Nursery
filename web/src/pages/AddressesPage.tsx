@@ -16,7 +16,7 @@ export const AddressesPage: React.FC = () => {
       fullName: user?.fullName || 'Botanical Customer',
       phoneNumber: user?.phoneNumber || '9841000000',
       streetAddress: 'Baluwatar-4, Near Russian Embassy',
-      city: 'Kathmandu',
+      city: 'Pokhara',
       latitude: 27.7215,
       longitude: 85.3206,
       isDefault: true,
@@ -28,7 +28,7 @@ export const AddressesPage: React.FC = () => {
   const [newName, setNewName] = useState(user?.fullName || '');
   const [newPhone, setNewPhone] = useState(user?.phoneNumber || '');
   const [newStreet, setNewStreet] = useState('');
-  const [newCity, setNewCity] = useState('Kathmandu');
+  const [newCity, setNewCity] = useState('Pokhara');
   const [newCoords, setNewCoords] = useState<{ latitude: number; longitude: number }>({
     latitude: 27.7215,
     longitude: 85.3206,
@@ -88,7 +88,7 @@ export const AddressesPage: React.FC = () => {
             <span>Delivery Addresses</span>
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Manage your saved delivery locations for swift plant deliveries across Kathmandu Valley.
+            Manage your saved delivery locations for swift plant deliveries across Pokhara.
           </p>
         </div>
 
@@ -218,7 +218,7 @@ export const AddressesPage: React.FC = () => {
                   required
                   value={newStreet}
                   onChange={(e) => setNewStreet(e.target.value)}
-                  placeholder="e.g. Lazimpat-2, near Radisson Hotel"
+                  placeholder="e.g. Arghau Chowk, near RJ Flowers"
                   className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
                 />
               </div>

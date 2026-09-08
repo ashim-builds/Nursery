@@ -138,16 +138,16 @@ export const SearchPage: React.FC = () => {
   };
 
   const seoTitle = query
-    ? `Search Results for "${query}" | KtmBotanica Nursery`
-    : 'Search Botanical Plants, Pots & Flowers | KtmBotanica';
+    ? `Search Results for "${query}" | RJ Flowers Nursery`
+    : 'Search Plants, Pots & Flowers | RJ Flowers';
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 pb-24">
       {/* Dynamic SEO Meta */}
       <SEO
         title={seoTitle}
-        description={`Find healthy plants and planters matching ${query || 'botanical greenery'} in Kathmandu with same-day valley delivery.`}
-        canonical={`https://ktmbotanica.com/search${query ? '?q=' + encodeURIComponent(query) : ''}`}
+        description={`Find healthy plants and planters matching ${query || 'flowers and greenery'} in Pokhara with local delivery.`}
+        canonical={`https://rjflowers.com/search${query ? '?q=' + encodeURIComponent(query) : ''}`}
       />
       {/* Search Input Bar */}
       <form onSubmit={handleSearchSubmit} className="relative max-w-2xl mx-auto">

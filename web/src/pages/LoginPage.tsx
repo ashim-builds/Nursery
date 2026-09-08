@@ -20,7 +20,7 @@ export const LoginPage: React.FC = () => {
     setIsLoading(true);
     try {
       await login(email.trim().toLowerCase(), password);
-      showToast('Welcome back to KtmBotanica!', 'success');
+      showToast('Welcome back to RJ Flowers!', 'success');
       navigate('/');
     } catch (err: any) {
       showToast(err.message || 'Invalid email or password', 'error');
@@ -52,7 +52,7 @@ export const LoginPage: React.FC = () => {
           <div className="w-12 h-12 rounded-2xl bg-forest-800 text-emerald-300 flex items-center justify-center mx-auto shadow-sm">
             <Sprout size={24} />
           </div>
-          <h1 className="font-serif font-bold text-2xl text-slate-900">Sign In to KtmBotanica</h1>
+          <h1 className="font-serif font-bold text-2xl text-slate-900">Sign In to RJ Flowers</h1>
           <p className="text-xs text-slate-500">Access your plant orders, care guides & wishlist</p>
         </div>
 
@@ -132,7 +132,7 @@ export const LoginPage: React.FC = () => {
         </form>
 
         <div className="pt-2 border-t border-slate-100 text-center text-xs text-slate-500">
-          New to KtmBotanica?{' '}
+          New to RJ Flowers?{' '}
           <Link to="/register" className="font-bold text-forest-700 hover:underline">
             Create an Account
           </Link>

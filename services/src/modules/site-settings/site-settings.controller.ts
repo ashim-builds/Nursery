@@ -18,7 +18,7 @@ export class SiteSettingsController {
           phone: '9800000000',
           email: 'contact@ktmbotanica.com',
           address: 'Pokhara-26, Arghau Chowk, Pokhara',
-          province: 'Bagmati',
+          province: 'Gandaki',
           district: 'Kaski',
           city: 'Pokhara',
           area: 'Arghau Chowk',
@@ -29,11 +29,19 @@ export class SiteSettingsController {
           setupCompleted: false,
         },
       });
-    } else if (settings.city === 'Kathmandu' || settings.address.includes('Lazimpat')) {
+    } else if (
+      settings.businessName.includes('KtmBotanica') ||
+      settings.city === 'Kathmandu' ||
+      settings.address.includes('Lazimpat') ||
+      settings.address.includes('Lakeside')
+    ) {
       settings = await prisma.siteSettings.update({
         where: { id: settings.id },
         data: {
+          businessName: 'RJ Flowers',
+          phone: '9815155580',
           address: 'Pokhara-26, Arghau Chowk, Pokhara',
+          province: 'Gandaki',
           district: 'Kaski',
           city: 'Pokhara',
           area: 'Arghau Chowk',

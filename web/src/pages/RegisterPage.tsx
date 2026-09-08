@@ -15,7 +15,7 @@ export const RegisterPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
-  const [city, setCity] = useState('Kathmandu');
+  const [city, setCity] = useState('Pokhara');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -44,7 +44,7 @@ export const RegisterPage: React.FC = () => {
         address: address.trim() || undefined,
         city: city.trim() || undefined,
       });
-      showToast('Welcome to the KtmBotanica plant community!', 'success');
+      showToast('Welcome to the RJ Flowers community!', 'success');
       navigate('/');
     } catch (err: any) {
       showToast(err.message || 'Registration failed', 'error');
@@ -77,7 +77,7 @@ export const RegisterPage: React.FC = () => {
             <Sprout size={24} />
           </div>
           <h1 className="font-serif font-bold text-2xl text-slate-900">Create Account</h1>
-          <p className="text-xs text-slate-500">Join Kathmandu’s green community</p>
+          <p className="text-xs text-slate-500">Join Pokhara’s flower and plant community</p>
         </div>
 
         {/* Google OAuth Button */}
@@ -179,7 +179,7 @@ export const RegisterPage: React.FC = () => {
               </label>
               <input
                 type="text"
-                placeholder="Kathmandu"
+                placeholder="Pokhara"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:border-forest-600 outline-none"
@@ -193,7 +193,7 @@ export const RegisterPage: React.FC = () => {
             </label>
             <input
               type="text"
-              placeholder="e.g. Lazimpat-2, near Radisson"
+              placeholder="e.g. Arghau Chowk, near RJ Flowers"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:border-forest-600 outline-none"

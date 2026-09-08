@@ -20,8 +20,8 @@ export const CategoryDetailPage: React.FC = () => {
     ? slug.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
     : 'Plants';
 
-  const seoTitle = `${categoryName} Plants & Floral Arrangements — Shop Online | KtmBotanica`;
-  const seoDescription = `Explore fresh ${categoryName.toLowerCase()} with valley-wide home delivery in Kathmandu, Lalitpur, and Pokhara from KtmBotanica Nursery.`;
+  const seoTitle = `${categoryName} Plants & Floral Arrangements — Shop Online | RJ Flowers`;
+  const seoDescription = `Explore fresh ${categoryName.toLowerCase()} with home delivery across Pokhara from RJ Flowers Nursery.`;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-6 pb-24">
@@ -48,7 +48,7 @@ export const CategoryDetailPage: React.FC = () => {
             {categoryName}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            {categoryData?.meta?.total || 0} plants available for Kathmandu delivery
+            {categoryData?.meta?.total || 0} plants available for Pokhara delivery
           </p>
         </div>
 

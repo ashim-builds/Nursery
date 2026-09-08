@@ -81,7 +81,7 @@ export const HomePage: React.FC = () => {
     name: siteSettings?.businessName || 'RJ Flowers',
     image:
       'https://images.unsplash.com/photo-1545241047-6083a3684587?auto=format&fit=crop&w=1200&q=80',
-    url: 'https://ktmbotanica.com',
+    url: 'https://rjflowers.com',
     telephone: siteSettings?.phone ? `+977-${siteSettings.phone}` : '+977-9800000000',
     priceRange: 'रू 200 - रू 25,000',
     address: {
@@ -119,7 +119,7 @@ export const HomePage: React.FC = () => {
           <div className="lg:col-span-7 space-y-4 sm:space-y-6">
             <div className="inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-3.5 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md">
               <Sprout size={14} className="text-emerald-400" />
-              <span>Kathmandu’s Premier Botanical Nursery</span>
+              <span>Pokhara’s Local Flower & Plant Nursery</span>
             </div>
 
             <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.15]">
@@ -187,7 +187,7 @@ export const HomePage: React.FC = () => {
             </div>
             <div>
               <h3 className="font-serif font-bold text-base sm:text-lg text-white">
-                Install KtmBotanica App
+                Install RJ Flowers App
               </h3>
               <p className="text-xs text-forest-200 mt-0.5">
                 Fast 1-tap plant shopping & live delivery tracking directly from your phone home

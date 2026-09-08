@@ -65,12 +65,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         <div className="flex items-center gap-2.5">
           <img
             src="/icon-192.png"
-            alt="KtmBotanica Logo"
+            alt="RJ Flowers Logo"
             className="w-9 h-9 rounded-xl object-cover border border-emerald-500/40 shadow-inner"
           />
           <div>
             <div className="font-serif font-bold text-sm text-white tracking-wide">
-              KtmBotanica Admin
+              RJ Flowers Admin
             </div>
             <div className="text-[10px] text-emerald-400 font-medium">Control Panel</div>
           </div>

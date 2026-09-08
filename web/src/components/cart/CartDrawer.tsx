@@ -62,7 +62,7 @@ export const CartDrawer: React.FC = () => {
               <span className="flex items-center gap-1.5">
                 <Truck size={14} className="text-emerald-400" />
                 {remainingForFree === 0 ? (
-                  <span className="text-emerald-300 font-bold">🎉 Free Delivery in Kathmandu Valley unlocked!</span>
+                  <span className="text-emerald-300 font-bold">🎉 Free Pokhara delivery unlocked!</span>
                 ) : (
                   <span>Add <strong>रू {remainingForFree.toLocaleString()}</strong> for Free Delivery</span>
                 )}
@@ -183,7 +183,7 @@ export const CartDrawer: React.FC = () => {
                   <span className="font-semibold text-slate-900">रू {subtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Delivery (Kathmandu Valley):</span>
+                  <span>Delivery (Pokhara):</span>
                   <span className="font-semibold text-slate-900">
                     {deliveryFee === 0 ? <span className="text-emerald-600 font-bold">FREE</span> : `रू ${deliveryFee}`}
                   </span>

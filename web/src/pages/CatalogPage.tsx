@@ -49,9 +49,9 @@ export const CatalogPage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 pb-24">
       {/* Dynamic SEO Meta */}
       <SEO
-        title={search ? `Search: "${search}" | KtmBotanica Shop` : 'Shop All Plants & Planters | KtmBotanica'}
-        description="Browse our complete collection of healthy indoor plants, outdoor shrubs, flowers, and ceramic pots in Kathmandu."
-        canonical="https://ktmbotanica.com/catalog"
+        title={search ? `Search: "${search}" | RJ Flowers Shop` : 'Shop All Plants & Flowers | RJ Flowers'}
+        description="Browse our collection of healthy plants, flowers, and nursery products available for delivery across Pokhara."
+        canonical="https://rjflowers.com/catalog"
       />
 
       {/* Header Title & Search */}

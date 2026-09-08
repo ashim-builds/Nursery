@@ -172,8 +172,8 @@ export const ProductDetailPage: React.FC = () => {
   };
 
   // Generate structured product data
-  const seoTitle = `${product.title}${selectedVariant ? ' — ' + selectedVariant.name : ''} — NPR ${currentPrice.toLocaleString()} | KtmBotanica Nursery`;
-  const seoDescription = product.shortDescription || product.fullDescription || `Buy ${product.title} online with same-day Kathmandu Valley delivery and botanical care advice from KtmBotanica.`;
+  const seoTitle = `${product.title}${selectedVariant ? ' — ' + selectedVariant.name : ''} — NPR ${currentPrice.toLocaleString()} | RJ Flowers Nursery`;
+  const seoDescription = product.shortDescription || product.fullDescription || `Buy ${product.title} online with delivery across Pokhara from RJ Flowers.`;
   const primaryImageUrl = images[0]?.url || 'https://images.unsplash.com/photo-1545241047-6083a3684587?auto=format&fit=crop&w=1200&q=80';
 
   const productSchema = {
@@ -185,11 +185,11 @@ export const ProductDetailPage: React.FC = () => {
     sku: product.sku,
     brand: {
       '@type': 'Brand',
-      name: 'KtmBotanica Nursery',
+      name: 'RJ Flowers',
     },
     offers: {
       '@type': 'Offer',
-      url: `https://ktmbotanica.com/product/${product.slug}`,
+      url: `https://rjflowers.com/product/${product.slug}`,
       priceCurrency: 'NPR',
       price: currentPrice,
       priceValidUntil: '2027-12-31',
@@ -197,7 +197,7 @@ export const ProductDetailPage: React.FC = () => {
       availability: selectedVariant && selectedVariant.stockQuantity > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       seller: {
         '@type': 'Organization',
-        name: 'KtmBotanica Nursery & Florist',
+        name: 'RJ Flowers and Nursery',
       },
     },
     aggregateRating: {
@@ -217,7 +217,7 @@ export const ProductDetailPage: React.FC = () => {
         description={seoDescription}
         ogType="product"
         ogImage={primaryImageUrl}
-        canonical={`https://ktmbotanica.com/product/${product.slug}`}
+        canonical={`https://rjflowers.com/product/${product.slug}`}
         structuredData={productSchema}
       />
 
