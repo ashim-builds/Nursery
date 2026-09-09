@@ -126,24 +126,15 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ variant 
 
   const getNotificationIcon = (type: NotificationType) => {
     switch (type) {
-      case 'ORDER_CREATED':
-      case 'ORDER_PROCESSING':
+      case 'ORDER_STATUS':
         return <Clock className="text-amber-500" size={16} />;
-      case 'ORDER_CONFIRMED':
-      case 'ORDER_READY':
+      case 'PROMOTION':
         return <Package className="text-emerald-500" size={16} />;
-      case 'ORDER_OUT_FOR_DELIVERY':
-        return <Truck className="text-sky-500" size={16} />;
-      case 'ORDER_DELIVERED':
-      case 'ORDER_COMPLETED':
-        return <CheckCircle2 className="text-emerald-600" size={16} />;
-      case 'ORDER_CANCELLED':
-        return <XCircle className="text-rose-500" size={16} />;
-      case 'PAYMENT_RECEIVED':
-        return <CreditCard className="text-indigo-500" size={16} />;
-      case 'LOW_STOCK':
+      case 'INVENTORY_ALERT':
         return <AlertTriangle className="text-rose-600" size={16} />;
-      case 'SYSTEM_ALERT':
+      case 'CARE_REMINDER':
+        return <Sparkles className="text-sky-500" size={16} />;
+      case 'SYSTEM':
       default:
         return <Info className="text-slate-500" size={16} />;
     }

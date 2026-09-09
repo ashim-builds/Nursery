@@ -139,9 +139,6 @@ GOOGLE_CALLBACK_URL=https://ktmbotanica.com/api/auth/google/callback
 UPLOAD_DIR=/home/ktmbota/public_html/uploads
 UPLOAD_BASE_URL=/uploads
 
-# Payment Gateways (Nepal Production Keys)
-ESEWA_PRODUCT_CODE=YOUR_MERCHANT_CODE
-ESEWA_SECRET_KEY=YOUR_PRODUCTION_SECRET
 ```
 
 ---
@@ -175,7 +172,7 @@ In cPanel Node.js App Manager:
 3. **Image Upload & Serving**:
    Log into `/admin`, upload a product image, and verify the file appears in `/home/ktmbota/public_html/uploads/products/` and renders correctly in the browser.
 4. **Checkout & Payment**:
-   Place a test Cash on Delivery or eSewa order.
+   Place a test Cash on Delivery or supported digital payment order.
 5. **SSL & Security**:
    Ensure SSL certificate is active (HTTPS enforced).
 

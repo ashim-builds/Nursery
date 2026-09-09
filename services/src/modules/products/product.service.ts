@@ -218,7 +218,7 @@ export class ProductService {
         dimensions: p.dimensions,
         weight: p.weight,
         category: p.category,
-        images: p.images.map((img) => ({
+        images: p.images.filter((img) => img.url.trim().length > 0).map((img) => ({
           id: img.id,
           url: img.url,
           altText: img.altText,
@@ -367,7 +367,7 @@ export class ProductService {
       dimensions: product.dimensions,
       weight: product.weight,
       category: product.category,
-      images: product.images.map((img) => ({
+      images: product.images.filter((img) => img.url.trim().length > 0).map((img) => ({
         id: img.id,
         url: img.url,
         altText: img.altText,
@@ -548,14 +548,35 @@ export class ProductService {
     const product = await prisma.product.findUnique({ where: { id } });
     if (!product) throw ApiError.notFound('Product not found');
 
-    const updated = await prisma.product.update({
-      where: { id },
-      data,
-      include: {
-        images: true,
-        variants: { include: { inventory: true } },
-        category: true,
-      },
+    const { images, ...productData } = data;
+    const updated = await prisma.$transaction(async (tx) => {
+      if (images) {
+        await tx.productImage.deleteMany({ where: { productId: id } });
+      }
+
+      return tx.product.update({
+        where: { id },
+        data: {
+          ...productData,
+          ...(images
+            ? {
+                images: {
+                  create: images.map((image: any, index: number) => ({
+                    url: image.url,
+                    altText: image.altText || product.name,
+                    isPrimary: image.isPrimary ?? index === 0,
+                    sortOrder: image.sortOrder ?? index + 1,
+                  })),
+                },
+              }
+            : {}),
+        },
+        include: {
+          images: true,
+          variants: { include: { inventory: true } },
+          category: true,
+        },
+      });
     });
 
     await prisma.auditLog.create({

@@ -4,6 +4,7 @@ import { ApiResponse } from '../../utils/ApiResponse.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { AuthenticatedRequest } from '../../middlewares/auth.middleware.js';
 import { PaymentMethod } from '@prisma/client';
+import { ApiError } from '../../utils/ApiError.js';
 
 export class PaymentController {
   static createPayment = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -26,7 +27,10 @@ export class PaymentController {
 
   static webhook = asyncHandler(async (req: Request, res: Response) => {
     const methodQuery = req.query.method as string;
-    const method = (methodQuery ? methodQuery.toUpperCase() : PaymentMethod.ESEWA) as PaymentMethod;
+    if (!methodQuery) {
+      throw ApiError.badRequest('Payment method is required');
+    }
+    const method = methodQuery.toUpperCase() as PaymentMethod;
     const result = await PaymentService.processWebhook(method, req.headers, req.body);
     res.status(200).json(ApiResponse.success(result, 'Webhook processed successfully'));
   });

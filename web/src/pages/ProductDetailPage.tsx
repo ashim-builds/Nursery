@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { VariantSelector } from '../components/product/VariantSelector';
 import { CareRequirementsMeter } from '../components/product/CareRequirementsMeter';
 import { RatingStars } from '../components/common/RatingStars';
-import { CloudinaryImage } from '../components/common/CloudinaryImage';
+import { DatabaseImage } from '../components/common/DatabaseImage';
 import { SEO } from '../components/common/SEO';
 import { 
   ShoppingBag, 
@@ -242,9 +242,9 @@ export const ProductDetailPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
           {/* Left Column: Image Gallery */}
           <div className="lg:col-span-6 space-y-3">
-            {/* Primary Image with Cloudinary detail preset */}
+            {/* Primary image served from database storage */}
             <div className="relative aspect-square rounded-3xl overflow-hidden bg-forest-50/50 border border-forest-100 shadow-soft">
-              <CloudinaryImage
+              <DatabaseImage
                 src={images[activeImageIndex]?.url || images[0].url}
                 alt={product.title}
                 preset="detail"
@@ -270,7 +270,7 @@ export const ProductDetailPage: React.FC = () => {
                         : 'border-slate-200 opacity-70 hover:opacity-100'
                     }`}
                   >
-                    <CloudinaryImage src={img.url} alt="" preset="thumbnail" className="w-full h-full object-cover" />
+                    <DatabaseImage src={img.url} alt="" preset="thumbnail" className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -564,7 +564,7 @@ export const ProductDetailPage: React.FC = () => {
                     </label>
                     <input
                       type="text"
-                      placeholder="https://res.cloudinary.com/... or image link"
+                      placeholder="https://... or image link"
                       value={reviewPhotoUrl}
                       onChange={(e) => setReviewPhotoUrl(e.target.value)}
                       className="w-full px-3.5 py-2 text-xs font-mono border border-slate-300 rounded-xl focus:border-forest-700 focus:outline-none bg-slate-50 focus:bg-white"

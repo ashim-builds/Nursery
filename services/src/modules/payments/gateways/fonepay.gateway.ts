@@ -21,7 +21,7 @@ export class FonepayPaymentGateway implements IPaymentGateway {
       paymentMethod: PaymentMethod.FONEPAY_QR,
       qrData: qrPayload,
       transactionReference: traceId,
-      instructions: `Scan the Fonepay dynamic QR code using any Nepali mobile banking app (eSewa, Global Smart, NIC Asia MoBank, Siddhartha Bank, etc.) to pay Rs. ${req.amount.toLocaleString()}.`,
+      instructions: `Scan the Fonepay dynamic QR code using any supported Nepali mobile banking app to pay Rs. ${req.amount.toLocaleString()}.`,
       metadata: {
         traceId,
         amount: req.amount,

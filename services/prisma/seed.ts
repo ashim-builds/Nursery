@@ -129,7 +129,6 @@ async function main() {
       slug: 'monstera-deliciosa',
       sku: 'NUR-MON-01',
       basePrice: 1200,
-      image: '/hero-plant.jpg',
       shortDescription: 'Lush tropical indoor foliage with iconic split leaves.',
     },
     {
@@ -137,7 +136,6 @@ async function main() {
       slug: 'fiddle-leaf-fig',
       sku: 'NUR-FID-02',
       basePrice: 1800,
-      image: 'https://images.unsplash.com/photo-1545241047-6083a3684587?auto=format&fit=crop&w=800&q=80',
       shortDescription: 'Stately violin-shaped green foliage for bright living rooms.',
     },
     {
@@ -145,7 +143,6 @@ async function main() {
       slug: 'golden-money-plant',
       sku: 'NUR-POT-03',
       basePrice: 450,
-      image: 'https://images.unsplash.com/photo-1596724817757-1901414457e5?auto=format&fit=crop&w=800&q=80',
       shortDescription: 'Hardy trailing plant that brings lush green vibrancy.',
     },
     {
@@ -153,7 +150,6 @@ async function main() {
       slug: 'snake-plant-sansevieria',
       sku: 'NUR-SNK-04',
       basePrice: 750,
-      image: 'https://images.unsplash.com/photo-1509423350716-97f9360b4e09?auto=format&fit=crop&w=800&q=80',
       shortDescription: 'Top-rated NASA air purifier that thrives on neglect.',
     },
     {
@@ -161,7 +157,6 @@ async function main() {
       slug: 'peace-lily-plant',
       sku: 'NUR-LIL-05',
       basePrice: 850,
-      image: 'https://images.unsplash.com/photo-1593482892290-f54927ae1bf6?auto=format&fit=crop&w=800&q=80',
       shortDescription: 'Deep emerald leaves with elegant white blooms.',
     },
     {
@@ -169,7 +164,6 @@ async function main() {
       slug: 'areca-palm',
       sku: 'NUR-PLM-06',
       basePrice: 1100,
-      image: 'https://images.unsplash.com/photo-1614594975525-e45190c55d0b?auto=format&fit=crop&w=800&q=80',
       shortDescription: 'Feathery tropical fronds that naturally humidify room air.',
     },
     {
@@ -177,7 +171,6 @@ async function main() {
       slug: 'rubber-plant-burgundy',
       sku: 'NUR-RUB-07',
       basePrice: 950,
-      image: 'https://images.unsplash.com/photo-1512428813834-c702c7702b78?auto=format&fit=crop&w=800&q=80',
       shortDescription: 'Glossy dark burgundy foliage with bold modern presence.',
     },
     {
@@ -185,12 +178,12 @@ async function main() {
       slug: 'flowering-rose-plant',
       sku: 'NUR-ROS-08',
       basePrice: 650,
-      image: 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?auto=format&fit=crop&w=800&q=80',
       shortDescription: 'Fragrant perennial blooming roses for balconies and gardens.',
     },
   ];
 
-  for (const item of initialProducts) {
+  // Products are created only through the admin upload workflow.
+  for (const item of initialProducts.slice(0, 0)) {
     await prisma.product.create({
       data: {
         name: item.name,
@@ -203,16 +196,6 @@ async function main() {
         available: true,
         featured: true,
         published: true,
-        images: {
-          create: [
-            {
-              url: item.image,
-              altText: item.name,
-              isPrimary: true,
-              sortOrder: 1,
-            },
-          ],
-        },
         variants: {
           create: [
             {
@@ -235,7 +218,7 @@ async function main() {
     });
   }
 
-  console.log('✅ Created 8 Auto-Featured Nursery Plants in MySQL');
+  console.log('✅ Skipped automatic product seed; add plants from the admin panel');
 
   // 6. Initial Audit Log
   await prisma.auditLog.create({
@@ -244,7 +227,7 @@ async function main() {
       action: 'DATABASE_INITIALIZED',
       resource: 'Database',
       details: {
-        message: 'Fresh database initialized with 8 auto-featured plants.',
+        message: 'Fresh database initialized without automatic products or images.',
         timestamp: new Date().toISOString(),
       },
     },

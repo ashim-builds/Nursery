@@ -214,16 +214,13 @@ export const AdminDashboardPage: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <span className="text-slate-500">Status:</span>
                     <select
-                      value={order.orderStatus}
+                      value={['PENDING', 'DELIVERED', 'CANCELLED'].includes(order.orderStatus) ? order.orderStatus : 'PENDING'}
                       onChange={(e) =>
                         statusMutation.mutate({ orderId: order.id, status: e.target.value as OrderStatus })
                       }
                       className="bg-white border border-slate-300 font-bold text-xs px-2.5 py-1 rounded-xl text-forest-900 focus:outline-none cursor-pointer"
                     >
                       <option value="PENDING">PENDING</option>
-                      <option value="CONFIRMED">CONFIRMED</option>
-                      <option value="PACKING">PACKING</option>
-                      <option value="OUT_FOR_DELIVERY">OUT FOR DELIVERY</option>
                       <option value="DELIVERED">DELIVERED</option>
                       <option value="CANCELLED">CANCELLED</option>
                     </select>

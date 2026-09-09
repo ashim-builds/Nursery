@@ -19,12 +19,13 @@ import { NotificationService } from '../notifications/notification.service.js';
 const idempotencyStore = new Map<string, { orderId: string; response: any; timestamp: number }>();
 
 const ALLOWED_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  PENDING: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
-  CONFIRMED: [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
-  PROCESSING: [OrderStatus.READY, OrderStatus.CANCELLED],
-  READY: [OrderStatus.OUT_FOR_DELIVERY, OrderStatus.CANCELLED],
+  PENDING: [OrderStatus.DELIVERED, OrderStatus.CANCELLED],
+  // Legacy in-progress rows remain updatable after the workflow is simplified.
+  CONFIRMED: [OrderStatus.DELIVERED, OrderStatus.CANCELLED],
+  PROCESSING: [OrderStatus.DELIVERED, OrderStatus.CANCELLED],
+  READY: [OrderStatus.DELIVERED, OrderStatus.CANCELLED],
   OUT_FOR_DELIVERY: [OrderStatus.DELIVERED, OrderStatus.CANCELLED],
-  DELIVERED: [OrderStatus.COMPLETED],
+  DELIVERED: [],
   COMPLETED: [],
   CANCELLED: [],
 };
@@ -256,7 +257,7 @@ export class OrderService {
             userId,
             orderSource: OrderSource.CUSTOMER_WEB,
             orderType: OrderType.DELIVERY,
-            status: OrderStatus.CONFIRMED,
+            status: OrderStatus.PENDING,
             subtotal,
             discountAmount,
             deliveryFee,
@@ -304,7 +305,7 @@ export class OrderService {
               create: [
                 {
                   fromStatus: OrderStatus.PENDING,
-                  toStatus: OrderStatus.CONFIRMED,
+                  toStatus: OrderStatus.PENDING,
                   comment: 'Order placed via secure checkout with inventory lock & price calculation',
                   changedByUserId: userId,
                 },

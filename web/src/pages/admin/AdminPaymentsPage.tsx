@@ -39,7 +39,7 @@ export const AdminPaymentsPage: React.FC = () => {
             <span>Payment Transactions Ledger</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Reconcile digital payment gateways (eSewa, Khalti, FonePay) and Cash On Delivery collections.
+            Reconcile digital payment gateways (Khalti, FonePay) and Cash On Delivery collections.
           </p>
         </div>
 
@@ -79,7 +79,6 @@ export const AdminPaymentsPage: React.FC = () => {
           >
             <option value="">All Gateways</option>
             <option value="CASH">Cash On Delivery</option>
-            <option value="ESEWA">eSewa</option>
             <option value="KHALTI">Khalti</option>
             <option value="FONEPAY_QR">Fonepay QR</option>
             <option value="CARD">Debit / Credit Card</option>

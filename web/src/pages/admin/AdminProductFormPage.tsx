@@ -187,6 +187,15 @@ export const AdminProductFormPage: React.FC = () => {
       ],
     };
 
+    if (isEdit) {
+      payload.images = finalImages.map((image) => ({
+        url: image.url,
+        altText: image.altText || name,
+        isPrimary: image.isPrimary ?? false,
+        sortOrder: image.sortOrder ?? 0,
+      }));
+    }
+
     mutation.mutate(payload);
   };
 

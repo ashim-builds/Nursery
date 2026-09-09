@@ -54,6 +54,23 @@ export class CategoryService {
   }
 
   static async delete(id: string) {
+    const category = await prisma.category.findUnique({
+      where: { id },
+      include: { _count: { select: { products: true, children: true } } },
+    });
+
+    if (!category) throw ApiError.notFound('Category not found');
+    if (category._count.products > 0) {
+      throw ApiError.conflict(
+        `Cannot delete "${category.name}" while ${category._count.products} product(s) use it. Move or delete those products first.`
+      );
+    }
+    if (category._count.children > 0) {
+      throw ApiError.conflict(
+        `Cannot delete "${category.name}" while it has child categories. Move or delete the child categories first.`
+      );
+    }
+
     return prisma.category.delete({
       where: { id },
     });

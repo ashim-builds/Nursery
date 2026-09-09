@@ -30,7 +30,7 @@ export const PrivacyPage: React.FC = () => {
 
         <h2 className="font-serif font-bold text-base text-slate-900 pt-2">2. Payment Security</h2>
         <p>
-          We do not store your digital wallet passwords or full credit card details. All online transactions (eSewa, Khalti, Fonepay QR) are securely processed via encrypted server-side verification channels.
+          We do not store your digital wallet passwords or full credit card details. All online transactions (Khalti, Fonepay QR, and cards) are securely processed via encrypted server-side verification channels.
         </p>
 
         <h2 className="font-serif font-bold text-base text-slate-900 pt-2">3. Address Snapshots & Data Retention</h2>

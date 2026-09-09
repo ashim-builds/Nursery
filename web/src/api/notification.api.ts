@@ -1,17 +1,11 @@
 import { apiClient } from './client';
 
 export type NotificationType =
-  | 'ORDER_CREATED'
-  | 'ORDER_CONFIRMED'
-  | 'ORDER_PROCESSING'
-  | 'ORDER_READY'
-  | 'ORDER_OUT_FOR_DELIVERY'
-  | 'ORDER_DELIVERED'
-  | 'ORDER_COMPLETED'
-  | 'ORDER_CANCELLED'
-  | 'PAYMENT_RECEIVED'
-  | 'LOW_STOCK'
-  | 'SYSTEM_ALERT';
+  | 'ORDER_STATUS'
+  | 'CARE_REMINDER'
+  | 'INVENTORY_ALERT'
+  | 'PROMOTION'
+  | 'SYSTEM';
 
 export interface AppNotification {
   id: string;

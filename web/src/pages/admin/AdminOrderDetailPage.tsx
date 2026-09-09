@@ -39,6 +39,11 @@ export const AdminOrderDetailPage: React.FC = () => {
     enabled: !!id,
   });
 
+  const visibleOrderStatus: OrderStatus =
+    order && ['PENDING', 'DELIVERED', 'CANCELLED'].includes(order.orderStatus)
+      ? order.orderStatus
+      : 'PENDING';
+
   const updateMutation = useMutation({
     mutationFn: (data: { orderStatus?: OrderStatus; paymentStatus?: PaymentStatus; deliveryNotes?: string }) =>
       adminApi.updateOrderStatus(id!, data),
@@ -55,7 +60,7 @@ export const AdminOrderDetailPage: React.FC = () => {
 
   const handleUpdate = () => {
     updateMutation.mutate({
-      orderStatus: (selectedStatus || order?.orderStatus) as OrderStatus,
+      orderStatus: (selectedStatus || visibleOrderStatus) as OrderStatus,
       paymentStatus: (selectedPaymentStatus || order?.paymentStatus) as PaymentStatus,
       deliveryNotes: adminNotes || undefined,
     });
@@ -249,17 +254,12 @@ export const AdminOrderDetailPage: React.FC = () => {
                   Order Status Pipeline
                 </label>
                 <select
-                  value={selectedStatus || order.orderStatus}
+                  value={selectedStatus || visibleOrderStatus}
                   onChange={(e) => setSelectedStatus(e.target.value as OrderStatus)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:border-forest-700"
                 >
                   <option value="PENDING">PENDING (New)</option>
-                  <option value="CONFIRMED">CONFIRMED (Payment Verified)</option>
-                  <option value="PROCESSING">PROCESSING (Greenhouse Intake)</option>
-                  <option value="READY">READY (Packed with Care Guide)</option>
-                  <option value="OUT_FOR_DELIVERY">OUT FOR DELIVERY (With Rider)</option>
                   <option value="DELIVERED">DELIVERED (Fulfilled)</option>
-                  <option value="COMPLETED">COMPLETED</option>
                   <option value="CANCELLED">CANCELLED (Restock items)</option>
                 </select>
               </div>

@@ -89,7 +89,6 @@ enum DeliveryStatus {
 enum PaymentMethod {
   CASH
   FONEPAY_QR
-  ESEWA
   KHALTI
   CARD
   ONLINE

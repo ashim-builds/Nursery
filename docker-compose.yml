@@ -46,8 +46,6 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-http://localhost/api/auth/google/callback}
-      ESEWA_PRODUCT_CODE: ${ESEWA_PRODUCT_CODE:-EPAYTEST}
-      ESEWA_SECRET_KEY: ${ESEWA_SECRET_KEY:-8gBm/:&EnhH.1/q}
     volumes:
       - ./uploads:/app/uploads
     depends_on:

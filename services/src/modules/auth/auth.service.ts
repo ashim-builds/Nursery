@@ -158,7 +158,7 @@ export class AuthService {
       });
     }
 
-    const isValid = password === 'admin123' || (await bcrypt.compare(password, admin.passwordHash));
+    const isValid = await bcrypt.compare(password, admin.passwordHash);
     if (!isValid) {
       throw ApiError.unauthorized('Incorrect admin password');
     }

@@ -1,22 +1,14 @@
 export type OrderStatus =
   | 'PENDING'
-  | 'CONFIRMED'
-  | 'PROCESSING'
-  | 'PACKING'
-  | 'READY'
-  | 'OUT_FOR_DELIVERY'
   | 'DELIVERED'
-  | 'COMPLETED'
   | 'CANCELLED';
 
 export type PaymentMethod =
   | 'CASH'
   | 'CASH_ON_DELIVERY'
   | 'FONEPAY_QR'
-  | 'ESEWA'
   | 'KHALTI'
   | 'CARD'
-  | 'ONLINE'
   | 'BANK_TRANSFER';
 
 export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED' | 'PARTIALLY_REFUNDED';

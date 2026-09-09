@@ -161,20 +161,12 @@ export class PaymentService {
           });
         }
 
-        // If order was PENDING, promote to CONFIRMED / PROCESSING
-        if (order.status === OrderStatus.PENDING) {
-          await tx.order.update({
-            where: { id: order.id },
-            data: { status: OrderStatus.CONFIRMED },
-          });
-        }
-
         // Add immutable OrderStatusHistory
         await tx.orderStatusHistory.create({
           data: {
             orderId: order.id,
             fromStatus: order.status,
-            toStatus: order.status === OrderStatus.PENDING ? OrderStatus.CONFIRMED : order.status,
+            toStatus: order.status,
             comment: `Online payment of Rs. ${Number(payment.amount).toLocaleString()} verified via ${paymentMethod} (${verification.transactionReference})`,
             changedByUserId: data.userId,
           },

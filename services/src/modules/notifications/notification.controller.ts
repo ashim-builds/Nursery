@@ -4,6 +4,7 @@ import { ApiResponse } from '../../utils/ApiResponse.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { AuthenticatedRequest } from '../../middlewares/auth.middleware.js';
 import { ApiError } from '../../utils/ApiError.js';
+import { ENV } from '../../config/env.js';
 
 export class NotificationController {
   // 1. Get logged in user's notifications
@@ -88,7 +89,10 @@ export class NotificationController {
 
   // 7. Get VAPID Public Key for client subscription
   static getVapidPublicKey = asyncHandler(async (req: Request, res: Response) => {
-    const publicKey = process.env.VAPID_PUBLIC_KEY || 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjB-Z_T4iA6_K4n8gB7C3s1xZ1h0A';
+    const publicKey = ENV.VAPID_PUBLIC_KEY;
+    if (!publicKey) {
+      throw ApiError.badRequest('Browser push notifications are not configured on this server');
+    }
     res.status(200).json(ApiResponse.success({ publicKey }, 'VAPID public key retrieved'));
   });
 }

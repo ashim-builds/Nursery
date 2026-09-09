@@ -185,11 +185,17 @@ export const AdminProductsPage: React.FC = () => {
                   <tr key={p.id} className="hover:bg-sand-50/40 transition-colors">
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">
-                        <img
-                          src={p.images?.[0]?.url || 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=100&auto=format&fit=crop'}
-                          alt={p.title}
-                          className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0"
-                        />
+                        {p.images?.[0]?.url ? (
+                          <img
+                            src={p.images[0].url}
+                            alt={p.title}
+                            className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-xl border border-dashed border-slate-300 bg-slate-50 text-[9px] text-slate-400 flex items-center justify-center text-center shrink-0">
+                            No image
+                          </div>
+                        )}
                         <div>
                           <div className="font-bold text-slate-900">{p.title}</div>
                           {p.botanicalName && (
@@ -264,11 +270,17 @@ export const AdminProductsPage: React.FC = () => {
                 className="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs space-y-3 text-xs"
               >
                 <div className="flex items-start gap-3">
-                  <img
-                    src={p.images?.[0]?.url || 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=100&auto=format&fit=crop'}
-                    alt={p.title}
-                    className="w-14 h-14 rounded-2xl object-cover border border-slate-200 shrink-0"
-                  />
+                  {p.images?.[0]?.url ? (
+                    <img
+                      src={p.images[0].url}
+                      alt={p.title}
+                      className="w-14 h-14 rounded-2xl object-cover border border-slate-200 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-14 h-14 rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-[10px] text-slate-400 flex items-center justify-center text-center shrink-0">
+                      No image
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-sm text-slate-900 truncate">{p.title}</h3>
                     {p.botanicalName && (

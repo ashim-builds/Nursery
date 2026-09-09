@@ -51,7 +51,7 @@ export const createProductSchema = z.object({
     weight: z.number().optional(),
     images: z.array(
       z.object({
-        url: z.string(),
+        url: z.string().trim().min(1, 'Image URL is required'),
         altText: z.string().optional(),
         isPrimary: z.boolean().default(false),
         sortOrder: z.number().int().default(0),
@@ -101,6 +101,14 @@ export const updateProductSchema = z.object({
     difficultyLevel: z.enum(['EASY', 'MODERATE', 'CHALLENGING']).optional(),
     dimensions: z.string().optional(),
     weight: z.number().optional(),
+    images: z.array(
+      z.object({
+        url: z.string().trim().min(1, 'Image URL is required'),
+        altText: z.string().optional(),
+        isPrimary: z.boolean().default(false),
+        sortOrder: z.number().int().default(0),
+      })
+    ).optional(),
   }),
 });
 
@@ -138,7 +146,7 @@ export const createCategorySchema = z.object({
   body: z.object({
     name: z.string().min(2, 'Category name is required'),
     description: z.string().optional(),
-    imageUrl: z.string().url().optional(),
+    imageUrl: z.string().trim().min(1).optional(),
     parentId: z.string().uuid().optional().nullable(),
     displayOrder: z.number().int().default(0),
     isActive: z.boolean().default(true),
@@ -152,7 +160,7 @@ export const updateCategorySchema = z.object({
   body: z.object({
     name: z.string().min(2).optional(),
     description: z.string().optional(),
-    imageUrl: z.string().url().optional(),
+    imageUrl: z.string().trim().min(1).optional(),
     parentId: z.string().uuid().optional().nullable(),
     displayOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),

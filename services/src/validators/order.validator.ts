@@ -29,7 +29,7 @@ export const createOrderSchema = z.object({
     scheduledDeliveryDate: z.string().optional(),
     giftMessage: z.string().optional(),
     deliveryNotes: z.string().optional(),
-    paymentMethod: z.enum(['CASH', 'FONEPAY_QR', 'ESEWA', 'KHALTI', 'CARD', 'ONLINE']).default('CASH'),
+    paymentMethod: z.enum(['CASH', 'FONEPAY_QR', 'KHALTI', 'CARD']).default('CASH'),
     items: z
       .array(
         z.object({
@@ -59,12 +59,7 @@ export const updateOrderStatusSchema = z.object({
     orderStatus: z
       .enum([
         'PENDING',
-        'CONFIRMED',
-        'PROCESSING',
-        'READY',
-        'OUT_FOR_DELIVERY',
         'DELIVERED',
-        'COMPLETED',
         'CANCELLED',
       ])
       .optional(),
@@ -86,12 +81,7 @@ export const orderQuerySchema = z.object({
     status: z
       .enum([
         'PENDING',
-        'CONFIRMED',
-        'PROCESSING',
-        'READY',
-        'OUT_FOR_DELIVERY',
         'DELIVERED',
-        'COMPLETED',
         'CANCELLED',
       ])
       .optional(),

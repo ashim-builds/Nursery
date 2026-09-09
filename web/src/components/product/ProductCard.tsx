@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Product } from '../../types/product';
 import { CareBadge } from '../common/CareBadge';
+import { DatabaseImage } from '../common/DatabaseImage';
 import { useCart } from '../../context/CartContext';
 import { useUI } from '../../context/UIContext';
 import { Plus, Check, X } from 'lucide-react';
@@ -14,10 +15,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
   const { showToast } = useUI();
 
-  const primaryImage =
-    Array.isArray(product.images) && product.images.length > 0
-      ? product.images.find((img) => img.isPrimary)?.url || product.images[0].url
-      : 'https://images.unsplash.com/photo-1545241047-6083a3684587?auto=format&fit=crop&w=600&q=80';
+  const primaryImage = Array.isArray(product.images) && product.images.length > 0
+    ? product.images.find((img) => img.isPrimary)?.url || product.images[0].url
+    : null;
 
   const defaultVariant = product.variants?.find((v) => v.isDefault) || product.variants?.[0];
   const basePriceNum = Number(product.basePrice);
@@ -49,7 +49,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         to={`/products/${product.slug}`}
         className="relative block aspect-square overflow-hidden bg-sand-50/60"
       >
-        <img
+        <DatabaseImage
           src={primaryImage}
           alt={product.title}
           loading="lazy"

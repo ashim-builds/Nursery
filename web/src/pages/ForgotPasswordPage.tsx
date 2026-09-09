@@ -1,18 +1,16 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useUI } from '../context/UIContext';
-import { Sprout, Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Sprout, Mail, ArrowLeft, Info } from 'lucide-react';
 
 export const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState('');
-  const [submitted, setSubmitted] = useState(false);
   const { showToast } = useUI();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
-    setSubmitted(true);
-    showToast('Password reset link sent if account exists', 'success');
+    showToast('Password reset by email is not configured yet', 'info');
   };
 
   return (
@@ -28,21 +26,13 @@ export const ForgotPasswordPage: React.FC = () => {
           </p>
         </div>
 
-        {submitted ? (
-          <div className="p-6 bg-forest-50/70 border border-forest-200 rounded-2xl text-center space-y-3">
-            <CheckCircle2 size={32} className="mx-auto text-emerald-600" />
-            <h2 className="font-bold text-sm text-forest-950">Reset Instructions Sent</h2>
+        <div className="p-6 bg-sand-50/70 border border-sand-200 rounded-2xl text-center space-y-3">
+            <Info size={32} className="mx-auto text-amber-600" />
+            <h2 className="font-bold text-sm text-slate-900">Reset email unavailable</h2>
             <p className="text-xs text-slate-600">
-              If an account is associated with <strong>{email}</strong>, you will receive an email shortly with reset steps.
+              SMTP password recovery has not been configured on this server. Please contact an administrator to reset the account.
             </p>
-            <Link
-              to="/login"
-              className="inline-block text-xs font-bold text-forest-800 hover:underline pt-2 min-h-[44px] flex items-center justify-center"
-            >
-              Return to Login
-            </Link>
           </div>
-        ) : (
           <form onSubmit={handleSubmit} className="space-y-4 text-xs">
             <div className="space-y-1">
               <label className="font-bold text-slate-700">Email Address</label>
@@ -66,7 +56,6 @@ export const ForgotPasswordPage: React.FC = () => {
               Send Reset Link
             </button>
           </form>
-        )}
 
         <div className="text-center pt-2">
           <Link
