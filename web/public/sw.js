@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rj-flowers-static-v3';
+const CACHE_NAME = 'rj-flowers-static-v4';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -47,6 +47,8 @@ self.addEventListener('fetch', (event) => {
           if (event.request.headers.get('accept')?.includes('text/html')) {
             return caches.match('/index.html');
           }
+          // Return proper offline response for non-HTML requests
+          return new Response('', { status: 503, statusText: 'Service Unavailable' });
         })
       );
     })
