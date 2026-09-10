@@ -12,30 +12,6 @@ interface LocationPickerMapProps {
   readOnly?: boolean;
 }
 
-const POKHARA_LANDMARKS = [
-  { name: 'Arghau Chowk', city: 'Pokhara', lat: 28.2365, lng: 84.0036 },
-  { name: 'Lakeside Baidam Area', city: 'Pokhara', lat: 28.2096, lng: 83.9595 },
-  { name: 'Mahendrapul', city: 'Pokhara', lat: 28.2185, lng: 83.9884 },
-  { name: 'Bagar', city: 'Pokhara', lat: 28.237, lng: 83.986 },
-];
-
-function getClosestLandmark(lat: number, lng: number) {
-  let closest = POKHARA_LANDMARKS[POKHARA_LANDMARKS.length - 1];
-  let minDistance = Infinity;
-
-  for (const lm of POKHARA_LANDMARKS) {
-    const dLat = lat - lm.lat;
-    const dLng = lng - lm.lng;
-    const dist = dLat * dLat + dLng * dLng;
-    if (dist < minDistance) {
-      minDistance = dist;
-      closest = lm;
-    }
-  }
-
-  return closest;
-}
-
 export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
   latitude = 28.2365,
   longitude = 84.0036,
@@ -65,55 +41,41 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
     let resolvedFormatted = '';
 
     try {
-      // 1. First Tier: BigDataCloud Reverse Geocode (Fast & zero CORS issue)
-      const bdcRes = await fetch(
-        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`
+      // Prefer detailed street-level results so the selected point becomes searchable.
+      const osmRes = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
       );
-      if (bdcRes.ok) {
-        const bdcData = await bdcRes.json();
-        if (bdcData.locality || bdcData.city) {
-          resolvedCity =
-            bdcData.city ||
-            (bdcData.locality && bdcData.locality.includes('Lalitpur') ? 'Lalitpur' : 'Pokhara');
-          resolvedStreet = bdcData.locality || bdcData.principalSubdivision || '';
-          resolvedFormatted = `${resolvedStreet}, ${resolvedCity}`;
-        }
+      if (osmRes.ok) {
+        const osmData = await osmRes.json();
+        const addr = osmData.address || {};
+        const locality = addr.suburb || addr.neighbourhood || addr.quarter || addr.residential || addr.hamlet || '';
+        resolvedStreet = addr.road ? `${addr.road}${locality ? `, ${locality}` : ''}` : locality;
+        resolvedCity =
+          addr.city ||
+          addr.town ||
+          addr.municipality ||
+          addr.county ||
+          addr.state_district ||
+          resolvedCity;
+        resolvedFormatted = osmData.display_name || `${resolvedStreet}, ${resolvedCity}`;
       }
     } catch {
-      // Continue to next tier
+      // Try the secondary provider below.
     }
 
-    // 2. Second Tier: OpenStreetMap Nominatim
     if (!resolvedStreet) {
       try {
-        const osmRes = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+        const bdcRes = await fetch(
+          `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`
         );
-        if (osmRes.ok) {
-          const osmData = await osmRes.json();
-          const addr = osmData.address || {};
-          resolvedStreet =
-            addr.road ||
-            addr.suburb ||
-            addr.neighbourhood ||
-            addr.quarter ||
-            addr.residential ||
-            addr.hamlet ||
-            osmData.display_name?.split(',')[0] ||
-            '';
-
-          resolvedCity =
-            addr.city ||
-            addr.town ||
-            addr.municipality ||
-            addr.county ||
-            addr.state_district ||
-            resolvedCity;
-
-          resolvedFormatted = osmData.display_name || `${resolvedStreet}, ${resolvedCity}`;
+        if (bdcRes.ok) {
+          const bdcData = await bdcRes.json();
+          resolvedCity = bdcData.city || bdcData.locality || resolvedCity;
+          resolvedStreet = bdcData.localityInfo?.administrative?.[3]?.name || '';
+          resolvedFormatted = resolvedStreet ? `${resolvedStreet}, ${resolvedCity}` : '';
         }
       } catch {
-        // Fallback to local landmark
+        // Use the coordinate fallback below.
       }
     }
 
@@ -122,11 +84,9 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
       resolvedStreet = '';
     }
 
-    // 4. Guaranteed Pokhara landmark matcher
+    // 4. Keep the selected point instead of guessing a nearby landmark.
     if (!resolvedStreet) {
-      const fallbackLandmark = getClosestLandmark(lat, lng);
-      resolvedStreet = fallbackLandmark.name;
-      resolvedCity = fallbackLandmark.city;
+      resolvedStreet = `Pinned location (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
       resolvedFormatted = `${resolvedStreet}, ${resolvedCity}`;
     }
 
@@ -189,7 +149,14 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
     mapRef.current = map;
     markerRef.current = marker;
 
+    const resizeObserver = new ResizeObserver(() => {
+      map.invalidateSize({ animate: false });
+    });
+    resizeObserver.observe(mapElementRef.current);
+    requestAnimationFrame(() => map.invalidateSize({ animate: false }));
+
     return () => {
+      resizeObserver.disconnect();
       map.remove();
       mapRef.current = null;
       markerRef.current = null;
@@ -204,6 +171,7 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
     const nextLatLng: L.LatLngExpression = [currentCoords.lat, currentCoords.lng];
     marker.setLatLng(nextLatLng);
     map.setView(nextLatLng, map.getZoom(), { animate: true });
+    requestAnimationFrame(() => map.invalidateSize({ animate: false }));
   }, [currentCoords.lat, currentCoords.lng]);
 
   const handleUseCurrentLocation = () => {
@@ -275,7 +243,7 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
       {/* Interactive Map Box */}
       <div
         ref={mapElementRef}
-        className="relative z-0 w-full h-56 sm:h-64 rounded-2xl overflow-hidden border-2 border-emerald-700/30 bg-slate-100 shadow-inner"
+        className="relative z-0 w-full h-64 sm:h-72 rounded-2xl overflow-hidden border-2 border-emerald-700/30 bg-slate-100 shadow-inner"
         aria-label="Interactive delivery location map"
       />
 

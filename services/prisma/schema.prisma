@@ -582,6 +582,8 @@ model Delivery {
   city            String  @default("Kathmandu")
   area            String?
   postalCode      String?
+  latitude        Decimal?      @db.Decimal(10, 8)
+  longitude       Decimal?      @db.Decimal(11, 8)
 
   scheduledDate  DateTime?
   deliveryCharge Decimal   @default(0.00) @db.Decimal(10, 2)

@@ -15,7 +15,7 @@ export const BottomNav: React.FC = () => {
   return (
     <nav
       aria-label="Mobile Bottom Navigation"
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/98 backdrop-blur-xl border-t border-slate-200 shadow-2xl safe-bottom"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#071a14] border-t border-forest-800 shadow-2xl safe-bottom"
     >
       <div className="grid grid-cols-4 h-14 items-center max-w-md mx-auto px-2">
         {/* 1. Home */}
@@ -23,7 +23,7 @@ export const BottomNav: React.FC = () => {
           to="/"
           className={({ isActive }) =>
             `flex flex-col items-center justify-center gap-0.5 py-1 h-full touch-target transition-all ${
-              isActive ? 'text-forest-800 font-bold scale-105' : 'text-slate-500 hover:text-forest-700'
+              isActive ? 'text-white font-bold scale-105' : 'text-white/70 hover:text-white'
             }`
           }
         >
@@ -36,7 +36,7 @@ export const BottomNav: React.FC = () => {
           to="/catalog"
           className={({ isActive }) =>
             `flex flex-col items-center justify-center gap-0.5 py-1 h-full touch-target transition-all ${
-              isActive ? 'text-forest-800 font-bold scale-105' : 'text-slate-500 hover:text-forest-700'
+              isActive ? 'text-white font-bold scale-105' : 'text-white/70 hover:text-white'
             }`
           }
         >
@@ -49,7 +49,7 @@ export const BottomNav: React.FC = () => {
           to={isAuthenticated ? '/orders' : '/login?redirect=/orders'}
           className={({ isActive }) =>
             `flex flex-col items-center justify-center gap-0.5 py-1 h-full touch-target transition-all ${
-              isActive ? 'text-forest-800 font-bold scale-105' : 'text-slate-500 hover:text-forest-700'
+              isActive ? 'text-white font-bold scale-105' : 'text-white/70 hover:text-white'
             }`
           }
         >
@@ -62,7 +62,7 @@ export const BottomNav: React.FC = () => {
           to={isAuthenticated ? '/profile' : '/login'}
           className={({ isActive }) =>
             `flex flex-col items-center justify-center gap-0.5 py-1 h-full touch-target transition-all ${
-              isActive ? 'text-forest-800 font-bold scale-105' : 'text-slate-500 hover:text-forest-700'
+              isActive ? 'text-white font-bold scale-105' : 'text-white/70 hover:text-white'
             }`
           }
         >

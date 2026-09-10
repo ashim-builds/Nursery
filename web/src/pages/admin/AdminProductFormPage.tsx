@@ -162,39 +162,21 @@ export const AdminProductFormPage: React.FC = () => {
             },
           ];
 
+    const imagesPayload = finalImages.map((img, i) => ({
+      url: img.url,
+      altText: img.altText || name,
+      isPrimary: img.isPrimary ?? i === 0,
+      sortOrder: img.sortOrder ?? i + 1,
+    }));
+
     const payload = {
       name: name.trim(),
-      title: name.trim(),
       basePrice: Number(basePrice),
       description:
         description.trim() || `${name} - Fresh and healthy plant from Kathmandu nursery.`,
       available: stockStatus === 'IN_STOCK',
-      stockStatus: stockStatus,
-      images: finalImages.map((img, i) => ({
-        url: img.url,
-        altText: img.altText || name,
-        isPrimary: img.isPrimary ?? i === 0,
-        sortOrder: img.sortOrder ?? i + 1,
-      })),
-      variants: [
-        {
-          name: 'Default',
-          sku: `PLT-${Date.now().toString().slice(-6)}`,
-          price: Number(basePrice),
-          stock: stockStatus === 'IN_STOCK' ? 100 : 0,
-          isAvailable: stockStatus === 'IN_STOCK',
-        },
-      ],
+      images: imagesPayload,
     };
-
-    if (isEdit) {
-      payload.images = finalImages.map((image) => ({
-        url: image.url,
-        altText: image.altText || name,
-        isPrimary: image.isPrimary ?? false,
-        sortOrder: image.sortOrder ?? 0,
-      }));
-    }
 
     mutation.mutate(payload);
   };

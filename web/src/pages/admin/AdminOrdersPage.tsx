@@ -128,12 +128,11 @@ export const AdminOrdersPage: React.FC = () => {
   const openMapLocation = (order: any) => {
     if (order.deliveryLatitude && order.deliveryLongitude) {
       window.open(
-        `https://www.google.com/maps/search/?api=1&query=${order.deliveryLatitude},${order.deliveryLongitude}`,
+        `https://www.google.com/maps/@${Number(order.deliveryLatitude).toFixed(6)},${Number(order.deliveryLongitude).toFixed(6)},17z`,
         '_blank'
       );
     } else {
-      const query = encodeURIComponent(`${order.deliveryAddress}, ${order.deliveryCity || 'Kathmandu'}`);
-      window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+      showToast('This order has no saved map coordinates.', 'info');
     }
   };
 

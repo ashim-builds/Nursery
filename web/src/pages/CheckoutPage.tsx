@@ -47,8 +47,6 @@ export const CheckoutPage: React.FC = () => {
       }
       if (user.email) setCustomerEmail(user.email);
       if (user.phoneNumber) setCustomerPhone(user.phoneNumber);
-      if (user.address) setShippingAddress(user.address);
-      if (user.city) setCity(user.city);
     }
   }, [user]);
 
@@ -135,7 +133,9 @@ export const CheckoutPage: React.FC = () => {
         customerPhone: customerPhone.trim(),
         customerEmail: customerEmail.trim().toLowerCase(),
         deliveryAddress: shippingAddress.trim(),
-        deliveryCity: city.trim(),
+        deliveryCity: city.trim() || 'Pokhara',
+        deliveryLatitude: latitude,
+        deliveryLongitude: longitude,
         deliveryNotes: deliveryNotes.trim() || undefined,
         paymentMethod: 'CASH' as const,
         items: items.map((item) => ({
@@ -242,10 +242,32 @@ export const CheckoutPage: React.FC = () => {
                   setLatitude(coords.latitude);
                   setLongitude(coords.longitude);
                   setHasMapSelected(true);
+                  setShippingAddress('');
+                  setCity('');
                 }}
                 onAddressFound={(addr) => {
-                  if (addr.street) {
-                    setShippingAddress(addr.street);
+              <div className="grid grid-cols-2 gap-3 mt-3 text-xs">
+                <label className="space-y-1">
+                  <span className="font-semibold text-slate-600">Latitude</span>
+                  <input
+                    value={latitude.toFixed(6)}
+                    readOnly
+                    aria-label="Selected latitude"
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-slate-700"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="font-semibold text-slate-600">Longitude</span>
+                  <input
+                    value={longitude.toFixed(6)}
+                    readOnly
+                    aria-label="Selected longitude"
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-slate-700"
+                  />
+                </label>
+              </div>
+                  if (addr.formatted || addr.street) {
+                    setShippingAddress(addr.formatted || addr.street);
                   }
                   if (addr.city) {
                     setCity(addr.city);

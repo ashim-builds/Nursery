@@ -20,25 +20,18 @@ import {
 
 export const AdminProductsPage: React.FC = () => {
   const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [page, setPage] = useState(1);
   const { showToast, confirmAction } = useUI();
   const queryClient = useQueryClient();
 
   const { data: productsData, isLoading, refetch } = useQuery({
-    queryKey: ['admin-products-list', search, selectedCategory, page],
+    queryKey: ['admin-products-list', search, page],
     queryFn: () =>
       adminApi.getProducts({
         search: search.trim() || undefined,
-        category: selectedCategory || undefined,
         page,
         limit: 20,
       }),
-  });
-
-  const { data: categories } = useQuery({
-    queryKey: ['admin-categories-quick'],
-    queryFn: adminApi.getCategories,
   });
 
   const deleteMutation = useMutation({
@@ -120,23 +113,6 @@ export const AdminProductsPage: React.FC = () => {
           />
         </div>
 
-        <div className="sm:w-60">
-          <select
-            value={selectedCategory}
-            onChange={(e) => {
-              setSelectedCategory(e.target.value);
-              setPage(1);
-            }}
-            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs text-slate-800 font-semibold focus:bg-white focus:outline-none focus:border-forest-700"
-          >
-            <option value="">All Botanical Categories</option>
-            {categories?.map((c: any) => (
-              <option key={c.id} value={c.slug}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
       </div>
 
       {/* Loading state */}
@@ -173,7 +149,6 @@ export const AdminProductsPage: React.FC = () => {
             <thead>
               <tr className="bg-sand-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 <th className="py-3.5 px-4">Plant & Botanical Name</th>
-                <th className="py-3.5 px-4">Category</th>
                 <th className="py-3.5 px-4">Price</th>
                 <th className="py-3.5 px-4">Availability</th>
                 <th className="py-3.5 px-4 text-right">Actions</th>
@@ -204,12 +179,6 @@ export const AdminProductsPage: React.FC = () => {
                           <div className="text-[10px] text-slate-400 font-mono">{p.slug}</div>
                         </div>
                       </div>
-                    </td>
-
-                    <td className="py-3.5 px-4">
-                      <span className="font-semibold text-slate-800 bg-sand-100 px-2 py-0.5 rounded-md text-[11px]">
-                        {p.category?.name || 'Uncategorized'}
-                      </span>
                     </td>
 
                     <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
@@ -286,9 +255,6 @@ export const AdminProductsPage: React.FC = () => {
                     {p.botanicalName && (
                       <p className="text-[11px] text-forest-700 italic">{p.botanicalName}</p>
                     )}
-                    <span className="inline-block bg-sand-100 text-slate-700 text-[10px] font-semibold px-2 py-0.5 rounded mt-1">
-                      {p.category?.name || 'General'}
-                    </span>
                   </div>
                 </div>
 

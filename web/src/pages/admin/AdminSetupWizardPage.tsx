@@ -317,6 +317,13 @@ export const AdminSetupWizardPage: React.FC = () => {
                 onChange={(coords) =>
                   setFormData({ ...formData, latitude: coords.latitude, longitude: coords.longitude })
                 }
+                onAddressFound={(address) =>
+                  setFormData((current) => ({
+                    ...current,
+                    address: address.formatted || address.street,
+                    city: address.city || current.city,
+                  }))
+                }
               />
             </div>
           )}

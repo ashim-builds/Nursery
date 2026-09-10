@@ -226,14 +226,6 @@ export const ProductDetailPage: React.FC = () => {
         <Link to="/" className="hover:text-forest-700">Home</Link>
         <ChevronRight size={12} className="text-slate-400" />
         <Link to="/catalog" className="hover:text-forest-700">Plants</Link>
-        {product.category && (
-          <>
-            <ChevronRight size={12} className="text-slate-400" />
-            <Link to={`/catalog?category=${product.category.slug}`} className="hover:text-forest-700">
-              {product.category.name}
-            </Link>
-          </>
-        )}
         <ChevronRight size={12} className="text-slate-400" />
         <span className="text-slate-900 font-medium truncate max-w-[150px]">{product.title}</span>
       </div>
@@ -280,15 +272,6 @@ export const ProductDetailPage: React.FC = () => {
           {/* Right Column: Product Info & Actions */}
           <div className="lg:col-span-6 space-y-5">
             <div>
-              {/* Category & Rating */}
-              <div className="flex items-center justify-between gap-2 mb-1.5">
-                {product.category && (
-                  <span className="text-xs font-bold uppercase tracking-wider text-forest-700 bg-forest-50 px-2.5 py-0.5 rounded-full">
-                    {product.category.name}
-                  </span>
-                )}
-              </div>
-
               <h1 className="font-serif font-bold text-2xl sm:text-3xl text-slate-900 tracking-tight leading-tight">
                 {product.title}
               </h1>
@@ -313,10 +296,15 @@ export const ProductDetailPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Short Description */}
-            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-              {product.shortDescription || product.fullDescription}
-            </p>
+            {/* Product Description */}
+            {(product.fullDescription || product.description || product.shortDescription) && (
+              <div className="space-y-1.5">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">Description</h2>
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+                  {product.fullDescription || product.description || product.shortDescription}
+                </p>
+              </div>
+            )}
 
             {/* Botanical Care Meter */}
             <CareRequirementsMeter product={product} />
@@ -704,7 +692,7 @@ export const ProductDetailPage: React.FC = () => {
       )}
 
       {/* Mobile-First Sticky Action Bar (Cleanly anchored at bottom of screen on phones) */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-forest-900/98 backdrop-blur-xl border-t border-forest-700 px-4 py-3 shadow-2xl flex items-center justify-between gap-3 safe-bottom">
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-black border-t border-slate-800 px-4 py-3 shadow-2xl flex items-center justify-between gap-3 safe-bottom">
         <div>
           <span className="text-[10px] text-emerald-200 block uppercase font-bold">Total</span>
           <span className="font-serif font-bold text-base text-white font-mono">

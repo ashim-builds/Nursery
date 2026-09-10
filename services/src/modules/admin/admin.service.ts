@@ -470,10 +470,20 @@ export class AdminService {
 
     if (targetUserIds.length === 0) {
       const customers = await prisma.user.findMany({
-        where: { isActive: true },
+        where: { isActive: true, role: 'CUSTOMER' },
         select: { id: true },
       });
       targetUserIds = customers.map((c) => c.id);
+    } else {
+      const customers = await prisma.user.findMany({
+        where: {
+          id: { in: targetUserIds },
+          isActive: true,
+          role: 'CUSTOMER',
+        },
+        select: { id: true },
+      });
+      targetUserIds = customers.map((customer) => customer.id);
     }
 
     const notificationsToCreate = targetUserIds.map((userId) => ({

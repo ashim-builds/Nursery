@@ -29,8 +29,8 @@ export const CartDrawer: React.FC = () => {
       />
 
       {/* Slide-over panel */}
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col justify-between">
+      <div className="fixed inset-y-0 right-0 max-w-full flex pl-0 sm:pl-10">
+        <div className="w-[min(100vw,28rem)] bg-white shadow-2xl flex flex-col justify-between">
           {/* Header */}
           <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-forest-50/50">
             <div className="flex items-center gap-2">
@@ -115,7 +115,7 @@ export const CartDrawer: React.FC = () => {
                     <img
                       src={itemImg}
                       alt={item.product.title}
-                      className="w-18 h-18 sm:w-20 sm:h-20 object-cover rounded-xl shrink-0 border border-slate-200 bg-white"
+                      className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-xl shrink-0 border border-slate-200 bg-white"
                     />
 
                     {/* Details */}

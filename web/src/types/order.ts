@@ -40,6 +40,8 @@ export interface Order {
   deliveryCity: string;
   deliveryArea?: string;
   deliveryPostalCode?: string;
+  deliveryLatitude?: number;
+  deliveryLongitude?: number;
   scheduledDeliveryDate?: string;
   giftMessage?: string;
   deliveryNotes?: string;

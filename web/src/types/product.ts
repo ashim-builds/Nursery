@@ -71,6 +71,7 @@ export interface Product {
   sku: string;
   scientificName?: string;
   shortDescription: string;
+  description?: string;
   fullDescription: string;
   productType: ProductType;
   basePrice: number | string;

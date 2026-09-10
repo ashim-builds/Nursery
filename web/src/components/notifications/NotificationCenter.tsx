@@ -27,7 +27,7 @@ interface NotificationCenterProps {
 }
 
 export const NotificationCenter: React.FC<NotificationCenterProps> = ({ variant = 'customer' }) => {
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { showToast } = useUI();
   const [isOpen, setIsOpen] = useState(false);
   const [pushStatus, setPushStatus] = useState<'default' | 'granted' | 'denied' | 'unsupported'>('default');
@@ -46,7 +46,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ variant 
 
   // Fetch notifications every 15 seconds if authenticated
   const { data, isLoading } = useQuery({
-    queryKey: ['notifications'],
+    queryKey: ['notifications', user?.id, variant],
     queryFn: () => notificationApi.getNotifications({ limit: 20 }),
     enabled: isAuthenticated,
     refetchInterval: 15000,
@@ -59,7 +59,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ variant 
   const markAsReadMutation = useMutation({
     mutationFn: notificationApi.markAsRead,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', user?.id, variant] });
     },
   });
 
@@ -67,7 +67,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ variant 
   const markAllMutation = useMutation({
     mutationFn: notificationApi.markAllAsRead,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', user?.id, variant] });
     },
   });
 
@@ -75,7 +75,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ variant 
   const deleteMutation = useMutation({
     mutationFn: notificationApi.deleteNotification,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', user?.id, variant] });
     },
   });
 
@@ -173,17 +173,15 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ variant 
 
       {/* Notification Dropdown / Slide Panel */}
       {isOpen && (
-        <div 
-          className={`absolute right-0 mt-2 w-80 sm:w-96 max-w-[92vw] bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden flex flex-col transition-all animate-in fade-in zoom-in-95 duration-150 ${
-            variant === 'admin' ? 'top-full' : 'top-full'
-          }`}
-          style={{ maxHeight: 'calc(100vh - 120px)' }}
+        <div
+          className="fixed top-16 left-2 right-2 w-auto max-w-none sm:absolute sm:top-full sm:left-auto sm:right-0 sm:mt-2 sm:w-96 sm:max-w-[92vw] bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden flex flex-col transition-all animate-in fade-in zoom-in-95 duration-150"
+          style={{ maxHeight: 'calc(100dvh - 5rem)' }}
         >
           {/* Header */}
           <div className="px-4 py-3 bg-forest-900 text-white flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
               <Bell size={16} className="text-emerald-400" />
-              <h3 className="font-semibold text-sm tracking-wide">Notifications</h3>
+              <h3 className="font-semibold text-sm tracking-wide truncate">Notifications</h3>
               {unreadCount > 0 && (
                 <span className="text-[11px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
                   {unreadCount} new
@@ -267,14 +265,14 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ variant 
                   {/* Content */}
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-center justify-between gap-1">
-                      <h4 className={`text-xs font-bold leading-tight truncate ${item.isRead ? 'text-slate-800' : 'text-forest-950'}`}>
+                      <h4 className={`text-xs font-bold leading-tight break-words ${item.isRead ? 'text-slate-800' : 'text-forest-950'}`}>
                         {item.title}
                       </h4>
                       <span className="text-[10px] text-slate-400 shrink-0">
                         {formatTimeAgo(item.createdAt)}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-600 leading-snug line-clamp-2">
+                    <p className="text-xs text-slate-600 leading-snug break-words line-clamp-3">
                       {item.message}
                     </p>
                     {item.linkUrl && (
@@ -308,7 +306,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ variant 
 
           {/* Footer */}
           {notifications.length > 0 && (
-            <div className="px-4 py-2 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 shrink-0">
+            <div className="px-4 py-2 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 shrink-0">
               <span>Showing latest updates</span>
               {variant === 'customer' ? (
                 <Link

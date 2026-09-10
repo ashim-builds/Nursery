@@ -10,6 +10,8 @@ export interface CreateOrderPayload {
   deliveryCity?: string;
   deliveryArea?: string;
   deliveryPostalCode?: string;
+  deliveryLatitude?: number;
+  deliveryLongitude?: number;
   deliveryZoneCode?: string;
   couponCode?: string;
   scheduledDeliveryDate?: string;

@@ -52,6 +52,8 @@ export class OrderService {
       deliveryCity?: string;
       deliveryArea?: string;
       deliveryPostalCode?: string;
+      deliveryLatitude?: number;
+      deliveryLongitude?: number;
       deliveryZoneCode?: string;
       deliveryZoneId?: string;
       couponCode?: string;
@@ -94,7 +96,7 @@ export class OrderService {
             select: { id: true, name: true, sku: true, available: true, published: true, stockStatus: true },
           });
 
-          if (!product || !product.available || !product.published || product.stockStatus === 'OUT_OF_STOCK') {
+          if (!product || !product.available || !product.published) {
             throw ApiError.badRequest(`Product "${product?.name || item.productId}" is currently Out of Stock`);
           }
 
@@ -276,6 +278,8 @@ export class OrderService {
                 city: data.deliveryCity || 'Kathmandu',
                 area: data.deliveryArea,
                 postalCode: data.deliveryPostalCode,
+                latitude: data.deliveryLatitude,
+                longitude: data.deliveryLongitude,
                 zoneId: matchedZoneId,
                 scheduledDate: data.scheduledDeliveryDate ? new Date(data.scheduledDeliveryDate) : null,
                 deliveryCharge: deliveryFee,
@@ -485,6 +489,8 @@ export class OrderService {
       customerPhone: o.delivery?.recipientPhone || o.user?.phoneNumber || '',
       deliveryAddress: o.delivery?.deliveryAddress || '',
       deliveryCity: o.delivery?.city || 'Kathmandu',
+      deliveryLatitude: o.delivery?.latitude ? Number(o.delivery.latitude) : undefined,
+      deliveryLongitude: o.delivery?.longitude ? Number(o.delivery.longitude) : undefined,
       scheduledDeliveryDate: o.delivery?.scheduledDate,
       itemCount: o.items.reduce((sum, i) => sum + i.quantity, 0),
       items: o.items.map((i) => ({
@@ -555,6 +561,8 @@ export class OrderService {
       deliveryCity: order.delivery?.city || 'Kathmandu',
       deliveryArea: order.delivery?.area,
       deliveryPostalCode: order.delivery?.postalCode,
+      deliveryLatitude: order.delivery?.latitude ? Number(order.delivery.latitude) : undefined,
+      deliveryLongitude: order.delivery?.longitude ? Number(order.delivery.longitude) : undefined,
       scheduledDeliveryDate: order.delivery?.scheduledDate,
       deliveryZone: order.delivery?.zone?.name,
       deliveryStatus: order.delivery?.status,

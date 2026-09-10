@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { CartItem } from '../types/cart';
 import { Product, ProductVariant } from '../types/product';
 import { cartApi } from '../api/cart.api';
@@ -43,6 +43,26 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [deliveryNotes, setDeliveryNotes] = useState<string>('');
   const [hasUnavailableItems, setHasUnavailableItems] = useState<boolean>(false);
   const [hasPriceChanges, setHasPriceChanges] = useState<boolean>(false);
+  const syncStartedRef = useRef(false);
+
+  const applyServerCart = (serverItems: Awaited<ReturnType<typeof cartApi.getCart>>['items']) => {
+    setItems((currentItems) =>
+      currentItems.map((item) => {
+        const serverItem = serverItems.find(
+          (candidate) => candidate.productId === item.productId && candidate.variantId === item.variantId
+        );
+        return serverItem
+          ? {
+              ...item,
+              id: serverItem.id,
+              quantity: serverItem.quantity,
+              unitPrice: serverItem.unitPrice,
+              totalPrice: serverItem.totalPrice,
+            }
+          : item;
+      })
+    );
+  };
 
   // Sync to localStorage
   useEffect(() => {
@@ -57,21 +77,27 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const syncWithServer = useCallback(async () => {
     const token = localStorage.getItem('ktm_access_token');
     if (!token) return;
+    if (syncStartedRef.current) return;
+    syncStartedRef.current = true;
 
     try {
-      // If there are guest items in local state/storage, merge them to server
-      const localItems = items.map((i) => ({
+      // Only synthetic IDs are guest items. Server cart IDs must never be merged again.
+      const localItems = items
+        .filter((item) => item.id === `${item.productId}_${item.variantId}`)
+        .map((i) => ({
         productId: i.productId,
         variantId: i.variantId,
         quantity: i.quantity,
-      }));
+        }));
 
       if (localItems.length > 0) {
         const res = await cartApi.mergeCart(localItems);
+        applyServerCart(res.items);
         setHasUnavailableItems(res.hasUnavailableItems);
         setHasPriceChanges(res.hasPriceChanges);
       } else {
         const res = await cartApi.getCart();
+        applyServerCart(res.items);
         setHasUnavailableItems(res.hasUnavailableItems);
         setHasPriceChanges(res.hasPriceChanges);
       }
@@ -92,6 +118,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (token) {
       try {
         const res = await cartApi.getCart();
+        applyServerCart(res.items);
         setHasUnavailableItems(res.hasUnavailableItems);
         setHasPriceChanges(res.hasPriceChanges);
       } catch (err) {
@@ -136,7 +163,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const token = localStorage.getItem('ktm_access_token');
     if (token) {
       try {
-        await cartApi.addItem(product.id, variant.id, quantity);
+        const res = await cartApi.addItem(product.id, variant.id, quantity);
+        applyServerCart(res.items);
       } catch (err) {
         console.error('Failed to add item to backend cart:', err);
       }

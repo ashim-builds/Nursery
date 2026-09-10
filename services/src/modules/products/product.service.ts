@@ -549,6 +549,9 @@ export class ProductService {
     if (!product) throw ApiError.notFound('Product not found');
 
     const { images, ...productData } = data;
+    if (productData.available !== undefined) {
+      productData.stockStatus = productData.available ? 'IN_STOCK' : 'OUT_OF_STOCK';
+    }
     const updated = await prisma.$transaction(async (tx) => {
       if (images) {
         await tx.productImage.deleteMany({ where: { productId: id } });

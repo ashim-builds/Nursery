@@ -5,6 +5,7 @@ import {
   ShoppingBag, 
   Package, 
   Users,
+  Store,
 } from 'lucide-react';
 
 interface AdminBottomNavProps {
@@ -63,6 +64,17 @@ export const AdminBottomNav: React.FC<AdminBottomNavProps> = ({
             </NavLink>
           );
         })}
+        <a
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all text-emerald-300 hover:text-white min-w-[56px]"
+          aria-label="Open customer shop"
+          title="Open customer shop"
+        >
+          <Store size={20} />
+          <span className="text-[10px] mt-0.5 tracking-tight">Go Shop</span>
+        </a>
       </div>
     </nav>
   );

@@ -338,7 +338,8 @@ export class CartService {
         });
 
         if (existingItem) {
-          const mergedQty = Math.min(existingItem.quantity + item.quantity, availableStock);
+          // Merge is intentionally idempotent: repeated login/refresh syncs must not multiply quantity.
+          const mergedQty = Math.min(Math.max(existingItem.quantity, item.quantity), availableStock);
           await prisma.cartItem.update({
             where: { id: existingItem.id },
             data: {
