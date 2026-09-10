@@ -35,7 +35,7 @@ export class PaymentService {
 
     const customerInfo = {
       name: order.delivery?.recipientName || order.user?.name || 'Customer',
-      email: order.user?.email || 'customer@ktmbotanica.com',
+      email: order.user?.email || 'customer@rjflowers.com',
       phone: order.delivery?.recipientPhone || order.user?.phoneNumber || '9800000000',
     };
 

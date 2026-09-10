@@ -142,7 +142,7 @@ export class TestRunner {
     let total = 0;
 
     console.log('\n========================================================');
-    console.log('🧪 KtmBotanica Test Suite Runner');
+    console.log('🧪 RJ Flowers Test Suite Runner');
     console.log('========================================================\n');
 
     for (const suite of this.suites) {

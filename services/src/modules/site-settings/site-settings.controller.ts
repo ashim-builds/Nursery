@@ -16,7 +16,7 @@ export class SiteSettingsController {
           id: 'default',
           businessName: 'RJ Flowers',
           phone: '9800000000',
-          email: 'contact@ktmbotanica.com',
+          email: 'contact@rjflowers.com',
           address: 'Pokhara-26, Arghau Chowk, Pokhara',
           province: 'Gandaki',
           district: 'Kaski',
@@ -30,7 +30,7 @@ export class SiteSettingsController {
         },
       });
     } else if (
-      settings.businessName.includes('KtmBotanica') ||
+      settings.businessName.includes('KtmBotanica') || settings.businessName.includes('Ktm Botanica') ||
       settings.city === 'Kathmandu' ||
       settings.address.includes('Lazimpat') ||
       settings.address.includes('Lakeside')
@@ -113,7 +113,7 @@ export class SiteSettingsController {
         logo,
         favicon,
         phone: phone || '9800000000',
-        email: (email || 'contact@ktmbotanica.com').toLowerCase(),
+        email: (email || 'contact@rjflowers.com').toLowerCase(),
         address: address || 'Pokhara-26, Arghau Chowk, Pokhara',
         province: province || 'Bagmati',
         district: district || 'Kaski',

@@ -29,7 +29,7 @@ export const CategoryDetailPage: React.FC = () => {
       <SEO
         title={seoTitle}
         description={seoDescription}
-        canonical={`https://ktmbotanica.com/category/${slug}`}
+        canonical={`https://rjflowers.com/category/${slug}`}
       />
 
       {/* Breadcrumbs */}

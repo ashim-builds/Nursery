@@ -99,7 +99,7 @@ export const LoginPage: React.FC = () => {
             <input
               type="email"
               required
-              placeholder="customer@ktmbotanica.com"
+              placeholder="customer@rjflowers.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:border-forest-600 focus:ring-1 focus:ring-forest-600 outline-none text-xs"

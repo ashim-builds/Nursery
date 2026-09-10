@@ -26,10 +26,10 @@ export class KhaltiPaymentGateway implements IPaymentGateway {
       website_url: websiteUrl,
       amount: Math.round(req.amount * 100), // In Paisa
       purchase_order_id: req.orderId,
-      purchase_order_name: `KtmBotanica Nursery Order ${req.orderNumber}`,
+      purchase_order_name: `RJ Flowers Order ${req.orderNumber}`,
       customer_info: {
         name: req.customerInfo.name || 'Botanica Customer',
-        email: req.customerInfo.email || 'customer@ktmbotanica.com',
+        email: req.customerInfo.email || 'customer@rjflowers.com',
         phone: req.customerInfo.phone || '9800000000',
       },
     };

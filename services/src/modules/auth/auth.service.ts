@@ -150,8 +150,8 @@ export class AuthService {
       const passwordHash = await bcrypt.hash('admin123', 10);
       admin = await prisma.user.create({
         data: {
-          name: 'Nursery Admin',
-          email: 'admin@ktmbotanica.com',
+          name: 'RJ Flowers Admin',
+          email: 'admin@rjflowers.com',
           passwordHash,
           role: UserRole.ADMIN,
         },

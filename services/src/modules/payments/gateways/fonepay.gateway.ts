@@ -15,7 +15,7 @@ export class FonepayPaymentGateway implements IPaymentGateway {
   async initiate(req: PaymentInitiateRequest): Promise<PaymentInitiateResponse> {
     const traceId = `FP-${req.orderNumber}-${Date.now()}`;
     // Dynamic Fonepay EMVCo QR String payload
-    const qrPayload = `00020101021226480010NP.FONEPAY0114009779800000000208${traceId}520459995303524540${req.amount.toFixed(2)}5802NP5915KTMBOTANICA6009KATHMANDU62250521${req.orderNumber}6304`;
+    const qrPayload = `00020101021226480010NP.FONEPAY0114009779800000000208${traceId}520459995303524540${req.amount.toFixed(2)}5802NP5910RJFLOWERS6007POKHARA62250521${req.orderNumber}6304`;
 
     return {
       paymentMethod: PaymentMethod.FONEPAY_QR,
@@ -25,7 +25,7 @@ export class FonepayPaymentGateway implements IPaymentGateway {
       metadata: {
         traceId,
         amount: req.amount,
-        merchantName: 'KtmBotanica Nursery',
+        merchantName: 'RJ Flowers',
       },
     };
   }

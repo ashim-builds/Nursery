@@ -52,7 +52,7 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
   'http://localhost',
-  'https://ktmbotanica.com',
+  'https://rjflowers.com',
 ].filter(Boolean) as string[];
 
 app.use(
@@ -131,7 +131,7 @@ app.get(['/health', '/api/health'], (req: Request, res: Response) => {
 
 // Dynamic Robots.txt Handler
 app.get(['/robots.txt', '/api/robots.txt'], (req: Request, res: Response) => {
-  const robots = `# KtmBotanica Robots.txt
+  const robots = `# RJ Flowers Robots.txt
 User-agent: *
 Allow: /
 Allow: /product/
@@ -148,7 +148,7 @@ Disallow: /wishlist
 Disallow: /profile
 Disallow: /api/
 
-Sitemap: https://ktmbotanica.com/sitemap.xml
+Sitemap: https://rjflowers.com/sitemap.xml
 `;
   res.header('Content-Type', 'text/plain');
   res.send(robots);
@@ -168,7 +168,7 @@ app.get(['/sitemap.xml', '/api/sitemap.xml'], async (req: Request, res: Response
       }),
     ]);
 
-    const baseUrl = process.env.FRONTEND_URL || 'https://ktmbotanica.com';
+    const baseUrl = process.env.FRONTEND_URL || 'https://rjflowers.com';
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
     xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;

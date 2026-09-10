@@ -30,19 +30,19 @@ export const AdminSetupWizardPage: React.FC = () => {
 
   // Wizard State
   const [formData, setFormData] = useState({
-    businessName: 'KtmBotanica Nursery & Florist',
+    businessName: 'RJ Flowers',
     logo: '',
-    shortDescription: 'Nepal’s premier botanical nursery, indoor plants & floral studio.',
+    shortDescription: 'Flowers and plants delivered across Pokhara from RJ Flowers, Arghau Chowk.',
     phone: '9800000000',
-    email: 'contact@ktmbotanica.com',
-    openingHours: 'Sun - Sat: 8:00 AM - 7:00 PM',
-    province: 'Bagmati',
-    district: 'Kathmandu',
-    city: 'Kathmandu',
-    area: 'Lazimpat',
-    address: 'Lazimpat Botanical Row, Kathmandu, Nepal',
-    latitude: 27.7215,
-    longitude: 85.3206,
+    email: 'contact@rjflowers.com',
+    openingHours: 'Every day: 7:00 AM - 7:00 PM (Closed on festivals)',
+    province: 'Gandaki',
+    district: 'Kaski',
+    city: 'Pokhara',
+    area: 'Arghau Chowk',
+    address: 'Pokhara-26, Arghau Chowk, Pokhara',
+    latitude: 28.2365,
+    longitude: 84.0036,
     categories: [
       'Indoor Plants',
       'Outdoor Plants',
@@ -212,7 +212,7 @@ export const AdminSetupWizardPage: React.FC = () => {
                   type="text"
                   value={formData.businessName}
                   onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
-                  placeholder="e.g. KtmBotanica Nursery & Florist"
+                  placeholder="e.g. RJ Flowers"
                   className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-forest-200 outline-none"
                 />
               </div>
@@ -255,7 +255,7 @@ export const AdminSetupWizardPage: React.FC = () => {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="contact@ktmbotanica.com"
+                  placeholder="contact@rjflowers.com"
                   className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-forest-200 outline-none"
                 />
               </div>

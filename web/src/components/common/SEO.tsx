@@ -49,7 +49,7 @@ export const SEO: React.FC<SEOProps> = ({
     setMetaTag('name', 'robots', noIndex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large');
 
     // 3. Open Graph Metadata
-    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://ktmbotanica.com';
+    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://rjflowers.com';
     const finalCanonical = canonical || `${currentOrigin}${location.pathname}`;
 
     setMetaTag('property', 'og:site_name', SITE_NAME);
