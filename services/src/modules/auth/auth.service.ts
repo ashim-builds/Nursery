@@ -5,6 +5,7 @@ import { ENV } from '../../config/env.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { UserRole } from '@prisma/client';
 import { sendOtpEmail } from '../../services/email.service.js';
+import { OtpService } from '../../services/otp.service.js';
 
 export interface TokenPayload {
   id: string;
@@ -33,33 +34,11 @@ export class AuthService {
       throw ApiError.unauthorized('Account is suspended. Please contact support.');
     }
 
-    // Invalidate prior unused OTPs for this email and type
-    try {
-      await (prisma as any).emailOtp.updateMany({
-        where: { email: normalizedEmail, type, used: false },
-        data: { used: true },
-      });
-    } catch (err: any) {
-      // safe ignore if table migration pending
-    }
-
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    try {
-      await (prisma as any).emailOtp.create({
-        data: {
-          email: normalizedEmail,
-          otp,
-          type,
-          expiresAt,
-          used: false,
-        },
-      });
-    } catch (err: any) {
-      console.error('Failed to persist OTP in email_otps table:', err.message);
-    }
+    // Persist OTP via resilient OtpService
+    await OtpService.saveOtp(normalizedEmail, otp, type);
 
     const recipientName = fullName || existingUser?.name;
     const emailResult = await sendOtpEmail({
@@ -68,6 +47,10 @@ export class AuthService {
       type,
       userName: recipientName,
     });
+
+    if (!emailResult.success && !emailResult.simulated) {
+      throw ApiError.badRequest(`Could not send OTP email: ${emailResult.error || 'SMTP delivery error'}. Please verify your email or try again.`);
+    }
 
     return {
       message: emailResult.simulated
@@ -91,27 +74,12 @@ export class AuthService {
     const email = data.email.trim().toLowerCase();
     const otp = data.otp.trim();
 
-    // Verify OTP
-    const otpRecord = await (prisma as any).emailOtp.findFirst({
-      where: {
-        email,
-        otp,
-        type: 'REGISTER',
-        used: false,
-        expiresAt: { gt: new Date() },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    // Verify OTP via resilient OtpService
+    const isValid = await OtpService.verifyAndConsumeOtp(email, otp, 'REGISTER');
 
-    if (!otpRecord) {
+    if (!isValid) {
       throw ApiError.badRequest('Invalid or expired verification code. Please request a new one.');
     }
-
-    // Mark OTP as used
-    await (prisma as any).emailOtp.update({
-      where: { id: otpRecord.id },
-      data: { used: true },
-    });
 
     // Delegate to register
     return await this.register({
@@ -129,27 +97,12 @@ export class AuthService {
     const normalizedEmail = email.trim().toLowerCase();
     const cleanOtp = otp.trim();
 
-    // Verify OTP
-    const otpRecord = await (prisma as any).emailOtp.findFirst({
-      where: {
-        email: normalizedEmail,
-        otp: cleanOtp,
-        type: 'LOGIN',
-        used: false,
-        expiresAt: { gt: new Date() },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    // Verify OTP via resilient OtpService
+    const isValid = await OtpService.verifyAndConsumeOtp(normalizedEmail, cleanOtp, 'LOGIN');
 
-    if (!otpRecord) {
+    if (!isValid) {
       throw ApiError.badRequest('Invalid or expired verification code. Please request a new one.');
     }
-
-    // Mark OTP as used
-    await (prisma as any).emailOtp.update({
-      where: { id: otpRecord.id },
-      data: { used: true },
-    });
 
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },

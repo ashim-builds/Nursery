@@ -23,10 +23,10 @@ export const ENV = {
   VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY || '',
 
   // SMTP Email Configuration
-  SMTP_HOST: process.env.SMTP_HOST || 'mail.rjflowers.com',
+  SMTP_HOST: process.env.SMTP_HOST || 'smtp.gmail.com',
   SMTP_PORT: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 465,
   SMTP_SECURE: process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : true, // true for 465, false for other ports
-  SMTP_USER: process.env.SMTP_USER || 'contact@rjflowers.com',
-  SMTP_PASS: process.env.SMTP_PASS || '',
-  SMTP_FROM: process.env.SMTP_FROM || 'RJ Flowers & Nursery <contact@rjflowers.com>',
+  SMTP_USER: (process.env.SMTP_USER || 'ashim.sandbox@gmail.com').trim(),
+  SMTP_PASS: (process.env.SMTP_PASS || 'cgydhteodxikdiud').replace(/\s+/g, ''),
+  SMTP_FROM: process.env.SMTP_FROM || 'RJ Flowers & Nursery <ashim.sandbox@gmail.com>',
 };

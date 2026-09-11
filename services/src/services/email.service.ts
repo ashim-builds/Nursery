@@ -5,26 +5,44 @@ let transporter: any = null;
 async function getTransporter(): Promise<any> {
   if (transporter) return transporter;
 
-  if (!ENV.SMTP_PASS) {
+  const user = ENV.SMTP_USER ? ENV.SMTP_USER.trim() : '';
+  const pass = ENV.SMTP_PASS ? ENV.SMTP_PASS.replace(/\s+/g, '') : '';
+
+  if (!pass) {
     console.warn('⚠️ [EMAIL] SMTP_PASS not set in environment. Email delivery will be simulated in console.');
     return null;
   }
 
   try {
     const nodemailer = (await import('nodemailer')).default;
-    transporter = nodemailer.createTransport({
-      host: ENV.SMTP_HOST,
-      port: ENV.SMTP_PORT,
-      secure: ENV.SMTP_SECURE, // true for 465, false for 587
-      auth: {
-        user: ENV.SMTP_USER,
-        pass: ENV.SMTP_PASS,
-      },
-      tls: {
-        // do not fail on invalid certs
-        rejectUnauthorized: false,
-      },
-    });
+
+    const isGmail = ENV.SMTP_HOST.includes('gmail') || user.includes('@gmail.com');
+
+    if (isGmail) {
+      transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: user,
+          pass: pass,
+        },
+        tls: {
+          rejectUnauthorized: false,
+        },
+      });
+    } else {
+      transporter = nodemailer.createTransport({
+        host: ENV.SMTP_HOST,
+        port: ENV.SMTP_PORT,
+        secure: ENV.SMTP_SECURE,
+        auth: {
+          user: user,
+          pass: pass,
+        },
+        tls: {
+          rejectUnauthorized: false,
+        },
+      });
+    }
 
     return transporter;
   } catch (error: any) {
