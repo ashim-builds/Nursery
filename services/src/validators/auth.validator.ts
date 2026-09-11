@@ -39,6 +39,33 @@ export const loginSchema = z.object({
   }),
 });
 
+export const sendOtpSchema = z.object({
+  body: z.object({
+    email: emailSchema,
+    type: z.enum(['REGISTER', 'LOGIN']).default('REGISTER'),
+    fullName: nameSchema.optional(),
+  }),
+});
+
+export const verifyOtpRegisterSchema = z.object({
+  body: z.object({
+    email: emailSchema,
+    otp: z.string().min(4).max(8),
+    fullName: nameSchema,
+    password: z.string().min(6, 'Password must be at least 6 characters'),
+    phoneNumber: phoneSchema.optional(),
+    address: z.string().optional(),
+    city: z.string().optional(),
+  }),
+});
+
+export const verifyOtpLoginSchema = z.object({
+  body: z.object({
+    email: emailSchema,
+    otp: z.string().min(4).max(8),
+  }),
+});
+
 export const updateProfileSchema = z.object({
   body: z.object({
     fullName: nameSchema.optional(),

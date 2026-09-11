@@ -2,6 +2,29 @@ import { apiClient } from './client';
 import { AuthResponse, User } from '../types/auth';
 
 export const authApi = {
+  sendOtp: async (data: { email: string; type?: 'REGISTER' | 'LOGIN'; fullName?: string }): Promise<{ message: string; email: string }> => {
+    const res = await apiClient.post('/auth/send-otp', data);
+    return res.data.data;
+  },
+
+  verifyOtpRegister: async (data: {
+    fullName: string;
+    email: string;
+    password: string;
+    otp: string;
+    phoneNumber?: string;
+    address?: string;
+    city?: string;
+  }): Promise<AuthResponse> => {
+    const res = await apiClient.post('/auth/verify-otp-register', data);
+    return res.data.data;
+  },
+
+  verifyOtpLogin: async (data: { email: string; otp: string }): Promise<AuthResponse> => {
+    const res = await apiClient.post('/auth/verify-otp-login', data);
+    return res.data.data;
+  },
+
   register: async (data: {
     fullName: string;
     email: string;

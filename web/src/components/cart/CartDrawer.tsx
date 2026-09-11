@@ -141,7 +141,7 @@ export const CartDrawer: React.FC = () => {
                           </button>
                         </div>
                         <span className="text-[11px] text-forest-700 font-medium block mt-0.5">
-                          {item.variant.name}
+                          {item.variant?.name || 'Standard'}
                         </span>
                       </div>
 

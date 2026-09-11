@@ -26,6 +26,26 @@ const setAuthCookies = (res: Response, accessToken: string, refreshToken?: strin
 };
 
 export class AuthController {
+  static sendOtp = asyncHandler(async (req: Request, res: Response) => {
+    const { email, type, fullName } = req.body;
+    const result = await AuthService.sendOtp(email, type, fullName);
+    res.status(200).json(ApiResponse.success(result, result.message));
+  });
+
+  static verifyOtpRegister = asyncHandler(async (req: Request, res: Response) => {
+    const result = await AuthService.verifyOtpRegister(req.body);
+    setAuthCookies(res, result.accessToken, result.refreshToken);
+    res.status(201).json(ApiResponse.created(result, 'Account created and verified successfully'));
+  });
+
+  static verifyOtpLogin = asyncHandler(async (req: Request, res: Response) => {
+    const { email, otp } = req.body;
+    const ipAddress = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress;
+    const result = await AuthService.verifyOtpLogin(email, otp, ipAddress);
+    setAuthCookies(res, result.accessToken, result.refreshToken);
+    res.status(200).json(ApiResponse.success(result, 'Logged in successfully'));
+  });
+
   static register = asyncHandler(async (req: Request, res: Response) => {
     const result = await AuthService.register(req.body);
     setAuthCookies(res, result.accessToken, result.refreshToken);

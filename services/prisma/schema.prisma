@@ -837,3 +837,17 @@ model SiteSettings {
 
   @@map("site_settings")
 }
+
+model EmailOtp {
+  id        String   @id @default(uuid())
+  email     String
+  otp       String
+  type      String   @default("AUTH") // "REGISTER", "LOGIN"
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email, otp])
+  @@index([email, type])
+  @@map("email_otps")
+}

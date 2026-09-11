@@ -1,21 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useUI } from '../context/UIContext';
-import { Sprout, Lock, Mail, ArrowRight } from 'lucide-react';
+import { Sprout, Lock, Mail, ArrowRight, KeyRound, RefreshCw, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { authApi } from '../api/auth.api';
 
 export const LoginPage: React.FC = () => {
-  const { login } = useAuth();
+  const { login, loginWithOtp } = useAuth();
   const { showToast } = useUI();
   const navigate = useNavigate();
 
+  const [authMode, setAuthMode] = useState<'PASSWORD' | 'OTP'>('PASSWORD');
+  const [otpSent, setOtpSent] = useState(false);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
+
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState<number>(0);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Countdown timer for resending OTP
+  useEffect(() => {
+    let timer: any;
+    if (resendCooldown > 0) {
+      timer = setInterval(() => {
+        setResendCooldown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
+  const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
@@ -23,7 +40,49 @@ export const LoginPage: React.FC = () => {
       showToast('Welcome back to RJ Flowers!', 'success');
       navigate('/');
     } catch (err: any) {
-      showToast(err.message || 'Invalid email or password', 'error');
+      showToast(err.response?.data?.message || err.message || 'Invalid email or password', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      showToast('Please enter your email address', 'error');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await authApi.sendOtp({
+        email: email.trim().toLowerCase(),
+        type: 'LOGIN',
+      });
+      showToast(res.message || `Login code sent to ${email}`, 'success');
+      setOtpSent(true);
+      setResendCooldown(60);
+    } catch (err: any) {
+      showToast(err.response?.data?.message || err.message || 'Failed to send login code', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOtpLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otp || otp.trim().length < 4) {
+      showToast('Please enter the 6-digit verification code', 'error');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await loginWithOtp(email.trim().toLowerCase(), otp.trim());
+      showToast('Welcome back to RJ Flowers!', 'success');
+      navigate('/');
+    } catch (err: any) {
+      showToast(err.response?.data?.message || err.message || 'Invalid or expired OTP', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -47,8 +106,8 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div className="max-w-md mx-auto px-4 py-12 sm:py-16 pb-24">
-      <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-soft space-y-6">
-        <div className="text-center space-y-2">
+      <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-soft space-y-5">
+        <div className="text-center space-y-1">
           <div className="w-12 h-12 rounded-2xl bg-forest-800 text-emerald-300 flex items-center justify-center mx-auto shadow-sm">
             <Sprout size={24} />
           </div>
@@ -56,12 +115,40 @@ export const LoginPage: React.FC = () => {
           <p className="text-xs text-slate-500">Access your plant orders, care guides & wishlist</p>
         </div>
 
+        {/* Tab switcher: Password vs Email OTP */}
+        <div className="flex bg-slate-100 p-1 rounded-xl gap-1 text-xs font-semibold">
+          <button
+            type="button"
+            onClick={() => { setAuthMode('PASSWORD'); setOtpSent(false); }}
+            className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              authMode === 'PASSWORD' 
+                ? 'bg-white text-forest-900 shadow-xs' 
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Lock size={13} />
+            <span>Password</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setAuthMode('OTP')}
+            className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              authMode === 'OTP' 
+                ? 'bg-white text-forest-900 shadow-xs' 
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <ShieldCheck size={14} />
+            <span>Email OTP</span>
+          </button>
+        </div>
+
         {/* Google OAuth Button */}
         <button
           type="button"
           onClick={handleGoogleLogin}
           disabled={isGoogleLoading}
-          className="w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs py-3 px-4 border border-slate-300 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2.5 active:scale-95 disabled:opacity-50"
+          className="w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs py-3 px-4 border border-slate-300 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2.5 active:scale-95 disabled:opacity-50 cursor-pointer"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path
@@ -87,49 +174,135 @@ export const LoginPage: React.FC = () => {
         <div className="relative flex items-center justify-center">
           <div className="border-t border-slate-200 w-full" />
           <span className="bg-white px-3 text-[11px] text-slate-400 font-medium uppercase absolute">
-            or email
+            or {authMode === 'PASSWORD' ? 'password' : 'otp'}
           </span>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-          <div className="space-y-1.5">
-            <label className="font-bold text-slate-700 flex items-center gap-1.5">
-              <Mail size={13} /> Email Address
-            </label>
-            <input
-              type="email"
-              required
-              placeholder="customer@rjflowers.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:border-forest-600 focus:ring-1 focus:ring-forest-600 outline-none text-xs"
-            />
+        {authMode === 'PASSWORD' ? (
+          /* Password Form */
+          <form onSubmit={handlePasswordLogin} className="space-y-4 text-xs">
+            <div className="space-y-1.5">
+              <label className="font-bold text-slate-700 flex items-center gap-1.5">
+                <Mail size={13} /> Email Address
+              </label>
+              <input
+                type="email"
+                required
+                placeholder="customer@rjflowers.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:border-forest-600 focus:ring-1 focus:ring-forest-600 outline-none text-xs"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-bold text-slate-700 flex items-center gap-1.5">
+                <Lock size={13} /> Password
+              </label>
+              <input
+                type="password"
+                required
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:border-forest-600 focus:ring-1 focus:ring-forest-600 outline-none text-xs"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-forest-800 hover:bg-forest-900 text-white font-bold text-xs py-3.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              <span>{isLoading ? 'Signing In...' : 'Sign In to Account'}</span>
+              <ArrowRight size={14} />
+            </button>
+          </form>
+        ) : (
+          /* OTP Form */
+          <div className="space-y-4 text-xs">
+            {!otpSent ? (
+              <form onSubmit={handleSendOtp} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="font-bold text-slate-700 flex items-center gap-1.5">
+                    <Mail size={13} /> Registered Email Address
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="customer@rjflowers.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:border-forest-600 focus:ring-1 focus:ring-forest-600 outline-none text-xs"
+                  />
+                  <p className="text-[11px] text-slate-400">We’ll send a 6-digit one-time password to your inbox</p>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-forest-800 hover:bg-forest-900 text-white font-bold text-xs py-3.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <KeyRound size={14} />
+                  <span>{isLoading ? 'Sending Login Code...' : 'Send Login OTP'}</span>
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyOtpLogin} className="space-y-4">
+                <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
+                  <p className="text-xs text-forest-800">
+                    Code sent to <strong className="font-bold">{email}</strong>
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-bold text-slate-700 flex items-center justify-center gap-1">
+                    Enter 6-digit Code
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={6}
+                    required
+                    autoFocus
+                    placeholder="• • • • • •"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                    className="w-full px-4 py-3 text-center text-2xl font-bold tracking-[0.5em] font-mono border-2 border-forest-600 bg-emerald-50/40 rounded-2xl focus:ring-4 focus:ring-emerald-100 outline-none"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading || otp.length < 4}
+                  className="w-full bg-forest-800 hover:bg-forest-900 text-white font-bold text-xs py-3.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <CheckCircle2 size={16} />
+                  <span>{isLoading ? 'Verifying...' : 'Verify OTP & Log In'}</span>
+                </button>
+
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs text-slate-600">
+                  <button
+                    type="button"
+                    onClick={() => setOtpSent(false)}
+                    className="font-medium text-slate-600 hover:text-slate-900"
+                  >
+                    Change Email
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={resendCooldown > 0 || isLoading}
+                    onClick={handleSendOtp}
+                    className="flex items-center gap-1 font-bold text-forest-700 hover:underline disabled:text-slate-400 disabled:no-underline cursor-pointer"
+                  >
+                    <RefreshCw size={12} className={isLoading ? 'animate-spin' : ''} />
+                    {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
-
-          <div className="space-y-1.5">
-            <label className="font-bold text-slate-700 flex items-center gap-1.5">
-              <Lock size={13} /> Password
-            </label>
-            <input
-              type="password"
-              required
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:border-forest-600 focus:ring-1 focus:ring-forest-600 outline-none text-xs"
-            />
-          </div>
-
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-forest-800 hover:bg-forest-900 text-white font-bold text-xs py-3.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
-          >
-            <span>{isLoading ? 'Signing In...' : 'Sign In to Account'}</span>
-            <ArrowRight size={14} />
-          </button>
-        </form>
+        )}
 
         <div className="pt-2 border-t border-slate-100 text-center text-xs text-slate-500">
           New to RJ Flowers?{' '}

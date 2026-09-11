@@ -4,6 +4,7 @@ import { prisma } from '../../config/database.js';
 import { ENV } from '../../config/env.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { UserRole } from '@prisma/client';
+import { sendOtpEmail } from '../../services/email.service.js';
 
 export interface TokenPayload {
   id: string;
@@ -13,6 +14,193 @@ export interface TokenPayload {
 }
 
 export class AuthService {
+  static async sendOtp(email: string, type: 'REGISTER' | 'LOGIN' = 'REGISTER', fullName?: string) {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (type === 'REGISTER' && existingUser) {
+      throw ApiError.conflict('An account with this email address already exists. Please log in.');
+    }
+
+    if (type === 'LOGIN' && !existingUser) {
+      throw ApiError.notFound('No account found with this email address. Please register first.');
+    }
+
+    if (type === 'LOGIN' && existingUser && !existingUser.isActive) {
+      throw ApiError.unauthorized('Account is suspended. Please contact support.');
+    }
+
+    // Invalidate prior unused OTPs for this email and type
+    try {
+      await (prisma as any).emailOtp.updateMany({
+        where: { email: normalizedEmail, type, used: false },
+        data: { used: true },
+      });
+    } catch (err: any) {
+      // safe ignore if table migration pending
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    try {
+      await (prisma as any).emailOtp.create({
+        data: {
+          email: normalizedEmail,
+          otp,
+          type,
+          expiresAt,
+          used: false,
+        },
+      });
+    } catch (err: any) {
+      console.error('Failed to persist OTP in email_otps table:', err.message);
+    }
+
+    const recipientName = fullName || existingUser?.name;
+    const emailResult = await sendOtpEmail({
+      to: normalizedEmail,
+      otp,
+      type,
+      userName: recipientName,
+    });
+
+    return {
+      message: emailResult.simulated
+        ? `OTP generated (Check server console in development: ${otp})`
+        : `Verification code sent to ${normalizedEmail}`,
+      email: normalizedEmail,
+      type,
+      simulated: emailResult.simulated,
+    };
+  }
+
+  static async verifyOtpRegister(data: {
+    fullName: string;
+    email: string;
+    password: string;
+    otp: string;
+    phoneNumber?: string;
+    address?: string;
+    city?: string;
+  }) {
+    const email = data.email.trim().toLowerCase();
+    const otp = data.otp.trim();
+
+    // Verify OTP
+    const otpRecord = await (prisma as any).emailOtp.findFirst({
+      where: {
+        email,
+        otp,
+        type: 'REGISTER',
+        used: false,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!otpRecord) {
+      throw ApiError.badRequest('Invalid or expired verification code. Please request a new one.');
+    }
+
+    // Mark OTP as used
+    await (prisma as any).emailOtp.update({
+      where: { id: otpRecord.id },
+      data: { used: true },
+    });
+
+    // Delegate to register
+    return await this.register({
+      fullName: data.fullName,
+      name: data.fullName,
+      email,
+      password: data.password,
+      phoneNumber: data.phoneNumber,
+      address: data.address,
+      city: data.city,
+    });
+  }
+
+  static async verifyOtpLogin(email: string, otp: string, ipAddress?: string) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const cleanOtp = otp.trim();
+
+    // Verify OTP
+    const otpRecord = await (prisma as any).emailOtp.findFirst({
+      where: {
+        email: normalizedEmail,
+        otp: cleanOtp,
+        type: 'LOGIN',
+        used: false,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!otpRecord) {
+      throw ApiError.badRequest('Invalid or expired verification code. Please request a new one.');
+    }
+
+    // Mark OTP as used
+    await (prisma as any).emailOtp.update({
+      where: { id: otpRecord.id },
+      data: { used: true },
+    });
+
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      include: {
+        addresses: { where: { isDefault: true } },
+        staffProfile: true,
+      },
+    });
+
+    if (!user || !user.isActive) {
+      throw ApiError.unauthorized('Account not found or inactive');
+    }
+
+    const tokens = await this.generateTokens({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      name: user.name,
+    });
+
+    const defaultAddress = user.addresses[0];
+
+    // Audit log
+    await prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        action: 'USER_OTP_LOGIN',
+        resource: 'User',
+        resourceId: user.id,
+        details: { role: user.role, method: 'OTP' },
+        ipAddress,
+      },
+    });
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        fullName: user.name,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+        staffProfile: user.staffProfile,
+        address: defaultAddress?.streetAddress,
+        city: defaultAddress?.city || 'Kathmandu',
+        createdAt: user.createdAt,
+      },
+      ...tokens,
+    };
+  }
+
   static async generateTokens(payload: TokenPayload) {
     const accessToken = jwt.sign(payload, ENV.JWT_SECRET, {
       expiresIn: (ENV.JWT_EXPIRES_IN || '7d') as any,

@@ -10,8 +10,10 @@ interface AuthContextType {
   isAdmin: boolean;
   isCareExpert: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithOtp: (email: string, otp: string) => Promise<void>;
   adminPasswordLogin: (password: string) => Promise<void>;
   register: (data: any) => Promise<void>;
+  registerWithOtp: (data: any) => Promise<void>;
   logout: () => void;
   refreshProfile: () => Promise<void>;
 }
@@ -44,6 +46,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(response.user);
   };
 
+  const loginWithOtp = async (email: string, otp: string) => {
+    const response = await authApi.verifyOtpLogin({ email, otp });
+    setAuthToken(response.accessToken);
+    setUser(response.user);
+  };
+
   const adminPasswordLogin = async (password: string) => {
     const response = await authApi.adminLogin(password);
     setAuthToken(response.accessToken);
@@ -52,6 +60,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (data: any) => {
     const response = await authApi.register(data);
+    setAuthToken(response.accessToken);
+    setUser(response.user);
+  };
+
+  const registerWithOtp = async (data: any) => {
+    const response = await authApi.verifyOtpRegister(data);
     setAuthToken(response.accessToken);
     setUser(response.user);
   };
@@ -75,8 +89,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAdmin: user?.role === 'ADMIN',
         isCareExpert: user?.role === 'CARE_EXPERT' || user?.role === 'ADMIN',
         login,
+        loginWithOtp,
         adminPasswordLogin,
         register,
+        registerWithOtp,
         logout,
         refreshProfile,
       }}
