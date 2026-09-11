@@ -49,7 +49,8 @@ export class OAuthController {
    * 2. Handle Google OAuth Callback / Token Exchange
    */
   static handleGoogleAuth = asyncHandler(async (req: Request, res: Response) => {
-    const { code, credential } = req.body;
+    const code = (req.body?.code || req.query?.code) as string;
+    const credential = req.body?.credential as string;
 
     let googleUser: {
       sub: string;
@@ -166,6 +167,29 @@ export class OAuthController {
       role: user.role,
       name: user.name,
     });
+
+    // Set auth cookies
+    const isProd = process.env.NODE_ENV === 'production';
+    res.cookie('ktm_access_token', accessToken, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
+    });
+    res.cookie('ktm_refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      path: '/',
+    });
+
+    // If initiated from standard browser redirect (GET), redirect to frontend
+    if (req.method === 'GET') {
+      const frontendUrl = ENV.FRONTEND_URL || 'https://rjflowers.com';
+      return res.redirect(`${frontendUrl}/`);
+    }
 
     return res.status(200).json(
       ApiResponse.success(

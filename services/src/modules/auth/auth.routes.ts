@@ -29,6 +29,7 @@ router.post('/refresh-token', AuthController.refresh);
 
 // Google OAuth
 router.get('/google/url', OAuthController.getGoogleAuthUrl);
+router.get('/google/callback', OAuthController.handleGoogleAuth);
 router.post('/google', OAuthController.handleGoogleAuth);
 router.post('/google/callback', OAuthController.handleGoogleAuth);
 
