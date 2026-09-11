@@ -10,14 +10,10 @@ import { errorHandler } from './middlewares/error.middleware.js';
 
 import { authRoutes } from './modules/auth/auth.routes.js';
 import { productRoutes } from './modules/products/product.routes.js';
-import { categoryRoutes } from './modules/categories/category.routes.js';
 import { inventoryRoutes } from './modules/inventory/inventory.routes.js';
 import { cartRoutes } from './modules/cart/cart.routes.js';
-import { wishlistRoutes } from './modules/wishlist/wishlist.routes.js';
 import { orderRoutes } from './modules/orders/order.routes.js';
-import { paymentRoutes } from './modules/payments/payment.routes.js';
 import { deliveryRoutes } from './modules/delivery/delivery.routes.js';
-import { reviewRoutes } from './modules/reviews/review.routes.js';
 import { adminRoutes } from './modules/admin/admin.routes.js';
 import { uploadRoutes } from './modules/upload/upload.routes.js';
 import { notificationRoutes } from './modules/notifications/notification.routes.js';
@@ -60,38 +56,27 @@ app.use(
   })
 );
 
-// 2. CORS Configuration (Strict Allowed Origins)
-const allowedOrigins = [
-  ENV.FRONTEND_URL,
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://localhost',
-  'https://rjflowers.com',
-  'https://www.rjflowers.com',
-  'http://rjflowers.com',
-  'http://www.rjflowers.com',
-].filter(Boolean) as string[];
-
+// 2. CORS Configuration (Dynamic Allowed Origins & Credentials)
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (
-        !origin ||
-        allowedOrigins.some(o => origin.startsWith(o)) ||
-        origin.endsWith('.rjflowers.com') ||
-        origin === 'https://rjflowers.com' ||
-        origin === 'http://rjflowers.com'
-      ) {
-        callback(null, true);
-      } else {
-        callback(new Error('Blocked by CORS security policy'));
-      }
-    },
+    origin: true, // Echo origin to allow localhost, staging, and production domains with cookies
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-session-id'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'x-session-id',
+      'x-refresh-token',
+      'Accept',
+      'Origin',
+      'X-Requested-With',
+    ],
+    exposedHeaders: ['set-cookie'],
   })
 );
+
+// Explicit preflight handler
+app.options('*', cors());
 
 // Request Logging
 app.use(morgan(ENV.NODE_ENV === 'development' ? 'dev' : 'combined'));
@@ -233,16 +218,12 @@ app.get(['/sitemap.xml', '/api/sitemap.xml'], async (req: Request, res: Response
 // Direct `/api/...` Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/categories', categoryRoutes);
 app.use('/api/cart', cartRoutes);
-app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/payments', paymentRoutes);
 app.use('/api/delivery-zones', deliveryRoutes);
 app.use('/api/admin/delivery-zones', deliveryRoutes);
 app.use('/api/inventory', inventoryRoutes);
-app.use('/api/reviews', reviewRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/site-settings', siteSettingsRoutes);
@@ -250,16 +231,12 @@ app.use('/api/site-settings', siteSettingsRoutes);
 // Versioned `/api/v1/...` Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/products', productRoutes);
-app.use('/api/v1/categories', categoryRoutes);
 app.use('/api/v1/cart', cartRoutes);
-app.use('/api/v1/wishlist', wishlistRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/orders', orderRoutes);
-app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/delivery-zones', deliveryRoutes);
 app.use('/api/v1/admin/delivery-zones', deliveryRoutes);
 app.use('/api/v1/inventory', inventoryRoutes);
-app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/upload', uploadRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/site-settings', siteSettingsRoutes);

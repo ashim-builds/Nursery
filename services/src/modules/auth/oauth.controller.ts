@@ -12,8 +12,13 @@ export class OAuthController {
    * 1. Get Google OAuth Authorization URL
    */
   static getGoogleAuthUrl = asyncHandler(async (_req: Request, res: Response) => {
-    if (!ENV.GOOGLE_CLIENT_ID) {
-      throw ApiError.badRequest('Google OAuth is not configured on this server');
+    if (!ENV.GOOGLE_CLIENT_ID || !ENV.GOOGLE_CLIENT_SECRET) {
+      return res.status(200).json(
+        ApiResponse.success(
+          { url: null, configured: false, clientId: null },
+          'Google OAuth is not configured on this server'
+        )
+      );
     }
 
     const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -34,7 +39,7 @@ export class OAuthController {
 
     return res.status(200).json(
       ApiResponse.success(
-        { url, clientId: ENV.GOOGLE_CLIENT_ID },
+        { url, configured: true, clientId: ENV.GOOGLE_CLIENT_ID },
         'Google OAuth URL generated'
       )
     );

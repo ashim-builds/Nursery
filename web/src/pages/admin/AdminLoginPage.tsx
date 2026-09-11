@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useUI } from '../../context/UIContext';
 import { Lock, ArrowRight, Sprout, AlertCircle, Shield } from 'lucide-react';
@@ -9,15 +9,14 @@ export const AdminLoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { adminPasswordLogin, isAuthenticated, isAdmin } = useAuth();
+  const { adminPasswordLogin, isAuthenticated, isAdmin, isLoading, user } = useAuth();
   const { showToast } = useUI();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (isAuthenticated && isAdmin) {
-      navigate('/admin', { replace: true });
-    }
-  }, [isAuthenticated, isAdmin, navigate]);
+  // If already authenticated as ADMIN, redirect immediately
+  if (!isLoading && (isAdmin || user?.role === 'ADMIN')) {
+    return <Navigate to="/admin" replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

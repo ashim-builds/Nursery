@@ -274,9 +274,6 @@ export class AuthService {
         cart: {
           create: {},
         },
-        wishlist: {
-          create: {},
-        },
       },
       select: {
         id: true,
@@ -523,7 +520,6 @@ export class AuthService {
         _count: {
           select: {
             orders: true,
-            reviews: true,
             notifications: { where: { isRead: false } },
           },
         },

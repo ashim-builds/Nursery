@@ -38,9 +38,9 @@ export const Footer: React.FC = () => {
             <div>
               <h4 className="text-[11px] uppercase tracking-[0.18em] text-emerald-300 mb-4">Explore</h4>
               <nav className="space-y-3 text-sm text-forest-200">
-                <Link to="/catalog" className="flex items-center gap-1 hover:text-white transition-colors">Shop all <ArrowUpRight size={13} /></Link>
-                <Link to="/categories" className="flex items-center gap-1 hover:text-white transition-colors">Categories <ArrowUpRight size={13} /></Link>
-                <Link to="/wishlist" className="flex items-center gap-1 hover:text-white transition-colors">Wishlist <ArrowUpRight size={13} /></Link>
+                <Link to="/catalog" className="flex items-center gap-1 hover:text-white transition-colors">Shop all plants <ArrowUpRight size={13} /></Link>
+                <Link to="/orders" className="flex items-center gap-1 hover:text-white transition-colors">My Orders <ArrowUpRight size={13} /></Link>
+                <Link to="/search" className="flex items-center gap-1 hover:text-white transition-colors">Search Plants <ArrowUpRight size={13} /></Link>
               </nav>
             </div>
             <div>

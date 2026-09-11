@@ -12,8 +12,6 @@ import { ScrollToTop } from './components/common/ScrollToTop';
 
 // Storefront Pages
 import { HomePage } from './pages/HomePage';
-import { CategoriesPage } from './pages/CategoriesPage';
-import { CategoryDetailPage } from './pages/CategoryDetailPage';
 import { CatalogPage } from './pages/CatalogPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { SearchPage } from './pages/SearchPage';
@@ -22,7 +20,6 @@ import { CheckoutPage } from './pages/CheckoutPage';
 import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
 import { OrdersPage } from './pages/OrdersPage';
 import { OrderDetailPage } from './pages/OrderDetailPage';
-import { WishlistPage } from './pages/WishlistPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { AddressesPage } from './pages/AddressesPage';
 import { LoginPage } from './pages/LoginPage';
@@ -46,9 +43,6 @@ import { AdminProductsPage } from './pages/admin/AdminProductsPage';
 import { AdminProductFormPage } from './pages/admin/AdminProductFormPage';
 import { AdminInventoryPage } from './pages/admin/AdminInventoryPage';
 import { AdminCustomersPage } from './pages/admin/AdminCustomersPage';
-import { AdminPaymentsPage } from './pages/admin/AdminPaymentsPage';
-import { AdminCouponsPage } from './pages/admin/AdminCouponsPage';
-import { AdminReviewsPage } from './pages/admin/AdminReviewsPage';
 import { AdminDeliveryZonesPage } from './pages/admin/AdminDeliveryZonesPage';
 import { AdminNotificationsPage } from './pages/admin/AdminNotificationsPage';
 import { AdminAuditLogsPage } from './pages/admin/AdminAuditLogsPage';
@@ -75,8 +69,6 @@ export const App: React.FC = () => {
                 {/* 1. PUBLIC STOREFRONT & CUSTOMER ROUTES */}
                 <Route element={<StorefrontLayout />}>
                   <Route path="/" element={<HomePage />} />
-                  <Route path="/categories" element={<CategoriesPage />} />
-                  <Route path="/category/:slug" element={<CategoryDetailPage />} />
                   <Route path="/catalog" element={<CatalogPage />} />
                   <Route path="/products/:slug" element={<ProductDetailPage />} />
                   <Route path="/product/:slug" element={<ProductDetailPage />} />
@@ -94,14 +86,6 @@ export const App: React.FC = () => {
                     }
                   />
                   <Route path="/orders/:id" element={<OrderDetailPage />} />
-                  <Route
-                    path="/wishlist"
-                    element={
-                      <ProtectedRoute>
-                        <WishlistPage />
-                      </ProtectedRoute>
-                    }
-                  />
                   <Route
                     path="/account"
                     element={
@@ -172,9 +156,6 @@ export const App: React.FC = () => {
                   <Route path="products/:id" element={<AdminProductFormPage />} />
                   <Route path="inventory" element={<AdminInventoryPage />} />
                   <Route path="customers" element={<AdminCustomersPage />} />
-                  <Route path="payments" element={<AdminPaymentsPage />} />
-                  <Route path="coupons" element={<AdminCouponsPage />} />
-                  <Route path="reviews" element={<AdminReviewsPage />} />
                   <Route path="delivery-zones" element={<AdminDeliveryZonesPage />} />
                   <Route path="notifications" element={<AdminNotificationsPage />} />
                   <Route path="audit-logs" element={<AdminAuditLogsPage />} />
