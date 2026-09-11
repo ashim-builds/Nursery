@@ -164,6 +164,7 @@ export class AdminService {
           name: true,
           email: true,
           phoneNumber: true,
+          role: true,
           isActive: true,
           createdAt: true,
           orders: {
@@ -187,13 +188,17 @@ export class AdminService {
       return {
         id: u.id,
         name: u.name,
+        fullName: u.name,
         email: u.email,
         phoneNumber: u.phoneNumber,
+        role: u.role || 'CUSTOMER',
         isActive: u.isActive,
         totalOrders: u.orders.length,
+        orderCount: u.orders.length,
         totalSpent,
         primaryAddress: u.addresses[0] ? `${u.addresses[0].streetAddress}, ${u.addresses[0].city}` : null,
         joinedDate: u.createdAt,
+        createdAt: u.createdAt,
       };
     });
 

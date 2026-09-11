@@ -106,23 +106,23 @@ export const AdminCustomersPage: React.FC = () => {
                   <td className="py-3.5 px-4">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-forest-100 text-forest-800 flex items-center justify-center font-bold text-xs shrink-0">
-                        {c.fullName?.charAt(0) || 'C'}
+                        {(c.fullName || c.name || 'C').charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <span className="font-bold text-slate-900 block">{c.fullName}</span>
-                        <span className="text-[10px] text-slate-400 font-mono">ID: {c.id.substring(0, 8)}</span>
+                        <span className="font-bold text-slate-900 block">{c.fullName || c.name || 'Customer'}</span>
+                        <span className="text-[10px] text-slate-400 font-mono">ID: {c.id ? c.id.substring(0, 8) : '—'}</span>
                       </div>
                     </div>
                   </td>
 
                   <td className="py-3.5 px-4">
-                    <div className="text-slate-800">{c.email || 'No email'}</div>
+                    <div className="text-slate-800 font-medium">{c.email || 'No email'}</div>
                     <div className="text-[11px] text-slate-500 font-mono">{c.phoneNumber || 'No phone'}</div>
                   </td>
 
                   <td className="py-3.5 px-4">
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      className={`text-[10px] font-bold px-2.5 py-1 rounded-full inline-block ${
                         c.role === 'ADMIN'
                           ? 'bg-rose-100 text-rose-800'
                           : c.role === 'STAFF'
@@ -130,20 +130,20 @@ export const AdminCustomersPage: React.FC = () => {
                           : 'bg-emerald-100 text-emerald-800'
                       }`}
                     >
-                      {c.role}
+                      {c.role || 'CUSTOMER'}
                     </span>
                   </td>
 
                   <td className="py-3.5 px-4 text-center font-bold font-mono text-slate-900">
-                    {c._count?.orders ?? c.orderCount ?? 0}
+                    {c._count?.orders ?? c.orderCount ?? c.totalOrders ?? 0}
                   </td>
 
                   <td className="py-3.5 px-4 text-right font-mono font-bold text-forest-900">
                     रू {Number(c.totalSpent || 0).toLocaleString()}
                   </td>
 
-                  <td className="py-3.5 px-4 text-right text-slate-400 text-[11px]">
-                    {new Date(c.createdAt).toLocaleDateString()}
+                  <td className="py-3.5 px-4 text-right text-slate-500 font-mono text-[11px]">
+                    {c.createdAt || c.joinedDate ? new Date(c.createdAt || c.joinedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
                   </td>
                 </tr>
               ))}
@@ -163,22 +163,22 @@ export const AdminCustomersPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-10 h-10 rounded-full bg-forest-100 text-forest-800 flex items-center justify-center font-bold text-sm">
-                    {c.fullName?.charAt(0) || 'C'}
+                    {(c.fullName || c.name || 'C').charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900">{c.fullName}</h3>
+                    <h3 className="font-bold text-slate-900">{c.fullName || c.name || 'Customer'}</h3>
                     <span className="text-[10px] text-slate-400">
-                      Joined {new Date(c.createdAt).toLocaleDateString()}
+                      Joined {c.createdAt || c.joinedDate ? new Date(c.createdAt || c.joinedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
                     </span>
                   </div>
                 </div>
 
                 <span
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    c.role === 'ADMIN' ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'
+                  className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
+                    c.role === 'ADMIN' ? 'bg-rose-100 text-rose-800' : c.role === 'STAFF' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
                   }`}
                 >
-                  {c.role}
+                  {c.role || 'CUSTOMER'}
                 </span>
               </div>
 

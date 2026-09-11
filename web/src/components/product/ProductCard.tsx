@@ -15,9 +15,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
   const { showToast } = useUI();
 
-  const primaryImage = Array.isArray(product.images) && product.images.length > 0
-    ? product.images.find((img) => img.isPrimary)?.url || product.images[0].url
-    : null;
+  if (!product) return null;
+
+  const primaryImage =
+    Array.isArray(product.images) && product.images.length > 0
+      ? product.images.find((img) => img?.isPrimary)?.url ||
+        product.images[0]?.url ||
+        (typeof product.images[0] === 'string' ? (product.images[0] as unknown as string) : null)
+      : null;
 
   const defaultVariant = product.variants?.find((v) => v.isDefault) || product.variants?.[0];
   const basePriceNum = Number(product.basePrice);

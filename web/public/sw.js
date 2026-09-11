@@ -40,17 +40,18 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return (
-        cached ||
-        fetch(event.request).catch(() => {
-          if (event.request.headers.get('accept')?.includes('text/html')) {
-            return caches.match('/index.html');
-          }
-          // Return proper offline response for non-HTML requests
-          return new Response('', { status: 503, statusText: 'Service Unavailable' });
-        })
-      );
-    })
+    fetch(event.request)
+      .then((networkResponse) => {
+        return networkResponse;
+      })
+      .catch(async () => {
+        const cached = await caches.match(event.request);
+        if (cached) return cached;
+        if (event.request.headers.get('accept')?.includes('text/html') || event.request.mode === 'navigate') {
+          const fallback = await caches.match('/index.html');
+          if (fallback) return fallback;
+        }
+        return new Response('', { status: 200, headers: { 'Content-Type': 'text/plain' } });
+      })
   );
 });
