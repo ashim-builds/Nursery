@@ -1,44 +1,76 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useUI } from '../../context/UIContext';
+import { useQuery } from '@tanstack/react-query';
+import { siteSettingsApi } from '../../api/site-settings.api';
 import {
   Settings,
   Store,
   Clock,
   CheckCircle2,
+  Loader2,
 } from 'lucide-react';
 
 export const AdminSettingsPage: React.FC = () => {
   const { showToast } = useUI();
 
-  // Settings State
-  const [storeName, setStoreName] = useState(() => localStorage.getItem('nursery_store_name') || 'RJ Flowers');
-  const [supportPhone, setSupportPhone] = useState(() => localStorage.getItem('nursery_phone') || '+977 9815155580');
-  const [whatsappPhone, setWhatsappPhone] = useState(() => localStorage.getItem('nursery_whatsapp') || '+977 9815155580');
-  const [supportEmail, setSupportEmail] = useState(() => localStorage.getItem('nursery_email') || 'nursery@gmail.com');
-  const [storeAddress, setStoreAddress] = useState(() => localStorage.getItem('nursery_address') || 'Pokhara-26, Arghau Chowk, Pokhara');
-  const [freeShippingThreshold, setFreeShippingThreshold] = useState<number>(() => Number(localStorage.getItem('nursery_free_shipping')) || 2000);
-  const [deliveryNotice, setDeliveryNotice] = useState(() => localStorage.getItem('nursery_delivery_notice') || 'Delivery across Pokhara. Rs. 100 below Rs. 2,000; free delivery from Rs. 2,000.');
+  // Settings State initialized from MySQL API
+  const [storeName, setStoreName] = useState('RJ Flowers');
+  const [supportPhone, setSupportPhone] = useState('9815155580');
+  const [whatsappPhone, setWhatsappPhone] = useState('9815155580');
+  const [supportEmail, setSupportEmail] = useState('contact@rjflowers.com');
+  const [storeAddress, setStoreAddress] = useState('Pokhara-26, Arghau Chowk, Pokhara');
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState<number>(2000);
+  const [deliveryNotice, setDeliveryNotice] = useState('Delivery across Pokhara. Rs. 100 below Rs. 2,000; free delivery from Rs. 2,000.');
 
   const [saving, setSaving] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  // Load from MySQL
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ['admin-site-settings'],
+    queryFn: siteSettingsApi.getSettings,
+  });
+
+  useEffect(() => {
+    if (settings) {
+      if (settings.businessName) setStoreName(settings.businessName);
+      if (settings.phone) setSupportPhone(settings.phone);
+      if (settings.whatsappPhone) setWhatsappPhone(settings.whatsappPhone);
+      if (settings.email) setSupportEmail(settings.email);
+      if (settings.address) setStoreAddress(settings.address);
+      if (settings.freeShippingThreshold !== undefined) setFreeShippingThreshold(Number(settings.freeShippingThreshold));
+      if (settings.deliveryNotice) setDeliveryNotice(settings.deliveryNotice);
+    }
+  }, [settings]);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
-    // Save to localStorage
-    localStorage.setItem('nursery_store_name', storeName);
-    localStorage.setItem('nursery_phone', supportPhone);
-    localStorage.setItem('nursery_whatsapp', whatsappPhone);
-    localStorage.setItem('nursery_email', supportEmail);
-    localStorage.setItem('nursery_address', storeAddress);
-    localStorage.setItem('nursery_free_shipping', freeShippingThreshold.toString());
-    localStorage.setItem('nursery_delivery_notice', deliveryNotice);
-
-    setTimeout(() => {
+    try {
+      await siteSettingsApi.updateSettings({
+        businessName: storeName,
+        phone: supportPhone,
+        whatsappPhone,
+        email: supportEmail,
+        address: storeAddress,
+        freeShippingThreshold,
+        deliveryNotice,
+      });
+      showToast('Store settings saved to MySQL database!', 'success');
+    } catch (err: any) {
+      showToast(err.response?.data?.message || err.message || 'Failed to save settings', 'error');
+    } finally {
       setSaving(false);
-      showToast('Store settings updated successfully!', 'success');
-    }, 400);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-16">
+        <Loader2 size={32} className="animate-spin text-forest-700" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -49,7 +81,7 @@ export const AdminSettingsPage: React.FC = () => {
           <span>Nursery & Store Settings</span>
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 mt-1">
-          Configure business contact details, delivery announcement, and store rules.
+          Configure business contact details, delivery announcement, and store rules stored in MySQL.
         </p>
       </div>
 
@@ -94,6 +126,17 @@ export const AdminSettingsPage: React.FC = () => {
               />
             </div>
 
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Customer Support Email</label>
+              <input
+                type="email"
+                required
+                value={supportEmail}
+                onChange={(e) => setSupportEmail(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-forest-700"
+              />
+            </div>
+
             <div className="sm:col-span-2">
               <label className="block font-semibold text-slate-700 mb-1">Physical Nursery Location</label>
               <input
@@ -126,7 +169,7 @@ export const AdminSettingsPage: React.FC = () => {
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-forest-700"
               />
               <span className="text-[10px] text-slate-400 mt-1 block">
-                Orders above this amount qualify for zero delivery fee in Kathmandu Valley.
+                Orders above this amount qualify for zero delivery fee.
               </span>
             </div>
 

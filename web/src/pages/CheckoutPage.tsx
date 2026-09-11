@@ -18,7 +18,6 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { LocationPickerMap } from '../components/common/LocationPickerMap';
-import axios from 'axios';
 
 export const CheckoutPage: React.FC = () => {
   const { items, subtotal, deliveryFee, total, clearCart } = useCart();

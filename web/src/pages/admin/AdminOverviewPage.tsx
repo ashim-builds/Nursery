@@ -15,7 +15,7 @@ import {
   RotateCw,
   CheckCircle,
 } from 'lucide-react';
-import axios from 'axios';
+import { siteSettingsApi } from '../../api/site-settings.api';
 
 export const AdminOverviewPage: React.FC = () => {
   const { data: metrics, isLoading, refetch } = useQuery({
@@ -26,10 +26,7 @@ export const AdminOverviewPage: React.FC = () => {
 
   const { data: siteSettings } = useQuery({
     queryKey: ['site-settings'],
-    queryFn: async () => {
-      const res = await axios.get('/api/site-settings');
-      return res.data?.data;
-    },
+    queryFn: siteSettingsApi.getSettings,
   });
 
   if (isLoading) {

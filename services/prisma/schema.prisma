@@ -337,9 +337,11 @@ model ProductImage {
   productId   String
   product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   filename    String   @default("image.webp")
-  storagePath String   @default("database")
-  mimeType    String?  @default("image/jpeg")
+  storagePath String   @default("uploads/products")
+  mimeType    String?  @default("image/webp")
   fileSize    Int?     @default(0)
+  width       Int?
+  height      Int?
   url         String   @db.LongText
   altText     String?
   isPrimary   Boolean  @default(false)
@@ -353,9 +355,12 @@ model ProductImage {
 model ImageAsset {
   id          String   @id @default(uuid())
   filename    String
+  storagePath String   @default("uploads")
+  url         String   @db.LongText
   mimeType    String
   fileSize    Int
-  data        Bytes    @db.LongBlob
+  width       Int?
+  height      Int?
   createdAt   DateTime @default(now())
 
   @@index([createdAt])
@@ -812,6 +817,7 @@ model SiteSettings {
   logo                   String?
   favicon                String?
   phone                  String   @default("9800000000")
+  whatsappPhone          String?  @default("9815155580")
   email                  String   @default("contact@ktmbotanica.com")
   address                String   @default("Lakeside Botanical Row, Pokhara")
   province               String?  @default("Bagmati")
@@ -822,6 +828,8 @@ model SiteSettings {
   longitude              Decimal? @default(85.32060000) @db.Decimal(10, 8)
   openingHours           String?  @default("Sun - Sat: 8:00 AM - 7:00 PM")
   socialLinks            Json?
+  freeShippingThreshold  Decimal? @default(2000.00) @db.Decimal(10, 2)
+  deliveryNotice         String?  @default("Delivery across Pokhara. Rs. 100 below Rs. 2,000; free delivery from Rs. 2,000.")
   defaultDeliveryMessage String?  @default("Standard delivery across Kathmandu Valley within 24 hours.")
   setupCompleted         Boolean  @default(false)
   createdAt              DateTime @default(now())

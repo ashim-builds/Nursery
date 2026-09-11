@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import {
   Sprout,
   Building2,
@@ -21,6 +20,8 @@ import {
 } from 'lucide-react';
 import { LocationPickerMap } from '../../components/common/LocationPickerMap';
 import { useUI } from '../../context/UIContext';
+import { uploadApi } from '../../api/upload.api';
+import { siteSettingsApi } from '../../api/site-settings.api';
 
 export const AdminSetupWizardPage: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -76,20 +77,14 @@ export const AdminSetupWizardPage: React.FC = () => {
     if (!file) return;
 
     setUploadingImage(true);
-    const body = new FormData();
-    body.append('file', file);
-    body.append('folder', 'products');
-
     try {
-      const res = await axios.post('/api/upload/image', body, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      if (res.data?.data?.url) {
-        setFormData((prev) => ({ ...prev, productImageUrl: res.data.data.url }));
-        showToast('Product image uploaded to NVMe storage!', 'success');
+      const data = await uploadApi.uploadImage(file, 'products');
+      if (data?.url) {
+        setFormData((prev) => ({ ...prev, productImageUrl: data.url }));
+        showToast('Product image uploaded successfully!', 'success');
       }
     } catch (err: any) {
-      showToast(err.response?.data?.message || 'Failed to upload image', 'error');
+      showToast(err.response?.data?.message || err.message || 'Failed to upload image', 'error');
     } finally {
       setUploadingImage(false);
     }
@@ -125,7 +120,7 @@ export const AdminSetupWizardPage: React.FC = () => {
   const handleFinishSetup = async () => {
     setIsSubmitting(true);
     try {
-      await axios.post('/api/site-settings/setup', {
+      await siteSettingsApi.setupSettings({
         businessName: formData.businessName,
         logo: formData.logo,
         phone: formData.phone,
@@ -143,7 +138,7 @@ export const AdminSetupWizardPage: React.FC = () => {
       showToast('Nursery configuration completed! Welcome to your Dashboard.', 'success');
       navigate('/admin/dashboard');
     } catch (err: any) {
-      showToast(err.response?.data?.message || 'Failed to save configuration', 'error');
+      showToast(err.response?.data?.message || err.message || 'Failed to save configuration', 'error');
     } finally {
       setIsSubmitting(false);
     }

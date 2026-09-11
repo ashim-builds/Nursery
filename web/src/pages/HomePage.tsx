@@ -17,7 +17,7 @@ import {
   Download,
   CheckCircle,
 } from 'lucide-react';
-import axios from 'axios';
+import { siteSettingsApi } from '../api/site-settings.api';
 import { useUI } from '../context/UIContext';
 
 export const HomePage: React.FC = () => {
@@ -69,10 +69,7 @@ export const HomePage: React.FC = () => {
   // Fetch Site Settings for verified phone, email, and location
   const { data: siteSettings } = useQuery({
     queryKey: ['site-settings'],
-    queryFn: async () => {
-      const res = await axios.get('/api/site-settings');
-      return res.data?.data;
-    },
+    queryFn: siteSettingsApi.getSettings,
   });
 
   const nurserySchema = {

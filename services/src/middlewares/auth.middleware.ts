@@ -14,14 +14,27 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
+export const extractCookie = (req: Request, name: string): string | undefined => {
+  if ((req as any).cookies && (req as any).cookies[name]) {
+    return (req as any).cookies[name];
+  }
+  const cookieHeader = req.headers.cookie;
+  if (!cookieHeader) return undefined;
+  const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : undefined;
+};
+
 export const authenticateJWT = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    let token = extractCookie(req, 'ktm_access_token');
+    if (!token && req.headers.authorization?.startsWith('Bearer ')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (!token) {
       throw ApiError.unauthorized('Authentication token is required');
     }
 
-    const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, ENV.JWT_SECRET) as { id: string; email: string; role: UserRole; name: string };
 
     const user = await prisma.user.findUnique({
@@ -53,9 +66,12 @@ export const authenticateJWT = async (req: AuthenticatedRequest, res: Response, 
 
 export const optionalAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1];
+    let token = extractCookie(req, 'ktm_access_token');
+    if (!token && req.headers.authorization?.startsWith('Bearer ')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (token) {
       const decoded = jwt.verify(token, ENV.JWT_SECRET) as { id: string; email: string; role: UserRole; name: string };
       const user = await prisma.user.findUnique({
         where: { id: decoded.id },

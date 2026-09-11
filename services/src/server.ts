@@ -1,3 +1,4 @@
+import path from 'path';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -24,8 +25,21 @@ import { siteSettingsRoutes } from './modules/site-settings/site-settings.routes
 
 const app = express();
 
-// Trust reverse proxy (Nginx) for accurate client IP in rate limiting & logs
+// Trust reverse proxy (Nginx / cPanel Apache) for accurate client IP in rate limiting & logs
 app.set('trust proxy', 1);
+
+// Dedicated Static Image Serving (High-Performance Caching)
+app.use(
+  '/uploads',
+  express.static(path.resolve(process.cwd(), 'uploads'), {
+    maxAge: '365d',
+    immutable: true,
+    setHeaders: (res) => {
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    },
+  })
+);
 
 // 1. Security Middlewares: Helmet with CSP and strict headers
 app.use(
@@ -53,12 +67,21 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost',
   'https://rjflowers.com',
+  'https://www.rjflowers.com',
+  'http://rjflowers.com',
+  'http://www.rjflowers.com',
 ].filter(Boolean) as string[];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
+      if (
+        !origin ||
+        allowedOrigins.some(o => origin.startsWith(o)) ||
+        origin.endsWith('.rjflowers.com') ||
+        origin === 'https://rjflowers.com' ||
+        origin === 'http://rjflowers.com'
+      ) {
         callback(null, true);
       } else {
         callback(new Error('Blocked by CORS security policy'));

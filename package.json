@@ -43,6 +43,7 @@
   "author": "RJ Flowers",
   "license": "MIT",
   "devDependencies": {
-    "concurrently": "^10.0.5"
+    "concurrently": "^10.0.5",
+    "typescript": "^5.7.3"
   }
 }

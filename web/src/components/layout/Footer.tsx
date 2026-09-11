@@ -2,15 +2,12 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight, Facebook, Heart, MapPin, Phone, ShieldCheck, Truck } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import { siteSettingsApi } from '../../api/site-settings.api';
 
 export const Footer: React.FC = () => {
   const { data: siteSettings } = useQuery({
     queryKey: ['site-settings'],
-    queryFn: async () => {
-      const res = await axios.get('/api/site-settings');
-      return res.data?.data;
-    },
+    queryFn: siteSettingsApi.getSettings,
   });
 
   const businessName = siteSettings?.businessName || 'RJ Flowers';

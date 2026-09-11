@@ -28,4 +28,24 @@ export const authApi = {
     const res = await apiClient.put('/auth/profile', data);
     return res.data.data;
   },
+
+  adminLogin: async (password: string): Promise<AuthResponse> => {
+    const res = await apiClient.post('/auth/admin-login', { password });
+    return res.data.data;
+  },
+
+  getGoogleAuthUrl: async (): Promise<string> => {
+    const res = await apiClient.get('/auth/google/url');
+    return res.data?.data?.url;
+  },
+
+  logout: async (): Promise<void> => {
+    try {
+      await apiClient.post('/auth/logout', {});
+    } catch {
+      // Ignore network errors during logout
+    }
+  },
 };
+
+

@@ -10,9 +10,7 @@ export const PWAInstallPrompt: React.FC = () => {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      if (!sessionStorage.getItem('pwa_prompt_dismissed')) {
-        setShowPrompt(true);
-      }
+      setShowPrompt(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -42,7 +40,6 @@ export const PWAInstallPrompt: React.FC = () => {
   const handleDismiss = () => {
     setShowPrompt(false);
     setIsDismissed(true);
-    sessionStorage.setItem('pwa_prompt_dismissed', 'true');
   };
 
   if (!showPrompt || isDismissed) return null;

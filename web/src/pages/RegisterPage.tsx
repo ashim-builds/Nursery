@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useUI } from '../context/UIContext';
 import { Sprout, Lock, Mail, User, Phone, MapPin, ArrowRight } from 'lucide-react';
-import axios from 'axios';
+import { authApi } from '../api/auth.api';
 
 export const RegisterPage: React.FC = () => {
   const { register } = useAuth();
@@ -56,14 +56,14 @@ export const RegisterPage: React.FC = () => {
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
     try {
-      const res = await axios.get('/api/auth/google/url');
-      if (res.data?.data?.url) {
-        window.location.href = res.data.data.url;
+      const url = await authApi.getGoogleAuthUrl();
+      if (url) {
+        window.location.href = url;
       } else {
         showToast('Google OAuth is not configured yet on this server.', 'info');
       }
     } catch (err: any) {
-      showToast(err.response?.data?.message || 'Google OAuth connection failed', 'error');
+      showToast(err.response?.data?.message || err.message || 'Google OAuth connection failed', 'error');
     } finally {
       setIsGoogleLoading(false);
     }

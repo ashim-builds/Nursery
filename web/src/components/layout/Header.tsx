@@ -6,7 +6,7 @@ import { useUI } from '../../context/UIContext';
 import { useAuth } from '../../context/AuthContext';
 import { NotificationCenter } from '../notifications/NotificationCenter';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import { siteSettingsApi } from '../../api/site-settings.api';
 
 export const Header: React.FC = () => {
   const { itemCount } = useCart();
@@ -16,7 +16,7 @@ export const Header: React.FC = () => {
   const navigate = useNavigate();
   const { data: siteSettings } = useQuery({
     queryKey: ['site-settings'],
-    queryFn: async () => (await axios.get('/api/site-settings')).data?.data,
+    queryFn: siteSettingsApi.getSettings,
   });
   const businessName = siteSettings?.businessName || 'RJ Flowers';
 
