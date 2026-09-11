@@ -332,7 +332,7 @@ export class AuthService {
     });
 
     if (!admin) {
-      const passwordHash = await bcrypt.hash('admin123', 10);
+      const passwordHash = await bcrypt.hash('Rjflowers@2026!', 10);
       admin = await prisma.user.create({
         data: {
           name: 'RJ Flowers Admin',

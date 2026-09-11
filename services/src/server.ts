@@ -257,13 +257,23 @@ app.use(errorHandler);
 let server: any;
 
 async function startServer() {
-  await connectDB();
-  server = app.listen(ENV.PORT, () => {
-    console.log(`🌿 Nursery API is flourishing on port ${ENV.PORT}`);
-    console.log(`🚀 Health Check: http://localhost:${ENV.PORT}/api/health`);
-    console.log(`🚀 Products API: http://localhost:${ENV.PORT}/api/products`);
-    console.log(`🚀 Categories API: http://localhost:${ENV.PORT}/api/categories`);
-  });
+  try {
+    await connectDB();
+  } catch (err: any) {
+    console.error('⚠️ [DB] Connection warning on startup:', err.message);
+  }
+
+  const port = process.env.PORT || ENV.PORT || 5000;
+
+  if (typeof (global as any).PhusionPassenger !== 'undefined') {
+    (app as any).listen('passenger');
+    console.log('🌿 RJ Flowers API running under Phusion Passenger');
+  } else {
+    server = app.listen(port, () => {
+      console.log(`🌿 RJ Flowers API is flourishing on port ${port}`);
+      console.log(`🚀 Health Check: http://localhost:${port}/api/health`);
+    });
+  }
 }
 
 // Graceful Shutdown

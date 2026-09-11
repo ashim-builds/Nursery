@@ -1,9 +1,8 @@
-import nodemailer, { type Transporter } from 'nodemailer';
 import { ENV } from '../config/env.js';
 
-let transporter: Transporter | null = null;
+let transporter: any = null;
 
-function getTransporter(): Transporter | null {
+async function getTransporter(): Promise<any> {
   if (transporter) return transporter;
 
   if (!ENV.SMTP_PASS) {
@@ -12,6 +11,7 @@ function getTransporter(): Transporter | null {
   }
 
   try {
+    const nodemailer = (await import('nodemailer')).default;
     transporter = nodemailer.createTransport({
       host: ENV.SMTP_HOST,
       port: ENV.SMTP_PORT,
@@ -27,8 +27,8 @@ function getTransporter(): Transporter | null {
     });
 
     return transporter;
-  } catch (error) {
-    console.error('❌ [EMAIL] Failed to create SMTP transporter:', error);
+  } catch (error: any) {
+    console.warn('⚠️ [EMAIL] Could not load nodemailer or connect to SMTP:', error.message);
     return null;
   }
 }
@@ -41,7 +41,7 @@ export interface SendOtpEmailParams {
 }
 
 export async function sendOtpEmail({ to, otp, type, userName }: SendOtpEmailParams): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
-  const mailClient = getTransporter();
+  const mailClient = await getTransporter();
 
   const title = type === 'REGISTER' ? 'Verify Your Email to Complete Registration' : 'Your Login Verification Code';
   const subtitle = type === 'REGISTER' 
