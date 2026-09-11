@@ -102,8 +102,11 @@ export const CartDrawer: React.FC = () => {
               </div>
             ) : (
               items.map((item) => {
+                const productTitle = item.product?.title || item.product?.name || 'Botanical Plant';
+                const productSlug = item.product?.slug || '';
                 const itemImg =
-                  item.product.images?.[0]?.url ||
+                  item.product?.images?.[0]?.url ||
+                  (typeof item.product?.images?.[0] === 'string' ? item.product.images[0] : null) ||
                   'https://images.unsplash.com/photo-1545241047-6083a3684587?auto=format&fit=crop&w=300&q=80';
 
                 return (
@@ -114,7 +117,7 @@ export const CartDrawer: React.FC = () => {
                     {/* Item Image */}
                     <img
                       src={itemImg}
-                      alt={item.product.title}
+                      alt={productTitle}
                       className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-xl shrink-0 border border-slate-200 bg-white"
                     />
 
@@ -123,11 +126,11 @@ export const CartDrawer: React.FC = () => {
                       <div>
                         <div className="flex items-start justify-between gap-1">
                           <Link
-                            to={`/products/${item.product.slug}`}
+                            to={productSlug ? `/products/${productSlug}` : '#'}
                             onClick={closeCartDrawer}
-                            className="font-semibold text-slate-900 text-xs sm:text-sm hover:text-forest-700 line-clamp-1 leading-tight"
+                            className="font-semibold text-xs sm:text-sm text-slate-900 hover:text-forest-800 line-clamp-1"
                           >
-                            {item.product.title}
+                            {productTitle}
                           </Link>
                           <button
                             onClick={() => removeFromCart(item.id)}

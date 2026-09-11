@@ -67,6 +67,7 @@ export interface Review {
 export interface Product {
   id: string;
   title: string;
+  name?: string;
   slug: string;
   sku: string;
   scientificName?: string;

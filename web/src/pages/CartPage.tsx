@@ -92,21 +92,25 @@ export const CartPage: React.FC = () => {
               className="bg-white rounded-3xl border border-slate-200/80 p-4 sm:p-5 flex gap-4 items-center shadow-xs"
             >
               <Link
-                to={`/products/${item.product.slug}`}
+                to={item.product?.slug ? `/products/${item.product.slug}` : '#'}
                 className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden bg-forest-50 shrink-0"
               >
                 <img
-                  src={item.product.images?.[0]?.url || 'https://images.unsplash.com/photo-1545241047-6083a3684587?auto=format&fit=crop&w=300&q=80'}
-                  alt={item.product.title}
+                  src={
+                    item.product?.images?.[0]?.url ||
+                    (typeof item.product?.images?.[0] === 'string' ? item.product.images[0] : null) ||
+                    'https://images.unsplash.com/photo-1545241047-6083a3684587?auto=format&fit=crop&w=300&q=80'
+                  }
+                  alt={item.product?.title || item.product?.name || 'Product'}
                   className="w-full h-full object-cover"
                 />
               </Link>
 
               <div className="flex-1 min-w-0 space-y-1">
-                <Link to={`/products/${item.product.slug}`} className="block font-semibold text-xs sm:text-sm text-slate-900 hover:text-forest-800 truncate">
-                  {item.product.title}
+                <Link to={item.product?.slug ? `/products/${item.product.slug}` : '#'} className="block font-semibold text-xs sm:text-sm text-slate-900 hover:text-forest-800 truncate">
+                  {item.product?.title || item.product?.name || 'Botanical Plant'}
                 </Link>
-                {!isGenericVariantName(item.variant.name) && (
+                {item.variant && !isGenericVariantName(item.variant.name) && (
                   <span className="text-[11px] text-slate-500 block">Variant: {item.variant.name}</span>
                 )}
                 <span className="font-bold text-xs sm:text-sm text-forest-950 block">
