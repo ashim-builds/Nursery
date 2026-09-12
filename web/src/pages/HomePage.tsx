@@ -255,7 +255,7 @@ export const HomePage: React.FC = () => {
               />
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5 leading-none mb-0.5">
-                  <span className="inline-block px-1.5 py-0.5 rounded bg-emerald-500/2`0 text-emerald-300 text-[9px] font-bold uppercase tracking-wider border border-emerald-400/20 shrink-0">
+                  <span className="inline-block px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-bold uppercase tracking-wider border border-emerald-400/20 shrink-0">
                     Official App
                   </span>
                 </div>
