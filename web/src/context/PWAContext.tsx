@@ -15,7 +15,9 @@ interface PWAContextType {
 const PWAContext = createContext<PWAContextType | undefined>(undefined);
 
 export const PWAProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(() => {
+    return typeof window !== 'undefined' ? (window as any).deferredPWAInstallPrompt || null : null;
+  });
   const [isInstalled, setIsInstalled] = useState(false);
   const [showInstallModal, setShowInstallModal] = useState(false);
 
@@ -40,6 +42,10 @@ export const PWAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     checkIsInstalled();
 
+    if ((window as any).deferredPWAInstallPrompt && !deferredPrompt) {
+      setDeferredPrompt((window as any).deferredPWAInstallPrompt);
+    }
+
     // Listen to display-mode change
     const matcher = window.matchMedia('(display-mode: standalone)');
     const handleDisplayModeChange = (e: MediaQueryListEvent) => {
@@ -51,24 +57,33 @@ export const PWAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       matcher.addEventListener('change', handleDisplayModeChange);
     } catch {
-      // Fallback for older browsers
       matcher.addListener?.(handleDisplayModeChange);
     }
 
     // 2. Capture Chrome/Android beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
-      // Prevent browser default mini-infobar
       e.preventDefault();
+      (window as any).deferredPWAInstallPrompt = e;
       setDeferredPrompt(e);
+    };
+
+    const handleCustomPromptReady = (e: any) => {
+      if (e.detail) {
+        setDeferredPrompt(e.detail);
+      }
     };
 
     const handleAppInstalled = () => {
       setIsInstalled(true);
       setDeferredPrompt(null);
+      if (typeof window !== 'undefined') {
+        (window as any).deferredPWAInstallPrompt = null;
+      }
       setShowInstallModal(false);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('pwa-prompt-ready', handleCustomPromptReady);
     window.addEventListener('appinstalled', handleAppInstalled);
 
     // 3. Register Service Worker reliably for PWA installability
@@ -84,6 +99,7 @@ export const PWAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('pwa-prompt-ready', handleCustomPromptReady);
       window.removeEventListener('appinstalled', handleAppInstalled);
       try {
         matcher.removeEventListener('change', handleDisplayModeChange);
@@ -91,21 +107,26 @@ export const PWAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         matcher.removeListener?.(handleDisplayModeChange);
       }
     };
-  }, []);
+  }, [deferredPrompt]);
 
   const promptInstall = useCallback(async (): Promise<'accepted' | 'dismissed' | 'manual_guide' | 'already_installed'> => {
     if (isInstalled) {
       return 'already_installed';
     }
 
+    const activePrompt = deferredPrompt || (typeof window !== 'undefined' ? (window as any).deferredPWAInstallPrompt : null);
+
     // Direct native installation prompt (Android / Chrome / Edge / Desktop)
-    if (deferredPrompt) {
+    if (activePrompt) {
       try {
-        await deferredPrompt.prompt();
-        const choice = await deferredPrompt.userChoice;
+        await activePrompt.prompt();
+        const choice = await activePrompt.userChoice;
         if (choice.outcome === 'accepted') {
           setIsInstalled(true);
           setDeferredPrompt(null);
+          if (typeof window !== 'undefined') {
+            (window as any).deferredPWAInstallPrompt = null;
+          }
           return 'accepted';
         } else {
           return 'dismissed';
@@ -117,8 +138,7 @@ export const PWAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
 
-    // If native prompt not available (e.g., iOS Safari, in-app browser, or Chrome without prompt fired yet),
-    // show clear, device-tailored step-by-step install instructions modal
+    // If native prompt not available (e.g., iOS Safari or in-app browser)
     setShowInstallModal(true);
     return 'manual_guide';
   }, [deferredPrompt, isInstalled]);

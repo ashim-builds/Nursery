@@ -24,6 +24,17 @@
     <meta name="application-name" content="RJ Flowers" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     
+    <script>
+      window.deferredPWAInstallPrompt = null;
+      window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        window.deferredPWAInstallPrompt = e;
+        if (window.dispatchEvent) {
+          window.dispatchEvent(new CustomEvent('pwa-prompt-ready', { detail: e }));
+        }
+      });
+    </script>
+    
     <!-- OpenGraph / Search Logo -->
     <meta property="og:image" content="https://rjflowers.com/rj-flowers-icon-512.png" />
     <meta property="og:site_name" content="RJ Flowers" />

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { productApi } from '../api/product.api';
-import { ProductCard } from '../components/product/ProductCard';
-import { SEO } from '../components/common/SEO';
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { productApi } from "../api/product.api";
+import { ProductCard } from "../components/product/ProductCard";
+import { SEO } from "../components/common/SEO";
 import {
   Sprout,
   ArrowRight,
@@ -19,11 +19,11 @@ import {
   Shield,
   Search,
   X,
-} from 'lucide-react';
-import { siteSettingsApi } from '../api/site-settings.api';
-import { useUI } from '../context/UIContext';
-import { usePWA } from '../context/PWAContext';
-import { useAuth } from '../context/AuthContext';
+} from "lucide-react";
+import { siteSettingsApi } from "../api/site-settings.api";
+import { useUI } from "../context/UIContext";
+import { usePWA } from "../context/PWAContext";
+import { useAuth } from "../context/AuthContext";
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -31,54 +31,57 @@ export const HomePage: React.FC = () => {
   const { showToast } = useUI();
   const { isAdmin } = useAuth();
   const [isBannerDismissed, setIsBannerDismissed] = useState(() => {
-    return localStorage.getItem('rj_home_app_banner_dismissed') === 'true';
+    return localStorage.getItem("rj_home_app_banner_dismissed") === "true";
   });
 
   const handleDismissBanner = () => {
     setIsBannerDismissed(true);
-    localStorage.setItem('rj_home_app_banner_dismissed', 'true');
+    localStorage.setItem("rj_home_app_banner_dismissed", "true");
   };
 
   const handleInstallApp = async () => {
     const res = await promptInstall();
-    if (res === 'accepted') {
-      showToast('The Bloom Patch app installed successfully!', 'success');
+    if (res === "accepted") {
+      showToast("The Bloom Patch app installed successfully!", "success");
     }
   };
 
   // Show the eight newest published products added from the admin panel.
-  const { data: latestProductsData, isLoading: latestProductsLoading } = useQuery({
-    queryKey: ['latest-products'],
-    queryFn: () => productApi.getProducts({ limit: 8, sortBy: 'newest' }),
-  });
+  const { data: latestProductsData, isLoading: latestProductsLoading } =
+    useQuery({
+      queryKey: ["latest-products"],
+      queryFn: () => productApi.getProducts({ limit: 8, sortBy: "newest" }),
+    });
 
   // Fetch Site Settings for verified phone, email, and location
   const { data: siteSettings } = useQuery({
-    queryKey: ['site-settings'],
+    queryKey: ["site-settings"],
     queryFn: siteSettingsApi.getSettings,
   });
 
-  const businessName = siteSettings?.businessName || 'The Bloom Patch';
+  const businessName = siteSettings?.businessName || "The Bloom Patch";
 
   const nurserySchema = {
-    '@context': 'https://schema.org',
-    '@type': 'GardenStore',
+    "@context": "https://schema.org",
+    "@type": "GardenStore",
     name: businessName,
     image:
-      'https://images.unsplash.com/photo-1545241047-6083a3684587?auto=format&fit=crop&w=1200&q=80',
-    url: typeof window !== 'undefined' ? window.location.origin : '/',
-    telephone: siteSettings?.phone ? `+977-${siteSettings.phone}` : '+977-9815155580',
-    priceRange: 'रू 200 - रू 25,000',
+      "https://images.unsplash.com/photo-1545241047-6083a3684587?auto=format&fit=crop&w=1200&q=80",
+    url: typeof window !== "undefined" ? window.location.origin : "/",
+    telephone: siteSettings?.phone
+      ? `+977-${siteSettings.phone}`
+      : "+977-9815155580",
+    priceRange: "रू 200 - रू 25,000",
     address: {
-      '@type': 'PostalAddress',
-      streetAddress: siteSettings?.address || 'Pokhara-26, Arghau Chowk',
-      addressLocality: siteSettings?.city || 'Pokhara',
-      addressRegion: siteSettings?.province || 'Gandaki',
-      postalCode: '33700',
-      addressCountry: 'NP',
+      "@type": "PostalAddress",
+      streetAddress: siteSettings?.address || "Pokhara-26, Arghau Chowk",
+      addressLocality: siteSettings?.city || "Pokhara",
+      addressRegion: siteSettings?.province || "Gandaki",
+      postalCode: "33700",
+      addressCountry: "NP",
     },
     geo: {
-      '@type': 'GeoCoordinates',
+      "@type": "GeoCoordinates",
       latitude: Number(siteSettings?.latitude) || 28.2365,
       longitude: Number(siteSettings?.longitude) || 84.0036,
     },
@@ -90,7 +93,9 @@ export const HomePage: React.FC = () => {
       <SEO
         title={`${businessName} | Flowers and Nursery in Pokhara`}
         description={`${businessName} and Nursery in Pokhara-26, Arghau Chowk. Shop flowers and plants with delivery across Pokhara.`}
-        canonical={typeof window !== 'undefined' ? `${window.location.origin}/` : '/'}
+        canonical={
+          typeof window !== "undefined" ? `${window.location.origin}/` : "/"
+        }
         structuredData={nurserySchema}
       />
 
@@ -103,10 +108,16 @@ export const HomePage: React.FC = () => {
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-xs sm:text-sm text-amber-200">Admin Mode Active</span>
-                <span className="text-[10px] bg-amber-500/30 text-amber-200 px-2 py-0.5 rounded-full font-mono font-semibold">Staff Access</span>
+                <span className="font-bold text-xs sm:text-sm text-amber-200">
+                  Admin Mode Active
+                </span>
+                <span className="text-[10px] bg-amber-500/30 text-amber-200 px-2 py-0.5 rounded-full font-mono font-semibold">
+                  Staff Access
+                </span>
               </div>
-              <p className="text-[11px] text-forest-200 truncate">Manage plants, inventory, orders & store settings</p>
+              <p className="text-[11px] text-forest-200 truncate">
+                Manage plants, inventory, orders & store settings
+              </p>
             </div>
           </div>
           <Link
@@ -125,14 +136,21 @@ export const HomePage: React.FC = () => {
           onSubmit={(e) => {
             e.preventDefault();
             const form = e.currentTarget;
-            const input = form.elements.namedItem('mobileSearch') as HTMLInputElement;
+            const input = form.elements.namedItem(
+              "mobileSearch",
+            ) as HTMLInputElement;
             if (input?.value.trim()) {
-              navigate(`/catalog?search=${encodeURIComponent(input.value.trim())}`);
+              navigate(
+                `/catalog?search=${encodeURIComponent(input.value.trim())}`,
+              );
             }
           }}
           className="relative flex items-center"
         >
-          <Search size={17} className="absolute left-3.5 text-slate-400 pointer-events-none" />
+          <Search
+            size={17}
+            className="absolute left-3.5 text-slate-400 pointer-events-none"
+          />
           <input
             type="text"
             name="mobileSearch"
@@ -221,57 +239,61 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* 2. PWA Mobile App Installation Banner */}
+      {/* 2. PWA Mobile App Installation Banner (Ultra-Compact & High-UX) */}
       {!isBannerDismissed && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative bg-gradient-to-r from-emerald-900 via-forest-900 to-forest-950 rounded-3xl p-5 sm:p-7 border border-emerald-500/30 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
-            {/* Top Right Cross (Close) Button */}
-            <button
-              onClick={handleDismissBanner}
-              className="absolute top-3 right-3 p-1.5 text-forest-300 hover:text-white bg-forest-950/60 hover:bg-forest-900 rounded-full transition-colors"
-              title="Close"
-              aria-label="Close"
-            >
-              <X size={16} />
-            </button>
+        <section className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="relative overflow-hidden bg-gradient-to-r from-forest-950 via-[#102a1e] to-emerald-950 rounded-2xl p-2.5 sm:p-3.5 border border-emerald-500/30 text-white shadow-md flex items-center justify-between gap-2.5 sm:gap-4">
+            {/* Ambient background glow */}
+            <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-emerald-400/10 rounded-full blur-xl pointer-events-none" />
 
-            <div className="flex items-center gap-3.5 text-center sm:text-left flex-col sm:flex-row pr-6 sm:pr-0">
+            {/* Left: App Logo & Info */}
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
               <img
                 src="/the-bloom-patch-logo.png"
-                alt="The Bloom Patch App Logo"
-                className="w-14 h-14 rounded-2xl shadow-lg border border-emerald-400/30 object-contain bg-white p-1 shrink-0"
+                alt="App Logo"
+                className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl shadow-sm border border-emerald-400/30 object-contain bg-white p-0.5 shrink-0"
               />
-              <div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold uppercase tracking-wider mb-1">
-                  Official Mobile App
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 leading-none mb-0.5">
+                  <span className="inline-block px-1.5 py-0.5 rounded bg-emerald-500/2`0 text-emerald-300 text-[9px] font-bold uppercase tracking-wider border border-emerald-400/20 shrink-0">
+                    Official App
+                  </span>
                 </div>
-                <h3 className="font-serif font-bold text-base sm:text-lg text-white">
+                <h3 className="font-semibold text-xs sm:text-sm text-white truncate">
                   Install {businessName} App
                 </h3>
-                <p className="text-xs text-forest-200 mt-0.5">
-                  Fast 1-tap plant shopping & live delivery tracking directly from your phone home screen.
-                </p>
               </div>
             </div>
 
-            {isInstalled ? (
+            {/* Right: Actions */}
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+              {isInstalled ? (
+                <button
+                  onClick={handleDismissBanner}
+                  className="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 font-bold text-xs px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl flex items-center gap-1 shadow-sm transition-transform active:scale-95"
+                  title="Dismiss Banner"
+                >
+                  <X size={13} />
+                  <span>Dismiss</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleInstallApp}
+                  className="bg-emerald-400 hover:bg-emerald-300 text-forest-950 font-bold text-xs px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-transform active:scale-95 whitespace-nowrap"
+                >
+                  <Download size={13} />
+                  <span>Install</span>
+                </button>
+              )}
               <button
                 onClick={handleDismissBanner}
-                className="w-full sm:w-auto bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 font-bold text-xs sm:text-sm px-6 py-3 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-transform active:scale-95 shrink-0"
-                title="Dismiss Banner"
+                className="p-1 sm:p-1.5 text-forest-300 hover:text-white hover:bg-forest-900/60 rounded-lg transition-colors"
+                title="Close"
+                aria-label="Close"
               >
-                <X size={16} />
-                <span>Dismiss</span>
+                <X size={15} />
               </button>
-            ) : (
-              <button
-                onClick={handleInstallApp}
-                className="w-full sm:w-auto bg-emerald-400 hover:bg-emerald-300 text-forest-950 font-bold text-xs sm:text-sm px-6 py-3 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-transform active:scale-95 shrink-0"
-              >
-                <Download size={16} />
-                <span>Install Mobile App</span>
-              </button>
-            )}
+            </div>
           </div>
         </section>
       )}
@@ -299,10 +321,14 @@ export const HomePage: React.FC = () => {
         {latestProductsLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-64 bg-slate-100 animate-pulse rounded-2xl" />
+              <div
+                key={i}
+                className="h-64 bg-slate-100 animate-pulse rounded-2xl"
+              />
             ))}
           </div>
-        ) : !latestProductsData?.products || latestProductsData.products.length === 0 ? (
+        ) : !latestProductsData?.products ||
+          latestProductsData.products.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-2">
             <Sprout size={32} className="mx-auto text-slate-300" />
             <h3 className="font-serif font-bold text-base text-slate-800">
