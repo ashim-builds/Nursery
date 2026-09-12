@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { productApi } from '../api/product.api';
 import { ProductCard } from '../components/product/ProductCard';
@@ -17,6 +17,8 @@ import {
   Download,
   CheckCircle,
   Shield,
+  Search,
+  X,
 } from 'lucide-react';
 import { siteSettingsApi } from '../api/site-settings.api';
 import { useUI } from '../context/UIContext';
@@ -24,9 +26,18 @@ import { usePWA } from '../context/PWAContext';
 import { useAuth } from '../context/AuthContext';
 
 export const HomePage: React.FC = () => {
+  const navigate = useNavigate();
   const { promptInstall, isInstalled } = usePWA();
   const { showToast } = useUI();
   const { isAdmin } = useAuth();
+  const [isBannerDismissed, setIsBannerDismissed] = useState(() => {
+    return localStorage.getItem('rj_home_app_banner_dismissed') === 'true';
+  });
+
+  const handleDismissBanner = () => {
+    setIsBannerDismissed(true);
+    localStorage.setItem('rj_home_app_banner_dismissed', 'true');
+  };
 
   const handleInstallApp = async () => {
     const res = await promptInstall();
@@ -108,115 +119,162 @@ export const HomePage: React.FC = () => {
         </div>
       )}
 
-      {/* 1. Mobile-First Botanical Hero Section */}
-      <section className="relative overflow-hidden rounded-3xl mx-3 sm:mx-6 lg:mx-8 mt-3 sm:mt-6 bg-gradient-to-br from-forest-950 via-forest-900 to-forest-800 text-white shadow-lifted">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-terracotta-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Mobile Search Bar (as shown in mobile mockup) */}
+      <div className="md:hidden px-3 sm:px-6">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const form = e.currentTarget;
+            const input = form.elements.namedItem('mobileSearch') as HTMLInputElement;
+            if (input?.value.trim()) {
+              navigate(`/catalog?search=${encodeURIComponent(input.value.trim())}`);
+            }
+          }}
+          className="relative flex items-center"
+        >
+          <Search size={17} className="absolute left-3.5 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            name="mobileSearch"
+            placeholder="Search flowers..."
+            className="w-full bg-[#f8faf9] border border-slate-200/90 text-slate-800 placeholder-slate-400 text-xs sm:text-sm pl-10 pr-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-forest-600/30 focus:border-forest-600 transition-all shadow-2xs"
+          />
+        </form>
+      </div>
 
-        <div className="max-w-7xl mx-auto px-5 py-8 sm:py-12 md:py-16 lg:py-16 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center text-center lg:text-left">
-          {/* Left Column: Headline & Action */}
-          <div className="lg:col-span-7 space-y-4 sm:space-y-6">
-            <div className="inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-3.5 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md">
-              <Sprout size={14} className="text-emerald-400" />
-              <span>Pokhara’s Local Flower & Plant Nursery</span>
-            </div>
+      {/* 1. Hero Section (Seamless Floral Panorama for Web & Mobile, No Borders) */}
+      <section className="mx-3 sm:mx-6 lg:mx-8 mt-1 sm:mt-4">
+        {/* Desktop / Tablet Hero Banner (Seamless Full-Width Floral Panorama, No Borders) */}
+        <div className="hidden md:block relative rounded-3xl overflow-hidden shadow-xs bg-[#fbf6f5] min-h-[360px] lg:min-h-[420px] xl:min-h-[460px]">
+          {/* Background Floral Image positioned on the right */}
+          <img
+            src="/hero-flowers-banner.jpg"
+            alt="Make Every Moment Special"
+            className="absolute inset-0 w-full h-full object-cover object-right select-none pointer-events-none"
+          />
+          {/* Soft Left Gradient Overlay to guarantee pristine text contrast */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#fbf6f5] via-[#fbf6f5]/85 to-transparent w-full md:w-3/4 lg:w-3/5 pointer-events-none" />
 
-            <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.15]">
-              Bring Living Nature <br className="hidden sm:inline" />
-              <span className="text-emerald-300 italic">Into Your Home.</span>
+          {/* Left Content Column */}
+          <div className="relative z-10 p-8 lg:p-14 xl:p-16 max-w-xl flex flex-col justify-center min-h-[360px] lg:min-h-[420px] xl:min-h-[460px] space-y-4 lg:space-y-6">
+            <span className="text-forest-700 font-bold text-xs tracking-widest uppercase">
+              Fresh Flowers
+            </span>
+
+            <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-[#14281d] leading-[1.12] tracking-tight">
+              Make Every <br />
+              Moment Special
             </h1>
 
-            <p className="text-forest-100 text-xs sm:text-base font-light leading-relaxed max-w-xl mx-auto lg:mx-0">
-              Acclimatized indoor foliage, outdoor blooms, and hand-turned clay planters delivered
-              with care across Pokhara, Lekhnath, and surrounding valleys.
+            <p className="text-slate-600 text-sm sm:text-base font-normal max-w-md leading-relaxed">
+              Beautiful bouquets for birthdays, anniversaries, gifts and more.
             </p>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-2">
+            <div className="pt-2">
               <Link
                 to="/catalog"
-                className="bg-emerald-400 hover:bg-emerald-300 text-forest-950 font-bold px-6 py-3.5 rounded-2xl text-xs sm:text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2 active:scale-98"
+                className="bg-[#1b4332] hover:bg-[#143225] text-white font-medium text-xs sm:text-sm px-7 py-3 rounded-full inline-flex items-center gap-2 shadow-sm hover:shadow-md transition-all active:scale-98"
               >
-                <span>Shop Plants & Products</span>
-                <ArrowRight size={16} />
+                <span>Shop Now</span>
+                <ArrowRight size={15} />
               </Link>
             </div>
-
-            {/* Valley Trust Signal */}
-            <div className="pt-2 flex items-center justify-center lg:justify-start gap-2 text-xs text-forest-200">
-              <Truck size={15} className="text-emerald-400" />
-              <span>
-                {siteSettings?.defaultDeliveryMessage ||
-                  'Same-day careful plant delivery across Pokhara'}
-              </span>
-            </div>
           </div>
+        </div>
 
-          {/* Right Column: Plant Showcase Image */}
-          <div className="lg:col-span-5 flex justify-center lg:justify-end">
-            <div className="relative w-64 h-64 sm:w-80 sm:h-80 lg:w-[340px] lg:h-[340px] xl:w-[380px] xl:h-[380px] rounded-3xl overflow-hidden border-2 border-emerald-400/30 shadow-2xl bg-forest-900/50 backdrop-blur-md group">
-              <img
-                src="/hero-plant.jpg"
-                alt="RJ Flowers & Nursery Pokhara"
-                className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-forest-950/80 via-transparent to-transparent pointer-events-none" />
-              <div className="absolute bottom-3.5 left-3.5 right-3.5 bg-forest-950/85 backdrop-blur-md rounded-2xl p-3 border border-emerald-500/20 text-left flex items-center gap-3 shadow-lg">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-emerald-300 truncate">
-                    Acclimatized Nursery Stock
-                  </p>
-                  <p className="text-[10px] text-forest-200 truncate">
-                    Guaranteed fresh & healthy on arrival in Pokhara
-                  </p>
-                </div>
-              </div>
+        {/* Mobile Hero Banner (Seamless Floral Panorama matching Web feel, No Borders) */}
+        <div className="md:hidden relative rounded-2xl overflow-hidden shadow-xs bg-[#fbf6f5] min-h-[220px] sm:min-h-[250px]">
+          {/* Background Floral Image positioned on the right */}
+          <img
+            src="/hero-flowers-banner.jpg"
+            alt="Make Every Moment Special"
+            className="absolute inset-0 w-full h-full object-cover object-right select-none pointer-events-none"
+          />
+          {/* Soft Left Gradient Overlay for seamless text readability */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#fbf6f5] via-[#fbf6f5]/90 to-transparent w-[72%] pointer-events-none" />
+
+          {/* Left Content Column */}
+          <div className="relative z-10 p-5 sm:p-6 max-w-[62%] flex flex-col justify-center min-h-[220px] sm:min-h-[250px] space-y-2">
+            <span className="text-forest-700 font-bold text-[10px] uppercase tracking-widest">
+              Fresh Flowers
+            </span>
+
+            <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#14281d] leading-tight">
+              Make Every <br />
+              Moment Special
+            </h2>
+
+            <p className="text-slate-600 text-[11px] leading-snug line-clamp-2">
+              Beautiful bouquets for birthdays, anniversaries, and gifts.
+            </p>
+
+            <div className="pt-1.5">
+              <Link
+                to="/catalog"
+                className="bg-[#1b4332] hover:bg-[#143225] active:scale-95 text-white text-[11px] font-semibold px-4 py-2 rounded-full inline-flex items-center gap-1.5 shadow-sm shadow-emerald-950/20 transition-transform"
+              >
+                <span>Shop Now</span>
+                <ArrowRight size={13} />
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
       {/* 2. PWA Mobile App Installation Banner */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-gradient-to-r from-emerald-900 via-forest-900 to-forest-950 rounded-3xl p-5 sm:p-7 border border-emerald-500/30 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5 text-center sm:text-left flex-col sm:flex-row">
-            <img
-              src="/the-bloom-patch-logo.png"
-              alt="The Bloom Patch App Logo"
-              className="w-14 h-14 rounded-2xl shadow-lg border border-emerald-400/30 object-contain bg-white p-1 shrink-0"
-            />
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold uppercase tracking-wider mb-1">
-                Official Mobile App
-              </div>
-              <h3 className="font-serif font-bold text-base sm:text-lg text-white">
-                Install {businessName} App
-              </h3>
-              <p className="text-xs text-forest-200 mt-0.5">
-                Fast 1-tap plant shopping & live delivery tracking directly from your phone home screen.
-              </p>
-            </div>
-          </div>
+      {!isBannerDismissed && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative bg-gradient-to-r from-emerald-900 via-forest-900 to-forest-950 rounded-3xl p-5 sm:p-7 border border-emerald-500/30 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Top Right Cross (Close) Button */}
+            <button
+              onClick={handleDismissBanner}
+              className="absolute top-3 right-3 p-1.5 text-forest-300 hover:text-white bg-forest-950/60 hover:bg-forest-900 rounded-full transition-colors"
+              title="Close"
+              aria-label="Close"
+            >
+              <X size={16} />
+            </button>
 
-          <button
-            onClick={handleInstallApp}
-            className="w-full sm:w-auto bg-emerald-400 hover:bg-emerald-300 text-forest-950 font-bold text-xs sm:text-sm px-6 py-3 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-transform active:scale-95 shrink-0"
-          >
+            <div className="flex items-center gap-3.5 text-center sm:text-left flex-col sm:flex-row pr-6 sm:pr-0">
+              <img
+                src="/the-bloom-patch-logo.png"
+                alt="The Bloom Patch App Logo"
+                className="w-14 h-14 rounded-2xl shadow-lg border border-emerald-400/30 object-contain bg-white p-1 shrink-0"
+              />
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold uppercase tracking-wider mb-1">
+                  Official Mobile App
+                </div>
+                <h3 className="font-serif font-bold text-base sm:text-lg text-white">
+                  Install {businessName} App
+                </h3>
+                <p className="text-xs text-forest-200 mt-0.5">
+                  Fast 1-tap plant shopping & live delivery tracking directly from your phone home screen.
+                </p>
+              </div>
+            </div>
+
             {isInstalled ? (
-              <>
-                <CheckCircle size={16} className="text-forest-950" />
-                <span>App Installed</span>
-              </>
+              <button
+                onClick={handleDismissBanner}
+                className="w-full sm:w-auto bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 font-bold text-xs sm:text-sm px-6 py-3 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-transform active:scale-95 shrink-0"
+                title="Dismiss Banner"
+              >
+                <X size={16} />
+                <span>Dismiss</span>
+              </button>
             ) : (
-              <>
+              <button
+                onClick={handleInstallApp}
+                className="w-full sm:w-auto bg-emerald-400 hover:bg-emerald-300 text-forest-950 font-bold text-xs sm:text-sm px-6 py-3 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-transform active:scale-95 shrink-0"
+              >
                 <Download size={16} />
                 <span>Install Mobile App</span>
-              </>
+              </button>
             )}
-          </button>
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
       {/* 3. Featured Products Showcase */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
