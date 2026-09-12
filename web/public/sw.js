@@ -1,12 +1,14 @@
-const CACHE_NAME = 'rj-flowers-static-v4';
+const CACHE_NAME = 'the-bloom-patch-static-v1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/the-bloom-patch-192.png',
+  '/the-bloom-patch-512.png',
+  '/the-bloom-patch-logo.png',
+  '/the-bloom-patch-logo.svg',
   '/rj-flowers-icon-192.png',
-  '/rj-flowers-icon-512.png',
-  '/rj-flowers-icon.svg',
-  '/rj-flowers-logo.svg'
+  '/rj-flowers-icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {

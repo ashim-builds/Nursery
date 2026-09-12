@@ -251,10 +251,13 @@ export const AdminProductsPage: React.FC = () => {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-sm text-slate-900 truncate">{p.title}</h3>
+                    <h3 className="font-bold text-sm text-slate-900 leading-snug line-clamp-2" title={p.title}>
+                      {p.title}
+                    </h3>
                     {p.botanicalName && (
-                      <p className="text-[11px] text-forest-700 italic">{p.botanicalName}</p>
+                      <p className="mt-0.5 text-[11px] text-forest-700 italic line-clamp-1">{p.botanicalName}</p>
                     )}
+                    <span className="text-[10px] text-slate-400 font-mono block mt-0.5">{p.slug}</span>
                   </div>
                 </div>
 

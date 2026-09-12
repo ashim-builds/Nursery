@@ -36,7 +36,7 @@ export class OrderService {
     const date = new Date();
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
-    return `KTM-${year}${month}-${random}`;
+    return `PKR-${year}${month}-${random}`;
   }
 
   /**
@@ -275,11 +275,11 @@ export class OrderService {
                 recipientName: data.customerName,
                 recipientPhone: data.customerPhone,
                 deliveryAddress: data.deliveryAddress,
-                city: data.deliveryCity || 'Kathmandu',
+                city: data.deliveryCity || 'Pokhara',
                 area: data.deliveryArea,
                 postalCode: data.deliveryPostalCode,
-                latitude: data.deliveryLatitude,
-                longitude: data.deliveryLongitude,
+                latitude: data.deliveryLatitude != null && !isNaN(Number(data.deliveryLatitude)) ? Number(data.deliveryLatitude) : null,
+                longitude: data.deliveryLongitude != null && !isNaN(Number(data.deliveryLongitude)) ? Number(data.deliveryLongitude) : null,
                 zoneId: matchedZoneId,
                 scheduledDate: data.scheduledDeliveryDate ? new Date(data.scheduledDeliveryDate) : null,
                 deliveryCharge: deliveryFee,
@@ -488,9 +488,9 @@ export class OrderService {
       customerEmail: o.user?.email || '',
       customerPhone: o.delivery?.recipientPhone || o.user?.phoneNumber || '',
       deliveryAddress: o.delivery?.deliveryAddress || '',
-      deliveryCity: o.delivery?.city || 'Kathmandu',
-      deliveryLatitude: o.delivery?.latitude ? Number(o.delivery.latitude) : undefined,
-      deliveryLongitude: o.delivery?.longitude ? Number(o.delivery.longitude) : undefined,
+      deliveryCity: o.delivery?.city || 'Pokhara',
+      deliveryLatitude: o.delivery?.latitude != null && !isNaN(Number(o.delivery.latitude)) ? Number(o.delivery.latitude) : undefined,
+      deliveryLongitude: o.delivery?.longitude != null && !isNaN(Number(o.delivery.longitude)) ? Number(o.delivery.longitude) : undefined,
       scheduledDeliveryDate: o.delivery?.scheduledDate,
       itemCount: o.items.reduce((sum, i) => sum + i.quantity, 0),
       items: o.items.map((i) => ({
@@ -558,11 +558,11 @@ export class OrderService {
       customerEmail: order.user?.email || '',
       customerPhone: order.delivery?.recipientPhone || order.user?.phoneNumber || '',
       deliveryAddress: order.delivery?.deliveryAddress || '',
-      deliveryCity: order.delivery?.city || 'Kathmandu',
+      deliveryCity: order.delivery?.city || 'Pokhara',
       deliveryArea: order.delivery?.area,
       deliveryPostalCode: order.delivery?.postalCode,
-      deliveryLatitude: order.delivery?.latitude ? Number(order.delivery.latitude) : undefined,
-      deliveryLongitude: order.delivery?.longitude ? Number(order.delivery.longitude) : undefined,
+      deliveryLatitude: order.delivery?.latitude != null && !isNaN(Number(order.delivery.latitude)) ? Number(order.delivery.latitude) : undefined,
+      deliveryLongitude: order.delivery?.longitude != null && !isNaN(Number(order.delivery.longitude)) ? Number(order.delivery.longitude) : undefined,
       scheduledDeliveryDate: order.delivery?.scheduledDate,
       deliveryZone: order.delivery?.zone?.name,
       deliveryStatus: order.delivery?.status,

@@ -1,30 +1,39 @@
 {
   "id": "/",
+  "name": "RJ Flowers & Nursery",
   "short_name": "RJ Flowers",
-  "name": "RJ Flowers",
+  "description": "Order fresh flowers, plants, and garden supplies in Pokhara directly from RJ Flowers & Nursery.",
   "icons": [
     {
-      "src": "/rj-flowers-icon-192.png",
+      "src": "/the-bloom-patch-192.png",
       "type": "image/png",
       "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/the-bloom-patch-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
       "purpose": "any"
     },
     {
-      "src": "/rj-flowers-icon-512.png",
+      "src": "/the-bloom-patch-512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
     },
     {
-      "src": "/rj-flowers-logo.svg",
-      "type": "image/svg+xml",
-      "sizes": "any"
+      "src": "/the-bloom-patch-logo.png",
+      "type": "image/png",
+      "sizes": "960x960",
+      "purpose": "any"
     }
   ],
   "start_url": "/",
-  "background_color": "#fffaf3",
-  "theme_color": "#1e3f30",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "scope": "/"
+  "background_color": "#fffaf3",
+  "theme_color": "#1e3f30",
+  "categories": ["shopping", "lifestyle", "business"]
 }

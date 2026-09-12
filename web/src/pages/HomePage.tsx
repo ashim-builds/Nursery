@@ -16,47 +16,22 @@ import {
   Smartphone,
   Download,
   CheckCircle,
+  Shield,
 } from 'lucide-react';
 import { siteSettingsApi } from '../api/site-settings.api';
 import { useUI } from '../context/UIContext';
+import { usePWA } from '../context/PWAContext';
+import { useAuth } from '../context/AuthContext';
 
 export const HomePage: React.FC = () => {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [installSuccess, setInstallSuccess] = useState(false);
+  const { promptInstall, isInstalled } = usePWA();
   const { showToast } = useUI();
-
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true);
-    }
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
-  }, []);
+  const { isAdmin } = useAuth();
 
   const handleInstallApp = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        setInstallSuccess(true);
-      }
-      setDeferredPrompt(null);
-    } else {
-      // If iOS or PWA prompt unavailable, show browser instruction
-      showToast(
-        'To install RJ Flowers on your phone:\n\n• On iPhone/Safari: Tap Share (⎋) and select "Add to Home Screen" (+).\n• On Android/Chrome: Tap the 3 dots menu (⋮) and tap "Install app" or "Add to Home Screen".'
-        , 'info'
-      );
+    const res = await promptInstall();
+    if (res === 'accepted') {
+      showToast('The Bloom Patch app installed successfully!', 'success');
     }
   };
 
@@ -72,14 +47,16 @@ export const HomePage: React.FC = () => {
     queryFn: siteSettingsApi.getSettings,
   });
 
+  const businessName = siteSettings?.businessName || 'The Bloom Patch';
+
   const nurserySchema = {
     '@context': 'https://schema.org',
     '@type': 'GardenStore',
-    name: siteSettings?.businessName || 'RJ Flowers',
+    name: businessName,
     image:
       'https://images.unsplash.com/photo-1545241047-6083a3684587?auto=format&fit=crop&w=1200&q=80',
     url: typeof window !== 'undefined' ? window.location.origin : '/',
-    telephone: siteSettings?.phone ? `+977-${siteSettings.phone}` : '+977-9800000000',
+    telephone: siteSettings?.phone ? `+977-${siteSettings.phone}` : '+977-9815155580',
     priceRange: 'रू 200 - रू 25,000',
     address: {
       '@type': 'PostalAddress',
@@ -100,11 +77,36 @@ export const HomePage: React.FC = () => {
     <div className="space-y-8 sm:space-y-12 pb-16">
       {/* Dynamic SEO Meta */}
       <SEO
-        title="RJ Flowers | Flowers and Nursery in Pokhara"
-        description="RJ Flowers and Nursery in Pokhara-26, Arghau Chowk. Shop flowers and plants with delivery across Pokhara."
+        title={`${businessName} | Flowers and Nursery in Pokhara`}
+        description={`${businessName} and Nursery in Pokhara-26, Arghau Chowk. Shop flowers and plants with delivery across Pokhara.`}
         canonical={typeof window !== 'undefined' ? `${window.location.origin}/` : '/'}
         structuredData={nurserySchema}
       />
+
+      {/* Admin Quick Access Banner (Mobile & Desktop) */}
+      {isAdmin && (
+        <div className="mx-3 sm:mx-6 lg:mx-8 mt-3 bg-gradient-to-r from-amber-950 via-forest-950 to-emerald-950 text-white p-3.5 sm:p-4 rounded-2xl border border-amber-500/40 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-300 shrink-0">
+              <Shield size={18} />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-xs sm:text-sm text-amber-200">Admin Mode Active</span>
+                <span className="text-[10px] bg-amber-500/30 text-amber-200 px-2 py-0.5 rounded-full font-mono font-semibold">Staff Access</span>
+              </div>
+              <p className="text-[11px] text-forest-200 truncate">Manage plants, inventory, orders & store settings</p>
+            </div>
+          </div>
+          <Link
+            to="/admin"
+            className="w-full sm:w-auto text-center shrink-0 bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all"
+          >
+            <span>Go to Admin Panel</span>
+            <ArrowRight size={14} />
+          </Link>
+        </div>
+      )}
 
       {/* 1. Mobile-First Botanical Hero Section */}
       <section className="relative overflow-hidden rounded-3xl mx-3 sm:mx-6 lg:mx-8 mt-3 sm:mt-6 bg-gradient-to-br from-forest-950 via-forest-900 to-forest-800 text-white shadow-lifted">
@@ -125,8 +127,8 @@ export const HomePage: React.FC = () => {
             </h1>
 
             <p className="text-forest-100 text-xs sm:text-base font-light leading-relaxed max-w-xl mx-auto lg:mx-0">
-              Acclimatized indoor foliage, outdoor plants, and hand-turned clay planters delivered
-              with care across Kathmandu, Lalitpur, and Bhaktapur.
+              Acclimatized indoor foliage, outdoor blooms, and hand-turned clay planters delivered
+              with care across Pokhara, Lekhnath, and surrounding valleys.
             </p>
 
             {/* CTA Buttons */}
@@ -145,7 +147,7 @@ export const HomePage: React.FC = () => {
               <Truck size={15} className="text-emerald-400" />
               <span>
                 {siteSettings?.defaultDeliveryMessage ||
-                  'Same-day careful delivery across Kathmandu Valley'}
+                  'Same-day careful plant delivery across Pokhara'}
               </span>
             </div>
           </div>
@@ -155,7 +157,7 @@ export const HomePage: React.FC = () => {
             <div className="relative w-64 h-64 sm:w-80 sm:h-80 lg:w-[340px] lg:h-[340px] xl:w-[380px] xl:h-[380px] rounded-3xl overflow-hidden border-2 border-emerald-400/30 shadow-2xl bg-forest-900/50 backdrop-blur-md group">
               <img
                 src="/hero-plant.jpg"
-                alt="Kathmandu Botanical Plant Nursery"
+                alt="RJ Flowers & Nursery Pokhara"
                 className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-forest-950/80 via-transparent to-transparent pointer-events-none" />
@@ -166,7 +168,7 @@ export const HomePage: React.FC = () => {
                     Acclimatized Nursery Stock
                   </p>
                   <p className="text-[10px] text-forest-200 truncate">
-                    Guaranteed healthy on arrival in KTM
+                    Guaranteed fresh & healthy on arrival in Pokhara
                   </p>
                 </div>
               </div>
@@ -179,16 +181,20 @@ export const HomePage: React.FC = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-gradient-to-r from-emerald-900 via-forest-900 to-forest-950 rounded-3xl p-5 sm:p-7 border border-emerald-500/30 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3.5 text-center sm:text-left flex-col sm:flex-row">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-400/30 flex items-center justify-center shrink-0">
-              <Smartphone size={24} />
-            </div>
+            <img
+              src="/the-bloom-patch-logo.png"
+              alt="The Bloom Patch App Logo"
+              className="w-14 h-14 rounded-2xl shadow-lg border border-emerald-400/30 object-contain bg-white p-1 shrink-0"
+            />
             <div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold uppercase tracking-wider mb-1">
+                Official Mobile App
+              </div>
               <h3 className="font-serif font-bold text-base sm:text-lg text-white">
-                Install RJ Flowers App
+                Install {businessName} App
               </h3>
               <p className="text-xs text-forest-200 mt-0.5">
-                Fast 1-tap plant shopping & live delivery tracking directly from your phone home
-                screen.
+                Fast 1-tap plant shopping & live delivery tracking directly from your phone home screen.
               </p>
             </div>
           </div>
@@ -197,7 +203,7 @@ export const HomePage: React.FC = () => {
             onClick={handleInstallApp}
             className="w-full sm:w-auto bg-emerald-400 hover:bg-emerald-300 text-forest-950 font-bold text-xs sm:text-sm px-6 py-3 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-transform active:scale-95 shrink-0"
           >
-            {installSuccess || isInstalled ? (
+            {isInstalled ? (
               <>
                 <CheckCircle size={16} className="text-forest-950" />
                 <span>App Installed</span>

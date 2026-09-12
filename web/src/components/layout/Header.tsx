@@ -18,7 +18,7 @@ export const Header: React.FC = () => {
     queryKey: ['site-settings'],
     queryFn: siteSettingsApi.getSettings,
   });
-  const businessName = siteSettings?.businessName || 'RJ Flowers';
+  const businessName = siteSettings?.businessName || 'The Bloom Patch';
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,16 +29,16 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 w-full glass-header border-b border-forest-100/80 transition-all bg-white/95 backdrop-blur-md">
+    <header className="fixed top-0 left-0 right-0 z-40 w-full glass-header border-b border-forest-100/80 transition-all bg-white/95 backdrop-blur-md pt-[env(safe-area-inset-top,0px)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Brand Logo */}
           <div className="flex items-center gap-2">
             <Link to="/" className="flex items-center gap-2.5 group">
               <img
-                src="/rj-flowers-icon.svg"
+                src="/the-bloom-patch-logo.png"
                 alt={`${businessName} logo`}
-                className="w-8 h-8 rounded-xl object-cover shadow-sm group-hover:scale-105 transition-transform border border-emerald-500/20"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-contain shadow-xs group-hover:scale-105 transition-transform bg-white border border-slate-200/80 p-0.5"
               />
               <div className="flex flex-col">
                 <span className="font-serif font-bold text-lg sm:text-xl tracking-tight text-forest-950 leading-none">
@@ -75,6 +75,18 @@ export const Header: React.FC = () => {
 
           {/* Right Action Icons */}
           <div className="flex items-center gap-1.5 sm:gap-3">
+            {/* Mobile Admin Shortcut Badge */}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="lg:hidden flex items-center gap-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300/80 px-2 py-1 rounded-lg text-[11px] font-bold transition-all shadow-xs"
+                title="Go to Admin Portal"
+              >
+                <Shield size={13} className="text-amber-700" />
+                <span>Admin</span>
+              </Link>
+            )}
+
             {/* Search Button */}
             <button
               onClick={toggleSearch}

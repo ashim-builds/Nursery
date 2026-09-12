@@ -34,7 +34,7 @@ export const AdminSetupWizardPage: React.FC = () => {
     businessName: 'RJ Flowers',
     logo: '',
     shortDescription: 'Flowers and plants delivered across Pokhara from RJ Flowers, Arghau Chowk.',
-    phone: '9800000000',
+    phone: '9815155580',
     email: 'contact@rjflowers.com',
     openingHours: 'Every day: 7:00 AM - 7:00 PM (Closed on festivals)',
     province: 'Gandaki',
@@ -62,10 +62,10 @@ export const AdminSetupWizardPage: React.FC = () => {
     firstProductStockStatus: 'IN_STOCK' as 'IN_STOCK' | 'OUT_OF_STOCK',
     productImageUrl: 'https://images.unsplash.com/photo-1545241047-6083a3684587?auto=format&fit=crop&w=800&q=80',
     deliveryZones: [
-      { name: 'Kathmandu Core', fee: 100 },
-      { name: 'Lalitpur Core', fee: 100 },
-      { name: 'Bhaktapur', fee: 150 },
-      { name: 'Outside Valley', fee: 250 },
+      { name: 'Pokhara Lakeside / Core', fee: 100 },
+      { name: 'Pokhara Lekhnath / Suburbs', fee: 120 },
+      { name: 'Hemja & Outskirts', fee: 150 },
+      { name: 'Outside Pokhara Valley', fee: 250 },
     ],
     paymentMethods: ['Cash on Delivery (COD)'],
   });
@@ -151,7 +151,7 @@ export const AdminSetupWizardPage: React.FC = () => {
     { title: 'Categories', icon: FolderTree, desc: 'Botanical collections available for customers to explore.' },
     { title: 'First Product', icon: Package, desc: 'Add the first plant or product you currently sell (In Stock / Out of Stock).' },
     { title: 'Product Images', icon: ImageIcon, desc: 'Upload clear photos saved directly to your NVMe server storage.' },
-    { title: 'Delivery Zones', icon: Truck, desc: 'Set the delivery regions and fees across Kathmandu Valley.' },
+    { title: 'Delivery Zones', icon: Truck, desc: 'Set the delivery regions and fees across Pokhara Valley.' },
     { title: 'Payment Options', icon: CreditCard, desc: 'Select payment methods accepted by your nursery.' },
     { title: 'Homepage Setup', icon: Layout, desc: 'Showcase featured plants and curated collections on the homepage.' },
     { title: 'Final Verification', icon: CheckCircle2, desc: 'Review your complete configuration and launch your store.' },
@@ -237,7 +237,7 @@ export const AdminSetupWizardPage: React.FC = () => {
                   maxLength={10}
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/[^0-9]/g, '') })}
-                  placeholder="9800000000"
+                  placeholder="9815155580"
                   className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-forest-200 outline-none"
                 />
               </div>
@@ -300,7 +300,7 @@ export const AdminSetupWizardPage: React.FC = () => {
                   type="text"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Lazimpat Botanical Row, Kathmandu"
+                  placeholder="Pokhara-26, Arghau Chowk, Pokhara"
                   className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none"
                 />
               </div>

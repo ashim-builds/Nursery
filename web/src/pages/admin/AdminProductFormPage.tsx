@@ -173,7 +173,7 @@ export const AdminProductFormPage: React.FC = () => {
       name: name.trim(),
       basePrice: Number(basePrice),
       description:
-        description.trim() || `${name} - Fresh and healthy plant from Kathmandu nursery.`,
+        description.trim() || `${name} - Fresh and healthy plant from RJ Flowers & Nursery Pokhara.`,
       available: stockStatus === 'IN_STOCK',
       images: imagesPayload,
     };
@@ -371,11 +371,11 @@ export const AdminProductFormPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex justify-end pt-4 border-t border-slate-100">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-6 border-t border-slate-100">
             <button
               type="button"
               onClick={handleGoToStep2}
-              className="px-6 py-3.5 bg-forest-900 hover:bg-forest-800 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-md flex items-center gap-2 active:scale-98 transition-all"
+              className="w-full sm:w-auto px-6 py-3.5 bg-forest-900 hover:bg-forest-800 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-md flex items-center justify-center gap-2 active:scale-98 transition-all"
             >
               <span>Next: Set Price (मूल्य राख्नुहोस्)</span>
               <ArrowRight size={16} />
@@ -463,11 +463,11 @@ export const AdminProductFormPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-6 border-t border-slate-100">
             <button
               type="button"
               onClick={() => setCurrentStep(1)}
-              className="px-5 py-3 rounded-2xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs sm:text-sm transition-all"
+              className="w-full sm:w-auto px-5 py-3 rounded-2xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs sm:text-sm text-center transition-all"
             >
               ⬅ Back
             </button>
@@ -475,7 +475,7 @@ export const AdminProductFormPage: React.FC = () => {
             <button
               type="button"
               onClick={handleGoToStep3}
-              className="px-6 py-3.5 bg-forest-900 hover:bg-forest-800 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-md flex items-center gap-2 active:scale-98 transition-all"
+              className="w-full sm:w-auto px-6 py-3.5 bg-forest-900 hover:bg-forest-800 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-md flex items-center justify-center gap-2 active:scale-98 transition-all"
             >
               <span>Next: Add Image & Save (फोटो राख्नुहोस्)</span>
               <ArrowRight size={16} />
@@ -515,11 +515,11 @@ export const AdminProductFormPage: React.FC = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-6 border-t border-slate-100">
             <button
               type="button"
               onClick={() => setCurrentStep(2)}
-              className="px-5 py-3 rounded-2xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs sm:text-sm transition-all"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-2xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs sm:text-sm text-center transition-all"
             >
               ⬅ Back to Price
             </button>
@@ -528,7 +528,7 @@ export const AdminProductFormPage: React.FC = () => {
               type="button"
               disabled={mutation.isPending}
               onClick={handleFinalSave}
-              className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-forest-950 font-extrabold text-xs sm:text-base rounded-2xl shadow-lifted flex items-center gap-2 active:scale-98 transition-all disabled:opacity-50"
+              className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 bg-emerald-600 hover:bg-emerald-500 text-forest-950 font-extrabold text-xs sm:text-sm rounded-2xl shadow-lifted flex items-center justify-center gap-2 active:scale-98 transition-all disabled:opacity-50"
             >
               {mutation.isPending ? (
                 <>

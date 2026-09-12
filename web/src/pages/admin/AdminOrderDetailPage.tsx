@@ -21,6 +21,7 @@ import {
   AlertCircle,
   RotateCw,
   Package,
+  ExternalLink,
 } from 'lucide-react';
 
 export const AdminOrderDetailPage: React.FC = () => {
@@ -210,8 +211,8 @@ export const AdminOrderDetailPage: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div className="p-3.5 bg-sand-50/80 rounded-2xl border border-slate-200 space-y-1">
                 <span className="text-slate-400 font-semibold block text-[11px]">DELIVERY ADDRESS</span>
-                <p className="font-bold text-slate-900">{order.deliveryAddress}</p>
-                <p className="text-slate-600">{order.deliveryCity}, Nepal</p>
+                <p className="font-bold text-slate-900">{order.deliveryAddress || 'No street address provided'}</p>
+                <p className="text-slate-600">{order.deliveryCity || 'Pokhara'}, Nepal</p>
                 {order.scheduledDeliveryDate && (
                   <p className="text-forest-800 font-semibold pt-1">
                     Scheduled Date: {new Date(order.scheduledDeliveryDate).toLocaleDateString()}
@@ -226,6 +227,37 @@ export const AdminOrderDetailPage: React.FC = () => {
                 <p className="text-slate-500">{order.customerEmail || 'No email provided'}</p>
               </div>
             </div>
+
+            {/* Exact GPS Pinpoint Section */}
+            {order.deliveryLatitude && order.deliveryLongitude ? (
+              <div className="p-4 bg-emerald-50/80 border border-emerald-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5 font-bold text-emerald-900 text-xs">
+                    <MapPin size={15} className="text-emerald-700 shrink-0" />
+                    <span>Exact Map Delivery Coordinates</span>
+                  </div>
+                  <p className="text-[11px] font-mono text-emerald-800">
+                    Latitude: {Number(order.deliveryLatitude).toFixed(6)}, Longitude: {Number(order.deliveryLongitude).toFixed(6)}
+                  </p>
+                </div>
+
+                <a
+                  href={`https://maps.google.com/?q=${Number(order.deliveryLatitude).toFixed(6)},${Number(order.deliveryLongitude).toFixed(6)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors shadow-2xs shrink-0 active:scale-95"
+                >
+                  <MapPin size={13} />
+                  <span>Show on Google Maps</span>
+                  <ExternalLink size={12} />
+                </a>
+              </div>
+            ) : (
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-500 flex items-center gap-2">
+                <MapPin size={15} className="text-slate-400 shrink-0" />
+                <span>No GPS map coordinates saved for this order (standard text address only).</span>
+              </div>
+            )}
 
             {order.giftMessage && (
               <div className="p-4 bg-amber-50/80 border border-amber-200 rounded-2xl text-xs space-y-1">

@@ -110,7 +110,7 @@ export async function sendOtpEmail({ to, otp, type, userName }: SendOtpEmailPara
         </div>
         <div class="footer">
           <p>© ${new Date().getFullYear()} RJ Flowers & Nursery. All rights reserved.</p>
-          <p>Pokhara / Kathmandu, Nepal</p>
+          <p>Pokhara-26, Arghau Chowk, Pokhara, Nepal</p>
         </div>
       </div>
     </body>

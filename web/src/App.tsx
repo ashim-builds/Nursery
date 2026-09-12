@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { UIProvider } from './context/UIContext';
+import { PWAProvider } from './context/PWAContext';
 import { ToastContainer } from './components/common/Toast';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { StorefrontLayout } from './components/layout/StorefrontLayout';
@@ -31,6 +32,7 @@ import { TermsPage } from './pages/TermsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
+import { InstallInstructionsModal } from './components/common/InstallInstructionsModal';
 
 // Admin Components & Pages
 import { AdminLayout } from './components/admin/AdminLayout';
@@ -63,118 +65,121 @@ export const App: React.FC = () => {
       <AuthProvider>
         <CartProvider>
           <UIProvider>
-            <BrowserRouter>
-              <ScrollToTop />
-              <Routes>
-                {/* 1. PUBLIC STOREFRONT & CUSTOMER ROUTES */}
-                <Route element={<StorefrontLayout />}>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/catalog" element={<CatalogPage />} />
-                  <Route path="/products/:slug" element={<ProductDetailPage />} />
-                  <Route path="/product/:slug" element={<ProductDetailPage />} />
-                  <Route path="/search" element={<SearchPage />} />
-                  <Route path="/cart" element={<CartPage />} />
-                  <Route path="/checkout" element={<CheckoutPage />} />
-                  <Route path="/order-success/:id" element={<OrderConfirmationPage />} />
-                  {/* Customer Account & Orders (Protected) */}
+            <PWAProvider>
+              <BrowserRouter>
+                <ScrollToTop />
+                <Routes>
+                  {/* 1. PUBLIC STOREFRONT & CUSTOMER ROUTES */}
+                  <Route element={<StorefrontLayout />}>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/catalog" element={<CatalogPage />} />
+                    <Route path="/products/:slug" element={<ProductDetailPage />} />
+                    <Route path="/product/:slug" element={<ProductDetailPage />} />
+                    <Route path="/search" element={<SearchPage />} />
+                    <Route path="/cart" element={<CartPage />} />
+                    <Route path="/checkout" element={<CheckoutPage />} />
+                    <Route path="/order-success/:id" element={<OrderConfirmationPage />} />
+                    {/* Customer Account & Orders (Protected) */}
+                    <Route
+                      path="/orders"
+                      element={
+                        <ProtectedRoute>
+                          <OrdersPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route path="/orders/:id" element={<OrderDetailPage />} />
+                    <Route
+                      path="/account"
+                      element={
+                        <ProtectedRoute>
+                          <ProfilePage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/account/profile"
+                      element={
+                        <ProtectedRoute>
+                          <ProfilePage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/profile"
+                      element={
+                        <ProtectedRoute>
+                          <ProfilePage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/account/addresses"
+                      element={
+                        <ProtectedRoute>
+                          <AddressesPage />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* Auth & Support */}
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                    <Route path="/contact" element={<ContactPage />} />
+                    <Route path="/privacy" element={<PrivacyPage />} />
+                    <Route path="/terms" element={<TermsPage />} />
+                  </Route>
+
+                  {/* 2. DEDICATED ADMIN LOGIN & SETUP */}
+                  <Route path="/admin/login" element={<AdminLoginPage />} />
                   <Route
-                    path="/orders"
+                    path="/admin/setup"
                     element={
-                      <ProtectedRoute>
-                        <OrdersPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="/orders/:id" element={<OrderDetailPage />} />
-                  <Route
-                    path="/account"
-                    element={
-                      <ProtectedRoute>
-                        <ProfilePage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/account/profile"
-                    element={
-                      <ProtectedRoute>
-                        <ProfilePage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/profile"
-                    element={
-                      <ProtectedRoute>
-                        <ProfilePage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/account/addresses"
-                    element={
-                      <ProtectedRoute>
-                        <AddressesPage />
+                      <ProtectedRoute requireAdmin>
+                        <AdminSetupWizardPage />
                       </ProtectedRoute>
                     }
                   />
 
-                  {/* Auth & Support */}
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/register" element={<RegisterPage />} />
-                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                  <Route path="/contact" element={<ContactPage />} />
-                  <Route path="/privacy" element={<PrivacyPage />} />
-                  <Route path="/terms" element={<TermsPage />} />
-                </Route>
+                  {/* 3. SECURE ADMIN OPERATIONS CONSOLE (PROTECTED) */}
+                  <Route
+                    path="/admin"
+                    element={
+                      <ProtectedRoute requireAdmin>
+                        <AdminLayout />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<AdminOverviewPage />} />
+                    <Route path="orders" element={<AdminOrdersPage />} />
+                    <Route path="orders/:id" element={<AdminOrderDetailPage />} />
+                    <Route path="products" element={<AdminProductsPage />} />
+                    <Route path="products/new" element={<AdminProductFormPage />} />
+                    <Route path="products/:id" element={<AdminProductFormPage />} />
+                    <Route path="inventory" element={<AdminInventoryPage />} />
+                    <Route path="customers" element={<AdminCustomersPage />} />
+                    <Route path="delivery-zones" element={<AdminDeliveryZonesPage />} />
+                    <Route path="notifications" element={<AdminNotificationsPage />} />
+                    <Route path="audit-logs" element={<AdminAuditLogsPage />} />
+                  </Route>
 
-                {/* 2. DEDICATED ADMIN LOGIN & SETUP */}
-                <Route path="/admin/login" element={<AdminLoginPage />} />
-                <Route
-                  path="/admin/setup"
-                  element={
-                    <ProtectedRoute requireAdmin>
-                      <AdminSetupWizardPage />
-                    </ProtectedRoute>
-                  }
-                />
+                  {/* 4. 404 CATCH-ALL */}
+                  <Route
+                    path="*"
+                    element={
+                      <StorefrontLayout />
+                    }
+                  >
+                    <Route path="*" element={<NotFoundPage />} />
+                  </Route>
+                </Routes>
 
-                {/* 3. SECURE ADMIN OPERATIONS CONSOLE (PROTECTED) */}
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute requireAdmin>
-                      <AdminLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route index element={<AdminOverviewPage />} />
-                  <Route path="orders" element={<AdminOrdersPage />} />
-                  <Route path="orders/:id" element={<AdminOrderDetailPage />} />
-                  <Route path="products" element={<AdminProductsPage />} />
-                  <Route path="products/new" element={<AdminProductFormPage />} />
-                  <Route path="products/:id" element={<AdminProductFormPage />} />
-                  <Route path="inventory" element={<AdminInventoryPage />} />
-                  <Route path="customers" element={<AdminCustomersPage />} />
-                  <Route path="delivery-zones" element={<AdminDeliveryZonesPage />} />
-                  <Route path="notifications" element={<AdminNotificationsPage />} />
-                  <Route path="audit-logs" element={<AdminAuditLogsPage />} />
-                </Route>
-
-                {/* 4. 404 CATCH-ALL */}
-                <Route
-                  path="*"
-                  element={
-                    <StorefrontLayout />
-                  }
-                >
-                  <Route path="*" element={<NotFoundPage />} />
-                </Route>
-              </Routes>
-
-              <PWAInstallPrompt />
-              <ToastContainer />
-            </BrowserRouter>
+                <PWAInstallPrompt />
+                <InstallInstructionsModal />
+                <ToastContainer />
+              </BrowserRouter>
+            </PWAProvider>
           </UIProvider>
         </CartProvider>
       </AuthProvider>

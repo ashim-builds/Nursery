@@ -109,7 +109,7 @@ export const AdminDeliveryZonesPage: React.FC = () => {
             <span>Delivery Zones & Shipping Rates</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Configure delivery tariffs and transit time guarantees for Kathmandu Valley and Outside Valley.
+            Configure delivery tariffs and transit time guarantees for Pokhara Valley and Outside Valley.
           </p>
         </div>
 
@@ -284,7 +284,7 @@ export const AdminDeliveryZonesPage: React.FC = () => {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Kathmandu Ring Road Core"
+                  placeholder="e.g. Pokhara Lakeside & City Core"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:bg-white focus:outline-none focus:border-forest-700"
                 />
               </div>
@@ -297,7 +297,7 @@ export const AdminDeliveryZonesPage: React.FC = () => {
                     required
                     value={code}
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
-                    placeholder="KTM_RING"
+                    placeholder="PKR_CORE"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold focus:bg-white focus:outline-none focus:border-forest-700"
                   />
                 </div>

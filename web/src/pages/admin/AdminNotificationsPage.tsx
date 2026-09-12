@@ -66,7 +66,7 @@ export const AdminNotificationsPage: React.FC = () => {
         <div className="flex items-center gap-3 p-3.5 bg-emerald-50 rounded-2xl border border-emerald-100 text-xs text-emerald-900">
           <Megaphone size={20} className="text-emerald-700 shrink-0" />
           <span>
-            Broadcasts instantly appear in customer accounts and push notification banners across Kathmandu & Nepal.
+            Broadcasts instantly appear in customer accounts and push notification banners across Pokhara & Nepal.
           </span>
         </div>
 

@@ -64,13 +64,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       <div className="p-4 border-b border-forest-800/80 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2.5">
           <img
-            src="/rj-flowers-icon-192.png"
-            alt="RJ Flowers Logo"
-            className="w-9 h-9 rounded-xl object-cover border border-emerald-500/40 shadow-inner"
+            src="/the-bloom-patch-logo.png"
+            alt="The Bloom Patch Logo"
+            className="w-9 h-9 rounded-xl object-contain bg-white p-0.5 border border-emerald-500/40 shadow-inner"
           />
           <div>
             <div className="font-serif font-bold text-sm text-white tracking-wide">
-              RJ Flowers Admin
+              Admin Portal
             </div>
             <div className="text-[10px] text-emerald-400 font-medium">Control Panel</div>
           </div>

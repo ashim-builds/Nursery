@@ -162,7 +162,7 @@ export const CartPage: React.FC = () => {
               <span className="font-bold text-slate-900">रू {subtotal.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
-              <span>Kathmandu Valley Delivery</span>
+              <span>Pokhara Delivery</span>
               <span className="font-bold text-slate-900">
                 {deliveryFee === 0 ? <span className="text-emerald-600">FREE</span> : `रू ${deliveryFee.toLocaleString()}`}
               </span>

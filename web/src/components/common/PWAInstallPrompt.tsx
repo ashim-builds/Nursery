@@ -1,59 +1,48 @@
 import React, { useState, useEffect } from 'react';
-import { Download, X, Smartphone } from 'lucide-react';
+import { Download, X } from 'lucide-react';
+import { usePWA } from '../../context/PWAContext';
 
 export const PWAInstallPrompt: React.FC = () => {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showPrompt, setShowPrompt] = useState(false);
+  const { isInstalled, promptInstall, deferredPrompt, isIOS } = usePWA();
   const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setShowPrompt(true);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    // Register service worker if supported
-    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
-      navigator.serviceWorker.register('/sw.js').catch((err) => {
-        console.warn('Service worker registration failed:', err);
-      });
+    // Check if dismissed in this browser session
+    const dismissed = sessionStorage.getItem('rj_pwa_prompt_dismissed');
+    if (dismissed === 'true') {
+      setIsDismissed(true);
     }
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
   }, []);
 
+  // Don't show if already installed, dismissed, or if neither deferredPrompt nor iOS
+  if (isInstalled || isDismissed || (!deferredPrompt && !isIOS)) {
+    return null;
+  }
+
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setShowPrompt(false);
-    }
-    setDeferredPrompt(null);
+    await promptInstall();
   };
 
   const handleDismiss = () => {
-    setShowPrompt(false);
     setIsDismissed(true);
+    sessionStorage.setItem('rj_pwa_prompt_dismissed', 'true');
   };
 
-  if (!showPrompt || isDismissed) return null;
-
   return (
-    <aside aria-label="Install App" className="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-sm z-50 animate-in slide-in-from-bottom-5 duration-300">
-      <div className="bg-forest-950/95 backdrop-blur-xl border border-emerald-500/30 text-white rounded-2xl p-3.5 shadow-2xl flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-            <Smartphone size={20} />
-          </div>
-          <div>
-            <h4 className="text-xs font-bold leading-tight">Install RJ Flowers</h4>
-            <p className="text-[11px] text-forest-200">Add to home screen for faster browsing</p>
+    <aside
+      aria-label="Install RJ Flowers App"
+      className="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-sm z-40 animate-in slide-in-from-bottom-5 duration-300"
+    >
+      <div className="bg-forest-950/95 backdrop-blur-xl border border-emerald-500/30 text-white rounded-2xl p-3 shadow-2xl flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <img
+            src="/the-bloom-patch-logo.png"
+            alt="App Logo"
+            className="w-10 h-10 rounded-xl border border-emerald-500/30 object-contain bg-white p-0.5 shrink-0 shadow-sm"
+          />
+          <div className="min-w-0">
+            <h4 className="text-xs font-bold leading-tight truncate">Install The Bloom Patch</h4>
+            <p className="text-[11px] text-forest-200 truncate">Add to home screen for faster shopping</p>
           </div>
         </div>
 

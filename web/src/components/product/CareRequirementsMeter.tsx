@@ -40,7 +40,7 @@ export const CareRequirementsMeter: React.FC<CareRequirementsMeterProps> = ({ pr
           <span>Botanical Care Specs</span>
         </h4>
         <span className="text-[11px] font-semibold text-forest-700 bg-white px-2 py-0.5 rounded-full border border-forest-200">
-          Kathmandu Valley Climate
+          Pokhara Subtropical Climate
         </span>
       </div>
 

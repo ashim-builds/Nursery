@@ -471,7 +471,7 @@ export class ProductService {
         slug,
         sku,
         shortDescription: data.shortDescription || name,
-        description: data.description || data.fullDescription || `${name} - Fresh and healthy nursery plant from Kathmandu nursery.`,
+        description: data.description || data.fullDescription || `${name} - Fresh and healthy nursery plant from RJ Flowers & Nursery Pokhara.`,
         categoryId,
         basePrice: Number(data.basePrice),
         compareAtPrice: data.compareAtPrice ? Number(data.compareAtPrice) : null,

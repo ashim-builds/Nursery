@@ -48,11 +48,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   };
 
   return (
-    <div className="group relative bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-xs hover:shadow-md hover:border-emerald-300 transition-all duration-300 flex flex-col h-full">
+    <div className="group relative bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:border-emerald-300/80 transition-all duration-300 flex flex-col h-full">
       {/* Product Image & Badges */}
       <Link
         to={`/products/${product.slug}`}
         className="relative block aspect-square overflow-hidden bg-sand-50/60"
+        title={product.title}
       >
         <DatabaseImage
           src={primaryImage}
@@ -86,8 +87,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {!isOutOfStock && (
           <button
             onClick={handleQuickAdd}
-            className="absolute bottom-2 right-2 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white text-forest-900 hover:bg-forest-800 hover:text-white shadow-md flex items-center justify-center transition-all duration-200 transform active:scale-90 border border-slate-100 z-10"
-            aria-label="Quick Add to Cart"
+            className="absolute bottom-2.5 right-2.5 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 backdrop-blur-xs text-forest-900 hover:bg-forest-800 hover:text-white shadow-md flex items-center justify-center transition-all duration-200 transform active:scale-90 border border-slate-100 z-10"
+            aria-label={`Quick add ${product.title} to cart`}
             title="Add to cart"
           >
             <Plus size={16} />
@@ -96,24 +97,27 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </Link>
 
       {/* Product Details */}
-      <div className="p-3 sm:p-3.5 flex flex-col flex-grow justify-between gap-2 text-left">
-        <div className="space-y-1">
+      <div className="p-3 sm:p-3.5 flex flex-col flex-grow justify-between gap-2.5 text-left">
+        <div className="space-y-1.5">
           {/* Care Badges (Compact) */}
-          <div className="flex flex-wrap items-center gap-1">
-            {product.sunlight && <CareBadge type="sunlight" value={product.sunlight} size="sm" />}
-            {product.petFriendly && <CareBadge type="petFriendly" value={true} size="sm" />}
-          </div>
+          {(product.sunlight || product.petFriendly) && (
+            <div className="flex flex-wrap items-center gap-1">
+              {product.sunlight && <CareBadge type="sunlight" value={product.sunlight} size="sm" />}
+              {product.petFriendly && <CareBadge type="petFriendly" value={true} size="sm" />}
+            </div>
+          )}
 
-          {/* Title */}
+          {/* Title & Scientific Name */}
           <Link
             to={`/products/${product.slug}`}
-            className="block group-hover:text-forest-700 transition-colors"
+            className="block group/title focus:outline-none"
+            title={product.title}
           >
-            <h3 className="font-semibold text-slate-900 text-xs sm:text-sm leading-snug line-clamp-1">
+            <h3 className="font-semibold text-slate-900 group-hover/title:text-emerald-800 text-xs sm:text-[13.5px] leading-snug line-clamp-3 transition-colors duration-200 min-h-[2.5rem] sm:min-h-[2.85rem] break-words">
               {product.title}
             </h3>
             {product.scientificName && (
-              <p className="text-[10px] sm:text-[11px] text-forest-600/80 italic font-serif line-clamp-1">
+              <p className="mt-0.5 text-[10px] sm:text-[11px] text-forest-600/90 italic font-serif line-clamp-1">
                 {product.scientificName}
               </p>
             )}
@@ -121,7 +125,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
 
         {/* Price Row */}
-        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-1">
+        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-1 mt-auto">
           <div className="flex items-baseline gap-1.5 flex-wrap">
             <span className="font-bold text-forest-950 text-xs sm:text-sm font-mono">
               रू {currentPrice.toLocaleString('en-IN')}
@@ -132,7 +136,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               </span>
             )}
           </div>
-
         </div>
       </div>
     </div>

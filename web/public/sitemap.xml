@@ -2,61 +2,61 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Core Storefront Pages -->
   <url>
-    <loc>https://ktmbotanica.com/</loc>
+    <loc>https://rjflowers.com/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://ktmbotanica.com/catalog</loc>
+    <loc>https://rjflowers.com/catalog</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://ktmbotanica.com/categories</loc>
+    <loc>https://rjflowers.com/categories</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ktmbotanica.com/search</loc>
+    <loc>https://rjflowers.com/search</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <!-- Key Botanical Categories -->
   <url>
-    <loc>https://ktmbotanica.com/category/indoor-plants</loc>
+    <loc>https://rjflowers.com/category/indoor-plants</loc>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://ktmbotanica.com/category/flower-bouquets</loc>
+    <loc>https://rjflowers.com/category/flower-bouquets</loc>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://ktmbotanica.com/category/pots-planters</loc>
+    <loc>https://rjflowers.com/category/pots-planters</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ktmbotanica.com/category/seeds-succulents</loc>
+    <loc>https://rjflowers.com/category/seeds-succulents</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- Static Information -->
   <url>
-    <loc>https://ktmbotanica.com/contact</loc>
+    <loc>https://rjflowers.com/contact</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://ktmbotanica.com/privacy</loc>
+    <loc>https://rjflowers.com/privacy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://ktmbotanica.com/terms</loc>
+    <loc>https://rjflowers.com/terms</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>

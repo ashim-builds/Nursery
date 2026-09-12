@@ -44,7 +44,7 @@ export const AdminLayout: React.FC = () => {
         {/* Main Content Area (Offset by sidebar width on desktop) */}
         <div className="flex-1 flex flex-col min-w-0 lg:pl-64">
           {/* Top Admin Navigation Bar */}
-          <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
+          <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 py-3.5 pt-[calc(0.875rem+env(safe-area-inset-top,0px))] flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               {/* Breadcrumb Path */}
               <div className="flex items-center gap-2 text-xs">

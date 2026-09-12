@@ -233,7 +233,7 @@ export const CheckoutPage: React.FC = () => {
             </div>
 
             {/* Interactive Map Picker with Auto-Fill */}
-            <div className="pt-2 border-t border-slate-100">
+            <div className="pt-2 border-t border-slate-100 space-y-3">
               <LocationPickerMap
                 latitude={latitude}
                 longitude={longitude}
@@ -241,38 +241,34 @@ export const CheckoutPage: React.FC = () => {
                   setLatitude(coords.latitude);
                   setLongitude(coords.longitude);
                   setHasMapSelected(true);
-                  setShippingAddress('');
-                  setCity('');
                 }}
                 onAddressFound={(addr) => {
-              <div className="grid grid-cols-2 gap-3 mt-3 text-xs">
-                <label className="space-y-1">
-                  <span className="font-semibold text-slate-600">Latitude</span>
-                  <input
-                    value={latitude.toFixed(6)}
-                    readOnly
-                    aria-label="Selected latitude"
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-slate-700"
-                  />
-                </label>
-                <label className="space-y-1">
-                  <span className="font-semibold text-slate-600">Longitude</span>
-                  <input
-                    value={longitude.toFixed(6)}
-                    readOnly
-                    aria-label="Selected longitude"
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-slate-700"
-                  />
-                </label>
-              </div>
-                  if (addr.formatted || addr.street) {
-                    setShippingAddress(addr.formatted || addr.street);
+                  if (!shippingAddress.trim() || shippingAddress.startsWith('Pinned location')) {
+                    if (addr.formatted || addr.street) {
+                      setShippingAddress(addr.formatted || addr.street);
+                    }
                   }
                   if (addr.city) {
                     setCity(addr.city);
                   }
                 }}
               />
+
+              {/* Verified Pin Coordinates readout */}
+              <div className="grid grid-cols-2 gap-3 text-xs bg-forest-50/50 p-3 rounded-2xl border border-forest-100/80">
+                <div className="space-y-1">
+                  <span className="font-semibold text-slate-600 block text-[11px]">Selected Latitude</span>
+                  <div className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-mono text-slate-800 text-xs shadow-2xs">
+                    {latitude.toFixed(6)}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <span className="font-semibold text-slate-600 block text-[11px]">Selected Longitude</span>
+                  <div className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-mono text-slate-800 text-xs shadow-2xs">
+                    {longitude.toFixed(6)}
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Payment Method Banner (Default COD) */}

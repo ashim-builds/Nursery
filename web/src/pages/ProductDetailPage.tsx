@@ -58,10 +58,10 @@ export const ProductDetailPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-pulse">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <div className="lg:col-span-6 aspect-square bg-slate-100 rounded-3xl" />
-          <div className="lg:col-span-6 space-y-4">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-pulse">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
+          <div className="lg:col-span-5 aspect-[4/3] sm:aspect-square max-h-[380px] bg-slate-100 rounded-3xl" />
+          <div className="lg:col-span-7 space-y-4">
             <div className="h-8 bg-slate-100 rounded-xl w-3/4" />
             <div className="h-6 bg-slate-100 rounded-xl w-1/3" />
             <div className="h-24 bg-slate-100 rounded-2xl w-full" />
@@ -115,19 +115,19 @@ export const ProductDetailPage: React.FC = () => {
       />
 
       {/* Breadcrumbs */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center gap-1.5 text-xs text-slate-500">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center gap-1.5 text-xs text-slate-500">
         <Link to="/" className="hover:text-forest-700">Home</Link>
         <ChevronRight size={12} className="text-slate-400" />
         <Link to="/catalog" className="hover:text-forest-700">Plants</Link>
         <ChevronRight size={12} className="text-slate-400" />
-        <span className="text-slate-900 font-medium truncate max-w-[150px]">{product.title}</span>
+        <span className="text-slate-900 font-medium truncate max-w-xs sm:max-w-md">{product.title}</span>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-2">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-2">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
           {/* Left Column: Image Gallery */}
-          <div className="lg:col-span-6 space-y-3">
-            <div className="relative aspect-square rounded-3xl overflow-hidden bg-forest-50/50 border border-forest-100 shadow-soft">
+          <div className="lg:col-span-5 space-y-3 max-w-md mx-auto lg:max-w-none w-full">
+            <div className="relative aspect-[4/3] sm:aspect-square max-h-[380px] sm:max-h-[420px] rounded-2xl sm:rounded-3xl overflow-hidden bg-forest-50/50 border border-forest-100 shadow-soft">
               <DatabaseImage
                 src={images[activeImageIndex]?.url || images[0].url}
                 alt={product.title}
@@ -148,7 +148,7 @@ export const ProductDetailPage: React.FC = () => {
                   <button
                     key={idx}
                     onClick={() => setActiveImageIndex(idx)}
-                    className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${
+                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${
                       activeImageIndex === idx
                         ? 'border-forest-800 ring-2 ring-forest-200'
                         : 'border-slate-200 opacity-70 hover:opacity-100'
@@ -162,7 +162,7 @@ export const ProductDetailPage: React.FC = () => {
           </div>
 
           {/* Right Column: Product Info & Actions */}
-          <div className="lg:col-span-6 space-y-5">
+          <div className="lg:col-span-7 space-y-5">
             <div>
               <h1 className="font-serif font-bold text-2xl sm:text-3xl text-slate-900 tracking-tight leading-tight">
                 {product.title}
@@ -187,7 +187,7 @@ export const ProductDetailPage: React.FC = () => {
               <div className="space-y-1.5">
                 <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">Description</h2>
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed whitespace-pre-line">
-                  {product.fullDescription || product.description || product.shortDescription}
+                  {(product.fullDescription || product.description || product.shortDescription || '').replace(/Kathmandu/gi, 'Pokhara')}
                 </p>
               </div>
             )}
@@ -260,18 +260,20 @@ export const ProductDetailPage: React.FC = () => {
       </div>
 
       {/* Sticky Mobile Add to Cart Bar */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 shadow-lg safe-bottom flex items-center gap-3">
-        <div className="flex items-center border border-slate-200 rounded-xl bg-slate-50 px-2 py-1">
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 p-2.5 shadow-lg safe-bottom flex items-center gap-2">
+        <div className="flex items-center border border-slate-200 rounded-xl bg-slate-50 px-2 py-1.5 shrink-0">
           <button
             onClick={() => setQuantity(Math.max(1, quantity - 1))}
-            className="p-1 text-slate-600"
+            className="p-1 text-slate-600 active:scale-95"
+            aria-label="Decrease quantity"
           >
             <Minus size={14} />
           </button>
-          <span className="px-2 text-xs font-bold text-slate-800">{quantity}</span>
+          <span className="px-2 text-xs font-bold text-slate-800 font-mono">{quantity}</span>
           <button
             onClick={() => setQuantity(quantity + 1)}
-            className="p-1 text-slate-600"
+            className="p-1 text-slate-600 active:scale-95"
+            aria-label="Increase quantity"
           >
             <Plus size={14} />
           </button>
@@ -280,13 +282,13 @@ export const ProductDetailPage: React.FC = () => {
         <button
           onClick={handleAddToCart}
           disabled={isProductOutOfStock || !selectedVariant || selectedVariant.stockQuantity <= 0}
-          className="flex-1 bg-forest-800 text-white font-bold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
+          className="flex-1 min-w-0 bg-forest-800 active:bg-forest-900 text-white font-bold text-xs py-3 px-3 rounded-xl flex items-center justify-center gap-1.5 disabled:opacity-50 active:scale-[0.98] transition-transform shadow-xs"
         >
-          <ShoppingBag size={14} />
-          <span>
+          <ShoppingBag size={14} className="shrink-0" />
+          <span className="truncate">
             {isProductOutOfStock || !selectedVariant || selectedVariant.stockQuantity <= 0
               ? 'Out of Stock'
-              : `Add to Cart • रू ${totalItemPrice.toLocaleString()}`}
+              : `Add • रू ${totalItemPrice.toLocaleString()}`}
           </span>
         </button>
       </div>

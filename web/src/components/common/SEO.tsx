@@ -14,7 +14,7 @@ export interface SEOProps {
 const DEFAULT_TITLE = "RJ Flowers";
 const DEFAULT_DESCRIPTION =
   "RJ Flowers nursery in Pokhara-26, Arghau Chowk. Shop flowers and plants with delivery across Pokhara.";
-const DEFAULT_IMAGE = "/rj-flowers-icon-512.png";
+const DEFAULT_IMAGE = "/the-bloom-patch-512.png";
 const SITE_NAME = "RJ Flowers";
 
 export const SEO: React.FC<SEOProps> = ({
@@ -76,7 +76,7 @@ export const SEO: React.FC<SEOProps> = ({
     canonicalLink.setAttribute('href', finalCanonical);
 
     // 6. Structured Data (JSON-LD)
-    const jsonLdId = 'ktm-seo-jsonld';
+    const jsonLdId = 'rj-seo-jsonld';
     let scriptTag = document.getElementById(jsonLdId) as HTMLScriptElement;
 
     if (structuredData) {

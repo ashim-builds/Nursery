@@ -14,6 +14,7 @@ import {
   XCircle,
   AlertCircle,
   ShieldCheck,
+  ExternalLink,
 } from 'lucide-react';
 import { formatOrderAmount, isGenericVariantName } from '../utils/orderDisplay';
 
@@ -125,8 +126,20 @@ export const OrderDetailPage: React.FC = () => {
 
           <div className="space-y-1">
             <span className="font-bold text-slate-800 block">Delivery Address</span>
-            <p>{order.deliveryAddress}</p>
-            <p>{order.deliveryCity}</p>
+            <p>{order.deliveryAddress || 'No street address'}</p>
+            <p>{order.deliveryCity || 'Pokhara'}</p>
+            {order.deliveryLatitude && order.deliveryLongitude && (
+              <a
+                href={`https://maps.google.com/?q=${Number(order.deliveryLatitude).toFixed(6)},${Number(order.deliveryLongitude).toFixed(6)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[11px] text-emerald-700 hover:text-emerald-800 font-bold mt-1"
+              >
+                <MapPin size={12} />
+                <span>View Pinned Location on Map</span>
+                <ExternalLink size={10} />
+              </a>
+            )}
           </div>
         </div>
 

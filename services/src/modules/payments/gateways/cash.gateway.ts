@@ -15,7 +15,7 @@ export class CashPaymentGateway implements IPaymentGateway {
   async initiate(req: PaymentInitiateRequest): Promise<PaymentInitiateResponse> {
     return {
       paymentMethod: PaymentMethod.CASH,
-      instructions: `Cash on Delivery selected. Please keep exact cash of Rs. ${req.amount.toLocaleString()} ready upon botanical delivery to your Kathmandu/valley address.`,
+      instructions: `Cash on Delivery selected. Please keep exact cash of Rs. ${req.amount.toLocaleString()} ready upon botanical delivery to your Pokhara address.`,
       metadata: {
         amount: req.amount,
         orderNumber: req.orderNumber,

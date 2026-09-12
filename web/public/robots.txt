@@ -24,4 +24,4 @@ Disallow: /account
 Disallow: /api/
 
 # Sitemap Location
-Sitemap: https://ktmbotanica.com/sitemap.xml
+Sitemap: https://rjflowers.com/sitemap.xml

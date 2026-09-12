@@ -246,7 +246,7 @@ export class NotificationService {
         break;
       case 'ORDER_OUT_FOR_DELIVERY':
         customerTitle = `🚚 Out For Delivery: #${orderNumber}`;
-        customerMessage = `Our Kathmandu Valley rider is on the way with your living plants!`;
+        customerMessage = `Our Pokhara rider is on the way with your living plants!`;
         break;
       case 'ORDER_DELIVERED':
         customerTitle = `🏡 Order Delivered: #${orderNumber}`;
@@ -280,7 +280,7 @@ export class NotificationService {
     if (event === 'ORDER_CREATED') {
       await this.notifyAdmins({
         title: `🛍️ New Order #${orderNumber}`,
-        message: `Customer ${order.customerName || 'Guest'} placed order for रू ${totalAmount} (${order.deliveryCity || 'Kathmandu'}).`,
+        message: `Customer ${order.customerName || 'Guest'} placed order for रू ${totalAmount} (${order.deliveryCity || 'Pokhara'}).`,
         type: NotificationType.ORDER_STATUS,
         linkUrl: `/admin/orders/${order.id}`,
       });

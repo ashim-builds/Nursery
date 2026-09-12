@@ -126,13 +126,16 @@ export const AdminOrdersPage: React.FC = () => {
   };
 
   const openMapLocation = (order: any) => {
-    if (order.deliveryLatitude && order.deliveryLongitude) {
+    const lat = Number(order.deliveryLatitude);
+    const lng = Number(order.deliveryLongitude);
+
+    if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
       window.open(
-        `https://www.google.com/maps/@${Number(order.deliveryLatitude).toFixed(6)},${Number(order.deliveryLongitude).toFixed(6)},17z`,
+        `https://maps.google.com/?q=${lat.toFixed(6)},${lng.toFixed(6)}`,
         '_blank'
       );
     } else {
-      showToast('This order has no saved map coordinates.', 'info');
+      showToast('This order has no saved GPS coordinates. Text address: ' + (order.deliveryAddress || 'N/A'), 'info');
     }
   };
 
@@ -270,21 +273,31 @@ export const AdminOrdersPage: React.FC = () => {
 
                     {/* Location & Map Track */}
                     <td className="py-3.5 px-4 max-w-[200px]">
-                      <div className="text-[11px] text-slate-700 truncate">
-                        {order.deliveryAddress}
+                      <div className="text-[11px] text-slate-700 truncate font-medium" title={order.deliveryAddress}>
+                        {order.deliveryAddress || 'No street address'}
                       </div>
                       <div className="flex items-center gap-1.5 mt-1">
                         <span className="text-[10px] font-bold text-slate-500">
-                          {order.deliveryCity || 'Kathmandu'}
+                          {order.deliveryCity || 'Pokhara'}
                         </span>
-                        <button
-                          onClick={() => openMapLocation(order)}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[10px] font-bold transition-colors"
-                          title="Open map delivery location"
-                        >
-                          <MapPin size={11} className="text-emerald-600" />
-                          <span>View Map</span>
-                        </button>
+                        {order.deliveryLatitude && order.deliveryLongitude ? (
+                          <button
+                            onClick={() => openMapLocation(order)}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[10px] font-bold transition-colors border border-emerald-200 cursor-pointer shadow-2xs"
+                            title={`Open exact GPS pin (${Number(order.deliveryLatitude).toFixed(5)}, ${Number(order.deliveryLongitude).toFixed(5)})`}
+                          >
+                            <MapPin size={11} className="text-emerald-600" />
+                            <span>Show Map</span>
+                          </button>
+                        ) : (
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-400 text-[10px] font-medium"
+                            title="No GPS pin recorded for this order"
+                          >
+                            <MapPin size={10} className="text-slate-400" />
+                            <span>No GPS</span>
+                          </span>
+                        )}
                       </div>
                     </td>
 
@@ -458,14 +471,21 @@ export const AdminOrdersPage: React.FC = () => {
                 </div>
 
                 {/* Map Location Tracker Button */}
-                <button
-                  onClick={() => openMapLocation(order)}
-                  className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-200 transition-colors"
-                >
-                  <MapPin size={15} className="text-emerald-700" />
-                  <span>Track Delivery on Map 📍</span>
-                  <ExternalLink size={12} className="opacity-60" />
-                </button>
+                {order.deliveryLatitude && order.deliveryLongitude ? (
+                  <button
+                    onClick={() => openMapLocation(order)}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-200 transition-colors shadow-2xs cursor-pointer active:scale-95"
+                  >
+                    <MapPin size={15} className="text-emerald-700" />
+                    <span>Show Map ({Number(order.deliveryLatitude).toFixed(4)}, {Number(order.deliveryLongitude).toFixed(4)}) 📍</span>
+                    <ExternalLink size={12} className="opacity-60" />
+                  </button>
+                ) : (
+                  <div className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-2xl bg-slate-100 text-slate-400 font-medium text-xs border border-slate-200">
+                    <MapPin size={14} className="text-slate-400" />
+                    <span>No GPS Coordinates Saved</span>
+                  </div>
+                )}
 
                 {/* Items & Total */}
                 <div className="flex items-center justify-between py-1">
