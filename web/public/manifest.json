@@ -5,27 +5,27 @@
   "description": "Order fresh flowers, plants, and garden supplies in Pokhara directly from RJ Flowers & Nursery.",
   "icons": [
     {
-      "src": "/the-bloom-patch-192.png",
+      "src": "/rj-flowers-icon-192.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
-      "src": "/the-bloom-patch-512.png",
+      "src": "/rj-flowers-icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any"
     },
     {
-      "src": "/the-bloom-patch-512.png",
+      "src": "/rj-flowers-icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
     },
     {
-      "src": "/the-bloom-patch-logo.png",
+      "src": "/rj-flowers-icon.png",
       "type": "image/png",
-      "sizes": "960x960",
+      "sizes": "192x192",
       "purpose": "any"
     }
   ],
