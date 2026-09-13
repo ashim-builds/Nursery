@@ -1,6 +1,6 @@
 // cPanel / Phusion Passenger entry point
 try {
-  require('./dist/server.js');
+  module.exports = require('./dist/server.js');
 } catch (error) {
   const fs = require('fs');
   const errorMsg = `[${new Date().toISOString()}] CRITICAL STARTUP ERROR:\n${error.stack || error}\n`;

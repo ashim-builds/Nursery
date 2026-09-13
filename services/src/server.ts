@@ -313,31 +313,36 @@ let server: any;
 let httpServer: http.Server;
 
 async function startServer() {
-  try {
-    await connectDB();
-  } catch (err: any) {
-    console.error('⚠️ [DB] Connection warning on startup:', err.message);
-  }
-
   const port = process.env.PORT || ENV.PORT || 5000;
   httpServer = http.createServer(app);
   initSocketIO(httpServer);
 
-  if (typeof (global as any).PhusionPassenger !== 'undefined') {
-    httpServer.listen('passenger');
-    console.log('🌿 RJ Flowers API running under Phusion Passenger with WebSocket support');
+  // 1. Listen immediately so cPanel Phusion Passenger / LiteSpeed never hangs
+  if (typeof (global as any).PhusionPassenger !== 'undefined' || process.env.PASSENGER_APP_ENV) {
+    httpServer.listen('passenger', () => {
+      console.log('🌿 RJ Flowers API running under Phusion Passenger');
+    });
+  } else if (process.env.PORT) {
+    server = httpServer.listen(process.env.PORT, () => {
+      console.log(`🌿 RJ Flowers API listening on port ${process.env.PORT}`);
+    });
   } else {
     server = httpServer.listen(port, () => {
       console.log(`🌿 RJ Flowers API is flourishing on port ${port}`);
       console.log(`🚀 Health Check: http://localhost:${port}/api/health`);
     });
-
-    // Configure connection keep-alive timeouts for high reverse-proxy throughput & minimal process contention
-    if (server) {
-      server.keepAliveTimeout = 65000;
-      server.headersTimeout = 66000;
-    }
   }
+
+  const activeServer = server || httpServer;
+  if (activeServer) {
+    activeServer.keepAliveTimeout = 65000;
+    activeServer.headersTimeout = 66000;
+  }
+
+  // 2. Connect to MySQL database in background without stalling HTTP listeners
+  connectDB().catch((err: any) => {
+    console.error('⚠️ [DB] Connection warning on startup:', err?.message || err);
+  });
 }
 
 // Graceful Shutdown
