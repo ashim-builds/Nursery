@@ -33,6 +33,7 @@ Add-FileToZip $backendArchive (Join-Path $root "services/dist/server.js") "dist/
 Add-FileToZip $backendArchive (Join-Path $root "services/prisma/schema.prisma") "prisma/schema.prisma"
 Add-FileToZip $backendArchive (Join-Path $root "services/app.js") "app.js"
 Add-FileToZip $backendArchive (Join-Path $root "services/package.json") "package.json"
+Add-FileToZip $backendArchive (Join-Path $root "services/.htaccess") ".htaccess"
 $backendArchive.Dispose()
 Write-Host "backend-update.zip created successfully!"
 
