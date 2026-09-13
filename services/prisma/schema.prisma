@@ -301,6 +301,11 @@ model Product {
   @@index([available])
   @@index([stockStatus])
   @@index([seasonal])
+  @@index([published, createdAt])
+  @@index([published, categoryId, createdAt])
+  @@index([published, featured, createdAt])
+  @@index([published, bestSeller, createdAt])
+  @@index([published, basePrice])
   @@map("products")
 }
 
@@ -420,6 +425,7 @@ model InventoryTransaction {
   @@index([variantId])
   @@index([type])
   @@index([createdAt])
+  @@index([variantId, createdAt])
   @@map("inventory_transactions")
 }
 
@@ -505,6 +511,8 @@ model Order {
   @@index([createdAt])
   @@index([orderSource])
   @@index([orderType])
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
   @@map("orders")
 }
 
@@ -679,6 +687,7 @@ model ProductReview {
   @@index([productId])
   @@index([userId])
   @@index([rating])
+  @@index([productId, isApproved, createdAt])
   @@map("product_reviews")
 }
 
@@ -772,6 +781,7 @@ model Notification {
 
   @@index([userId])
   @@index([isRead])
+  @@index([userId, isRead, createdAt])
   @@map("notifications")
 }
 

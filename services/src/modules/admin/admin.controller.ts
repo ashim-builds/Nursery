@@ -46,23 +46,8 @@ export class AdminController {
     res.status(200).json(ApiResponse.success(result, 'Coupon deleted'));
   });
 
-  // Reviews Moderation
-  static getReviews = asyncHandler(async (req: Request, res: Response) => {
-    const result = await AdminService.getReviews(req.query as any);
-    res.status(200).json(ApiResponse.success(result.reviews, 'Reviews list', 200, result.meta));
-  });
-
-  static moderateReview = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const review = await AdminService.moderateReview(req.params.id, req.body.isApproved, req.user?.id);
-    res.status(200).json(ApiResponse.success(review, 'Review moderation updated'));
-  });
-
-  static deleteReview = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const result = await AdminService.deleteReview(req.params.id, req.user?.id);
-    res.status(200).json(ApiResponse.success(result, 'Review deleted'));
-  });
-
   // Notifications
+
   static broadcastNotification = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const result = await AdminService.broadcastNotification(req.body, req.user?.id);
     res.status(200).json(ApiResponse.success(result, result.message));

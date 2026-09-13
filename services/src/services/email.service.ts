@@ -25,6 +25,9 @@ async function getTransporter(): Promise<any> {
           user: user,
           pass: pass,
         },
+        connectionTimeout: 8000, // 8 seconds
+        greetingTimeout: 8000,
+        socketTimeout: 10000,
         tls: {
           rejectUnauthorized: false,
         },
@@ -38,6 +41,9 @@ async function getTransporter(): Promise<any> {
           user: user,
           pass: pass,
         },
+        connectionTimeout: 8000, // 8 seconds
+        greetingTimeout: 8000,
+        socketTimeout: 10000,
         tls: {
           rejectUnauthorized: false,
         },

@@ -35,15 +35,6 @@ export const updateCouponSchema = z.object({
   }),
 });
 
-export const moderateReviewSchema = z.object({
-  params: z.object({
-    id: z.string().uuid('Valid review ID required'),
-  }),
-  body: z.object({
-    isApproved: z.boolean(),
-  }),
-});
-
 export const broadcastNotificationSchema = z.object({
   body: z.object({
     title: z.string().min(2, 'Title is required'),

@@ -4,10 +4,20 @@ import { ApiResponse } from '../../utils/ApiResponse.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { AuthenticatedRequest } from '../../middlewares/auth.middleware.js';
+import { siteSettingsCache } from '../../utils/cache.js';
+import { emitLiveEvent } from '../../utils/socket.js';
+
+const SETTINGS_CACHE_KEY = 'site_settings:global';
+const SETTINGS_CACHE_TTL = 600; // 10 minutes
 
 export class SiteSettingsController {
-  // 1. Get current site settings (or default if not yet created)
+  // 1. Get current site settings (with in-memory cache)
   static getSettings = asyncHandler(async (_req: Request, res: Response) => {
+    const cached = siteSettingsCache.get(SETTINGS_CACHE_KEY);
+    if (cached) {
+      return res.status(200).json(ApiResponse.success(cached, 'Site settings retrieved successfully (cached)'));
+    }
+
     let settings = await prisma.siteSettings.findFirst();
 
     if (!settings) {
@@ -30,32 +40,9 @@ export class SiteSettingsController {
           setupCompleted: false,
         },
       });
-    } else if (
-      settings.phone === '9800000000' || !settings.phone ||
-      settings.businessName.includes('KtmBotanica') || settings.businessName.includes('Ktm Botanica') ||
-      settings.city === 'Kathmandu' ||
-      settings.address.includes('Lazimpat') ||
-      settings.address.includes('Lakeside')
-    ) {
-      settings = await prisma.siteSettings.update({
-        where: { id: settings.id },
-        data: {
-          businessName: 'RJ Flowers',
-          phone: '9815155580',
-          whatsappPhone: '9815155580',
-          address: 'Pokhara-26, Arghau Chowk, Pokhara',
-          province: 'Gandaki',
-          district: 'Kaski',
-          city: 'Pokhara',
-          area: 'Arghau Chowk',
-          latitude: 28.2365,
-          longitude: 84.0036,
-          openingHours: 'Every day: 7:00 AM - 7:00 PM (Closed on festivals)',
-          defaultDeliveryMessage: 'Delivery across Pokhara. Rs. 100 delivery charge below Rs. 2,000; free delivery at Rs. 2,000 and above.',
-        },
-      });
     }
 
+    siteSettingsCache.set(SETTINGS_CACHE_KEY, settings, SETTINGS_CACHE_TTL);
     return res.status(200).json(ApiResponse.success(settings, 'Site settings retrieved successfully'));
   });
 
@@ -140,6 +127,10 @@ export class SiteSettingsController {
       },
     });
 
+    // Invalidate in-memory cache
+    siteSettingsCache.del(SETTINGS_CACHE_KEY);
+    emitLiveEvent('settings:updated', { settings });
+
     return res.status(200).json(ApiResponse.success(settings, 'Site settings updated successfully'));
   });
 
@@ -206,6 +197,10 @@ export class SiteSettingsController {
         setupCompleted: true,
       },
     });
+
+    // Invalidate in-memory cache
+    siteSettingsCache.del(SETTINGS_CACHE_KEY);
+    emitLiveEvent('settings:updated', { settings: updated });
 
     return res.status(200).json(ApiResponse.success(updated, 'Admin onboarding setup completed successfully!'));
   });

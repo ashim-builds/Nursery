@@ -25,7 +25,6 @@ import {
 import {
   createCouponSchema,
   updateCouponSchema,
-  moderateReviewSchema,
   broadcastNotificationSchema,
 } from '../../validators/admin.validator.js';
 import { UserRole } from '@prisma/client';
@@ -108,20 +107,8 @@ router.patch(
 router.delete('/coupons/:id', authenticateJWT, requireRole(UserRole.ADMIN), AdminController.deleteCoupon);
 
 // ==========================================
-// 6. REVIEWS MODERATION
-// ==========================================
-router.get('/reviews', authenticateJWT, requireRole(UserRole.ADMIN, UserRole.STAFF), AdminController.getReviews);
-router.patch(
-  '/reviews/:id/moderate',
-  authenticateJWT,
-  requireRole(UserRole.ADMIN, UserRole.STAFF),
-  validateRequest(moderateReviewSchema),
-  AdminController.moderateReview
-);
-router.delete('/reviews/:id', authenticateJWT, requireRole(UserRole.ADMIN), AdminController.deleteReview);
-
-// ==========================================
 // 7. NOTIFICATIONS & BROADCAST
+
 // ==========================================
 router.post(
   '/notifications/broadcast',

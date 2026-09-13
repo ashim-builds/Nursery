@@ -1,6 +1,8 @@
 import { prisma } from '../../config/database.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { InventoryTransactionType } from '@prisma/client';
+import { catalogCache } from '../../utils/cache.js';
+import { emitLiveEvent } from '../../utils/socket.js';
 
 export class InventoryService {
   /**
@@ -262,7 +264,7 @@ export class InventoryService {
         },
       });
 
-      return {
+      const result = {
         success: true,
         variantId: data.variantId,
         productName: variant.product.name,
@@ -272,6 +274,16 @@ export class InventoryService {
         availableQuantity: newAvailable,
         transaction,
       };
+
+      catalogCache.clear();
+      emitLiveEvent('inventory:updated', {
+        variantId: data.variantId,
+        productId: variant.productId,
+        availableQuantity: newAvailable,
+        stockQuantity: newStock,
+      });
+
+      return result;
     });
   }
 

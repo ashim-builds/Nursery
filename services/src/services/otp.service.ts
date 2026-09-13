@@ -1,5 +1,6 @@
 import { prisma } from '../config/database.js';
 import crypto from 'crypto';
+import { MemoryCache } from '../utils/cache.js';
 
 interface InMemoryOtp {
   id: string;
@@ -11,8 +12,8 @@ interface InMemoryOtp {
   createdAt: Date;
 }
 
-// In-memory fallback map: email:type -> InMemoryOtp[]
-const memoryOtpStore = new Map<string, InMemoryOtp[]>();
+// In-memory fallback cache bounded to max 1000 active OTP sessions
+const memoryOtpCache = new MemoryCache(1000);
 
 let tableInitialized = false;
 
@@ -45,9 +46,9 @@ export class OtpService {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     const id = crypto.randomUUID();
 
-    // 1. Save in memory store
-    const key = `${normalizedEmail}:${type}`;
-    const list = memoryOtpStore.get(key) || [];
+    // 1. Save in memory store (10-minute TTL)
+    const key = `otp:${normalizedEmail}:${type}`;
+    const list: InMemoryOtp[] = memoryOtpCache.get(key) || [];
     // Mark old ones used
     list.forEach(item => { item.used = true; });
     list.push({
@@ -59,7 +60,7 @@ export class OtpService {
       used: false,
       createdAt: new Date(),
     });
-    memoryOtpStore.set(key, list);
+    memoryOtpCache.set(key, list, 600); // 10 minutes TTL
 
     // 2. Try DB storage (Prisma or raw SQL)
     await ensureOtpTable();
@@ -102,8 +103,8 @@ export class OtpService {
     const now = new Date();
 
     // 1. Check in-memory store first
-    const key = `${normalizedEmail}:${type}`;
-    const memoryList = memoryOtpStore.get(key) || [];
+    const key = `otp:${normalizedEmail}:${type}`;
+    const memoryList: InMemoryOtp[] = memoryOtpCache.get(key) || [];
     const memoryMatch = memoryList
       .filter(item => !item.used && item.otp === cleanOtp && item.expiresAt > now)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];

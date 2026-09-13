@@ -33,6 +33,7 @@ export const DatabaseImage: React.FC<PlantImageProps> = ({
             src={finalSrc}
             alt={alt}
             loading="lazy"
+            decoding="async"
             onLoad={() => setLoaded(true)}
             onError={() => {
               setError(true);

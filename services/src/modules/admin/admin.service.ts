@@ -387,80 +387,10 @@ export class AdminService {
   /**
    * Reviews Moderation
    */
-  static async getReviews(query: { page?: string; limit?: string; isApproved?: string }) {
-    const page = Math.max(1, parseInt(query.page || '1', 10));
-    const limit = Math.max(1, Math.min(100, parseInt(query.limit || '20', 10)));
-    const skip = (page - 1) * limit;
-
-    const where: Prisma.ProductReviewWhereInput = {};
-    if (query.isApproved !== undefined) {
-      where.isApproved = query.isApproved === 'true';
-    }
-
-    const [reviews, total] = await Promise.all([
-      prisma.productReview.findMany({
-        where,
-        include: {
-          product: { select: { id: true, name: true, slug: true } },
-          user: { select: { id: true, name: true, email: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
-      prisma.productReview.count({ where }),
-    ]);
-
-    return {
-      reviews,
-      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    };
-  }
-
-  static async moderateReview(id: string, isApproved: boolean, adminUserId?: string) {
-    const review = await prisma.productReview.findUnique({ where: { id } });
-    if (!review) throw ApiError.notFound('Review not found');
-
-    const updated = await prisma.productReview.update({
-      where: { id },
-      data: { isApproved },
-    });
-
-    await prisma.auditLog.create({
-      data: {
-        userId: adminUserId,
-        action: isApproved ? 'REVIEW_APPROVE' : 'REVIEW_REJECT',
-        resource: 'ProductReview',
-        resourceId: id,
-        details: { isApproved },
-      },
-    });
-
-    return updated;
-  }
-
-  static async deleteReview(id: string, adminUserId?: string) {
-    const review = await prisma.productReview.findUnique({ where: { id } });
-    if (!review) throw ApiError.notFound('Review not found');
-
-    await prisma.productReview.delete({ where: { id } });
-
-    await prisma.auditLog.create({
-      data: {
-        userId: adminUserId,
-        action: 'REVIEW_DELETE',
-        resource: 'ProductReview',
-        resourceId: id,
-        details: { rating: review.rating, title: review.title },
-      },
-    });
-
-    return { message: 'Review deleted successfully' };
-  }
-
   /**
    * Broadcast Notifications
    */
+
   static async broadcastNotification(
     data: {
       title: string;

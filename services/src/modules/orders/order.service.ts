@@ -14,9 +14,11 @@ import {
   Prisma,
 } from '@prisma/client';
 import { NotificationService } from '../notifications/notification.service.js';
+import { MemoryCache, catalogCache } from '../../utils/cache.js';
+import { emitLiveEvent } from '../../utils/socket.js';
 
-// In-memory idempotency cache for checkout requests (TTL: 5 minutes)
-const idempotencyStore = new Map<string, { orderId: string; response: any; timestamp: number }>();
+// Memory-bounded idempotency cache for checkout requests (Max 500 entries)
+const idempotencyCache = new MemoryCache(500);
 
 const ALLOWED_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   PENDING: [OrderStatus.DELIVERED, OrderStatus.CANCELLED],
@@ -72,9 +74,9 @@ export class OrderService {
     // 1. Idempotency Check
     const idempotencyKey = data.idempotencyKey;
     if (idempotencyKey) {
-      const existing = idempotencyStore.get(idempotencyKey);
-      if (existing && Date.now() - existing.timestamp < 5 * 60 * 1000) {
-        return existing.response;
+      const cached = idempotencyCache.get<any>(idempotencyKey);
+      if (cached) {
+        return cached;
       }
     }
 
@@ -363,6 +365,16 @@ export class OrderService {
           totalAmount: Number(order.totalAmount),
         }).catch((err) => console.warn('Order created notification failed:', err.message));
 
+        catalogCache.clear();
+        emitLiveEvent('order:created', {
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          customerName: data.customerName,
+          totalAmount: Number(order.totalAmount),
+          status: order.status,
+        });
+        emitLiveEvent('inventory:updated', { source: 'order:created' });
+
         return {
           id: order.id,
           orderNumber: order.orderNumber,
@@ -401,13 +413,9 @@ export class OrderService {
       }
     );
 
-    // Save to idempotency store if key was provided
+    // Save to idempotency store if key was provided (5 minutes TTL)
     if (idempotencyKey) {
-      idempotencyStore.set(idempotencyKey, {
-        orderId: orderResult.id,
-        response: orderResult,
-        timestamp: Date.now(),
-      });
+      idempotencyCache.set(idempotencyKey, orderResult, 300);
     }
 
     return orderResult;
@@ -812,6 +820,14 @@ export class OrderService {
         totalAmount: Number(result.totalAmount),
       }).catch((err) => console.warn('Status change notification error:', err.message));
     }
+
+    catalogCache.clear();
+    emitLiveEvent('order:updated', {
+      orderId: id,
+      orderNumber: result.orderNumber,
+      status: result.status,
+    });
+    emitLiveEvent('order:changed', { action: 'update', orderId: id });
 
     return result;
   }

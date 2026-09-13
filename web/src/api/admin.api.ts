@@ -180,22 +180,6 @@ export const adminApi = {
     return res.data.data;
   },
 
-  // Reviews Moderation
-  getReviews: async (params?: { page?: number; limit?: number; isApproved?: boolean }) => {
-    const res = await apiClient.get('/admin/reviews', { params });
-    return { reviews: res.data.data, meta: res.data.meta };
-  },
-
-  moderateReview: async (id: string, isApproved: boolean) => {
-    const res = await apiClient.patch(`/admin/reviews/${id}/moderate`, { isApproved });
-    return res.data.data;
-  },
-
-  deleteReview: async (id: string) => {
-    const res = await apiClient.delete(`/admin/reviews/${id}`);
-    return res.data.data;
-  },
-
   // Delivery Zones
   getDeliveryZones: async () => {
     const res = await apiClient.get('/delivery-zones', { params: { all: true } });

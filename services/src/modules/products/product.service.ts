@@ -1,6 +1,8 @@
 import { prisma } from '../../config/database.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { SunlightRequirement, WateringRequirement, DifficultyLevel, Prisma } from '@prisma/client';
+import { catalogCache, appCache } from '../../utils/cache.js';
+import { emitLiveEvent } from '../../utils/socket.js';
 
 export class ProductService {
   static async getAll(query: {
@@ -25,6 +27,12 @@ export class ProductService {
     watering?: WateringRequirement;
     difficulty?: DifficultyLevel;
   }) {
+    const cacheKey = `products:query:${JSON.stringify(query)}`;
+    const cached = catalogCache.get<any>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const page = Math.max(1, parseInt(query.page || '1', 10));
     const limit = Math.max(1, Math.min(100, parseInt(query.limit || '12', 10)));
     const skip = (page - 1) * limit;
@@ -162,10 +170,6 @@ export class ProductService {
             },
             orderBy: { sortOrder: 'asc' },
           },
-          reviews: {
-            where: { isApproved: true },
-            select: { rating: true },
-          },
         },
         orderBy,
         skip,
@@ -175,11 +179,7 @@ export class ProductService {
     ]);
 
     const products = productsRaw.map((p) => {
-      const avgRating =
-        p.reviews.length > 0
-          ? p.reviews.reduce((acc, r) => acc + r.rating, 0) / p.reviews.length
-          : 5.0;
-
+      const avgRating = 5.0;
       const totalStock = p.variants.reduce((acc, v) => acc + (v.inventory?.availableQuantity ?? v.stock), 0);
 
       return {
@@ -240,12 +240,12 @@ export class ProductService {
         attributes: p.attributes,
         rating: avgRating,
         averageRating: avgRating,
-        reviewCount: p.reviews.length,
+        reviewCount: 0,
         createdAt: p.createdAt,
       };
     });
 
-    return {
+    const result = {
       products,
       meta: {
         page,
@@ -254,6 +254,9 @@ export class ProductService {
         totalPages: Math.ceil(total / limit),
       },
     };
+
+    catalogCache.set(cacheKey, result, 120); // 2 minutes TTL
+    return result;
   }
 
   static async getBySlug(slug: string) {
@@ -302,20 +305,6 @@ export class ProductService {
           },
           orderBy: { sortOrder: 'asc' },
         },
-        reviews: {
-          where: { isApproved: true },
-          select: {
-            id: true,
-            rating: true,
-            title: true,
-            comment: true,
-            plantPhotoUrl: true,
-            isVerifiedBuyer: true,
-            createdAt: true,
-            user: { select: { name: true } },
-          },
-          orderBy: { createdAt: 'desc' },
-        },
       },
     });
 
@@ -323,11 +312,7 @@ export class ProductService {
       throw ApiError.notFound('Product not found');
     }
 
-    const avgRating =
-      product.reviews.length > 0
-        ? product.reviews.reduce((acc, r) => acc + r.rating, 0) / product.reviews.length
-        : 5.0;
-
+    const avgRating = 5.0;
     const totalStock = product.variants.reduce((acc, v) => acc + (v.inventory?.availableQuantity ?? v.stock), 0);
 
     return {
@@ -387,19 +372,10 @@ export class ProductService {
         sortOrder: v.sortOrder,
       })),
       attributes: product.attributes,
-      reviews: product.reviews.map((r) => ({
-        id: r.id,
-        customerName: r.user?.name || 'Customer',
-        rating: r.rating,
-        title: r.title,
-        comment: r.comment,
-        plantPhotoUrl: r.plantPhotoUrl,
-        isVerifiedBuyer: r.isVerifiedBuyer,
-        createdAt: r.createdAt,
-      })),
+      reviews: [],
       rating: avgRating,
       averageRating: avgRating,
-      reviewCount: product.reviews.length,
+      reviewCount: 0,
       createdAt: product.createdAt,
     };
   }
@@ -541,6 +517,11 @@ export class ProductService {
       },
     });
 
+    catalogCache.clear();
+    appCache.clearPattern('system:sitemap.xml');
+    emitLiveEvent('product:created', { product });
+    emitLiveEvent('product:changed', { action: 'create', productId: product.id });
+
     return product;
   }
 
@@ -592,6 +573,11 @@ export class ProductService {
       },
     });
 
+    catalogCache.clear();
+    appCache.clearPattern('system:sitemap.xml');
+    emitLiveEvent('product:updated', { product: updated });
+    emitLiveEvent('product:changed', { action: 'update', productId: id });
+
     return updated;
   }
 
@@ -602,6 +588,9 @@ export class ProductService {
     });
 
     if (!product) throw ApiError.notFound('Product not found');
+
+    catalogCache.clear();
+    appCache.clearPattern('system:sitemap.xml');
 
     // Soft delete / unpublish if historical order items exist
     if (product.orderItems.length > 0) {
@@ -623,6 +612,9 @@ export class ProductService {
         },
       });
 
+      emitLiveEvent('product:deleted', { productId: id, soft: true });
+      emitLiveEvent('product:changed', { action: 'delete', productId: id });
+
       return { message: 'Product unpublished and archived successfully (historical orders preserved)' };
     } else {
       await prisma.product.delete({ where: { id } });
@@ -636,6 +628,9 @@ export class ProductService {
           details: { name: product.name },
         },
       });
+
+      emitLiveEvent('product:deleted', { productId: id, soft: false });
+      emitLiveEvent('product:changed', { action: 'delete', productId: id });
 
       return { message: 'Product permanently deleted' };
     }

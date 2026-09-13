@@ -1,12 +1,16 @@
 import path from 'path';
+import http from 'http';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { ENV } from './config/env.js';
 import { connectDB, prisma } from './config/database.js';
 import { errorHandler } from './middlewares/error.middleware.js';
+import { appCache } from './utils/cache.js';
+import { initSocketIO } from './utils/socket.js';
 
 import { authRoutes } from './modules/auth/auth.routes.js';
 import { productRoutes } from './modules/products/product.routes.js';
@@ -24,7 +28,10 @@ const app = express();
 // Trust reverse proxy (Nginx / cPanel Apache) for accurate client IP in rate limiting & logs
 app.set('trust proxy', 1);
 
-// Dedicated Static Image Serving (High-Performance Caching)
+// High-Efficiency Gzip/Deflate Response Compression
+app.use((compression as any)({ threshold: 1024 }));
+
+// Dedicated Static Image Serving (High-Performance Caching with Cross-Origin Resource Sharing)
 app.use(
   '/uploads',
   express.static(path.resolve(process.cwd(), 'uploads'), {
@@ -33,9 +40,18 @@ app.use(
     setHeaders: (res) => {
       res.setHeader('X-Content-Type-Options', 'nosniff');
       res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     },
   })
 );
+
+// Cache-Busting Headers for Dynamic API Routes
+app.use('/api', (_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
 
 // 1. Security Middlewares: Helmet with CSP and strict headers
 app.use(
@@ -128,18 +144,32 @@ const checkoutLimiter = rateLimit({
 });
 app.use(['/api/orders', '/api/v1/orders'], checkoutLimiter);
 
-// Health Endpoint
+// Health Endpoint with Memory & Cache Diagnostics
 app.get(['/health', '/api/health'], (req: Request, res: Response) => {
+  const memoryUsage = process.memoryUsage();
   res.status(200).json({
     status: 'ok',
     success: true,
     message: 'Nursery API is running',
+    timestamp: new Date().toISOString(),
+    process: {
+      uptime: process.uptime(),
+      pid: process.pid,
+      memory: {
+        rssMb: Math.round(memoryUsage.rss / 1024 / 1024),
+        heapUsedMb: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+        heapTotalMb: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+      },
+    },
+    cache: appCache.getStats(),
   });
 });
 
-// Dynamic Robots.txt Handler
-app.get(['/robots.txt', '/api/robots.txt'], (req: Request, res: Response) => {
-  const robots = `# RJ Flowers Robots.txt
+// Dynamic Robots.txt Handler (Cached)
+app.get(['/robots.txt', '/api/robots.txt'], async (_req: Request, res: Response) => {
+  const robots = await appCache.getOrSet(
+    'system:robots.txt',
+    async () => `# RJ Flowers Robots.txt
 User-agent: *
 Allow: /
 Allow: /product/
@@ -157,56 +187,66 @@ Disallow: /profile
 Disallow: /api/
 
 Sitemap: https://rjflowers.com/sitemap.xml
-`;
+`,
+    3600 // Cache for 1 hour
+  );
+
   res.header('Content-Type', 'text/plain');
   res.send(robots);
 });
 
-// Dynamic Sitemap.xml Handler
-app.get(['/sitemap.xml', '/api/sitemap.xml'], async (req: Request, res: Response) => {
+// Dynamic Sitemap.xml Handler (Cached with 30-minute TTL)
+app.get(['/sitemap.xml', '/api/sitemap.xml'], async (_req: Request, res: Response) => {
   try {
-    const [products, categories] = await Promise.all([
-      prisma.product.findMany({
-        where: { published: true, available: true },
-        select: { slug: true, updatedAt: true },
-      }),
-      prisma.category.findMany({
-        where: { isActive: true },
-        select: { slug: true, updatedAt: true },
-      }),
-    ]);
+    const xml = await appCache.getOrSet(
+      'system:sitemap.xml',
+      async () => {
+        const [products, categories] = await Promise.all([
+          prisma.product.findMany({
+            where: { published: true, available: true },
+            select: { slug: true, updatedAt: true },
+          }),
+          prisma.category.findMany({
+            where: { isActive: true },
+            select: { slug: true, updatedAt: true },
+          }),
+        ]);
 
-    const baseUrl = process.env.FRONTEND_URL || 'https://rjflowers.com';
+        const baseUrl = process.env.FRONTEND_URL || 'https://rjflowers.com';
 
-    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+        let xmlContent = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+        xmlContent += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
 
-    // Static Pages
-    const staticPages = [
-      { loc: `${baseUrl}/`, priority: '1.0', changefreq: 'daily' },
-      { loc: `${baseUrl}/catalog`, priority: '0.9', changefreq: 'daily' },
-      { loc: `${baseUrl}/categories`, priority: '0.8', changefreq: 'weekly' },
-      { loc: `${baseUrl}/search`, priority: '0.7', changefreq: 'weekly' },
-      { loc: `${baseUrl}/contact`, priority: '0.5', changefreq: 'monthly' },
-      { loc: `${baseUrl}/privacy`, priority: '0.3', changefreq: 'yearly' },
-      { loc: `${baseUrl}/terms`, priority: '0.3', changefreq: 'yearly' },
-    ];
+        // Static Pages
+        const staticPages = [
+          { loc: `${baseUrl}/`, priority: '1.0', changefreq: 'daily' },
+          { loc: `${baseUrl}/catalog`, priority: '0.9', changefreq: 'daily' },
+          { loc: `${baseUrl}/categories`, priority: '0.8', changefreq: 'weekly' },
+          { loc: `${baseUrl}/search`, priority: '0.7', changefreq: 'weekly' },
+          { loc: `${baseUrl}/contact`, priority: '0.5', changefreq: 'monthly' },
+          { loc: `${baseUrl}/privacy`, priority: '0.3', changefreq: 'yearly' },
+          { loc: `${baseUrl}/terms`, priority: '0.3', changefreq: 'yearly' },
+        ];
 
-    staticPages.forEach((p) => {
-      xml += `  <url>\n    <loc>${p.loc}</loc>\n    <changefreq>${p.changefreq}</changefreq>\n    <priority>${p.priority}</priority>\n  </url>\n`;
-    });
+        staticPages.forEach((p) => {
+          xmlContent += `  <url>\n    <loc>${p.loc}</loc>\n    <changefreq>${p.changefreq}</changefreq>\n    <priority>${p.priority}</priority>\n  </url>\n`;
+        });
 
-    // Categories
-    categories.forEach((c) => {
-      xml += `  <url>\n    <loc>${baseUrl}/category/${c.slug}</loc>\n    <lastmod>${c.updatedAt.toISOString().split('T')[0]}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.85</priority>\n  </url>\n`;
-    });
+        // Categories
+        categories.forEach((c) => {
+          xmlContent += `  <url>\n    <loc>${baseUrl}/category/${c.slug}</loc>\n    <lastmod>${c.updatedAt.toISOString().split('T')[0]}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.85</priority>\n  </url>\n`;
+        });
 
-    // Products
-    products.forEach((p) => {
-      xml += `  <url>\n    <loc>${baseUrl}/product/${p.slug}</loc>\n    <lastmod>${p.updatedAt.toISOString().split('T')[0]}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
-    });
+        // Products
+        products.forEach((p) => {
+          xmlContent += `  <url>\n    <loc>${baseUrl}/product/${p.slug}</loc>\n    <lastmod>${p.updatedAt.toISOString().split('T')[0]}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+        });
 
-    xml += `</urlset>`;
+        xmlContent += `</urlset>`;
+        return xmlContent;
+      },
+      1800 // Cache for 30 minutes
+    );
 
     res.header('Content-Type', 'application/xml');
     res.send(xml);
@@ -255,6 +295,7 @@ app.use(errorHandler);
 
 // Server startup & Graceful Shutdown
 let server: any;
+let httpServer: http.Server;
 
 async function startServer() {
   try {
@@ -264,23 +305,32 @@ async function startServer() {
   }
 
   const port = process.env.PORT || ENV.PORT || 5000;
+  httpServer = http.createServer(app);
+  initSocketIO(httpServer);
 
   if (typeof (global as any).PhusionPassenger !== 'undefined') {
-    (app as any).listen('passenger');
-    console.log('🌿 RJ Flowers API running under Phusion Passenger');
+    httpServer.listen('passenger');
+    console.log('🌿 RJ Flowers API running under Phusion Passenger with WebSocket support');
   } else {
-    server = app.listen(port, () => {
+    server = httpServer.listen(port, () => {
       console.log(`🌿 RJ Flowers API is flourishing on port ${port}`);
       console.log(`🚀 Health Check: http://localhost:${port}/api/health`);
     });
+
+    // Configure connection keep-alive timeouts for high reverse-proxy throughput & minimal process contention
+    if (server) {
+      server.keepAliveTimeout = 65000;
+      server.headersTimeout = 66000;
+    }
   }
 }
 
 // Graceful Shutdown
 const handleGracefulShutdown = async (signal: string) => {
   console.log(`\n🛑 Received ${signal}. Starting graceful shutdown...`);
-  if (server) {
-    server.close(async () => {
+  const activeServer = server || httpServer;
+  if (activeServer) {
+    activeServer.close(async () => {
       console.log('🔒 Closed HTTP server connections.');
       try {
         await prisma.$disconnect();
@@ -301,3 +351,4 @@ process.on('SIGINT', () => handleGracefulShutdown('SIGINT'));
 startServer();
 
 export default app;
+

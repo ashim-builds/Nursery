@@ -1,17 +1,27 @@
 import { prisma } from '../../config/database.js';
 import { ApiError } from '../../utils/ApiError.js';
+import { appCache } from '../../utils/cache.js';
+
+const CATEGORIES_ALL_CACHE_KEY = 'categories:all';
+const CATEGORIES_CACHE_TTL = 600; // 10 minutes
 
 export class CategoryService {
   static async getAll() {
-    return prisma.category.findMany({
-      where: { isActive: true },
-      orderBy: { displayOrder: 'asc' },
-      include: {
-        _count: {
-          select: { products: true },
-        },
+    return appCache.getOrSet(
+      CATEGORIES_ALL_CACHE_KEY,
+      async () => {
+        return prisma.category.findMany({
+          where: { isActive: true },
+          orderBy: { displayOrder: 'asc' },
+          include: {
+            _count: {
+              select: { products: true },
+            },
+          },
+        });
       },
-    });
+      CATEGORIES_CACHE_TTL
+    );
   }
 
   static async getBySlug(slug: string) {
@@ -38,19 +48,27 @@ export class CategoryService {
       .replace(/[^\w\s-]/g, '')
       .replace(/[\s_-]+/g, '-');
 
-    return prisma.category.create({
+    const created = await prisma.category.create({
       data: {
         ...data,
         slug,
       },
     });
+
+    appCache.del(CATEGORIES_ALL_CACHE_KEY);
+    appCache.clearPattern('system:sitemap.xml');
+    return created;
   }
 
   static async update(id: string, data: any) {
-    return prisma.category.update({
+    const updated = await prisma.category.update({
       where: { id },
       data,
     });
+
+    appCache.del(CATEGORIES_ALL_CACHE_KEY);
+    appCache.clearPattern('system:sitemap.xml');
+    return updated;
   }
 
   static async delete(id: string) {
@@ -71,8 +89,13 @@ export class CategoryService {
       );
     }
 
-    return prisma.category.delete({
+    const deleted = await prisma.category.delete({
       where: { id },
     });
+
+    appCache.del(CATEGORIES_ALL_CACHE_KEY);
+    appCache.clearPattern('system:sitemap.xml');
+    return deleted;
   }
 }
+

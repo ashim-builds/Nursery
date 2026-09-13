@@ -86,6 +86,7 @@ export class OAuthController {
             redirect_uri: ENV.GOOGLE_CALLBACK_URL,
             grant_type: 'authorization_code',
           }),
+          signal: AbortSignal.timeout(8000), // 8-second timeout guard
         });
 
         const tokenData = await tokenRes.json();
@@ -95,6 +96,7 @@ export class OAuthController {
 
         const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${tokenData.access_token}` },
+          signal: AbortSignal.timeout(8000), // 8-second timeout guard
         });
 
         const profile = await userRes.json();
