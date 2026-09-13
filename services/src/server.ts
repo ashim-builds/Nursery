@@ -312,31 +312,32 @@ app.use(errorHandler);
 let server: any;
 let httpServer: http.Server;
 
+function getListenTarget(): number | string {
+  const envPort = process.env.PORT;
+  if (!envPort) {
+    if (typeof (global as any).PhusionPassenger !== 'undefined') {
+      return 'passenger';
+    }
+    return 5000;
+  }
+  if (!isNaN(Number(envPort))) {
+    return Number(envPort);
+  }
+  return envPort;
+}
+
 async function startServer() {
-  const port = process.env.PORT || ENV.PORT || 5000;
+  const target = getListenTarget();
   httpServer = http.createServer(app);
   initSocketIO(httpServer);
 
-  // 1. Listen immediately so cPanel Phusion Passenger / LiteSpeed never hangs
-  if (typeof (global as any).PhusionPassenger !== 'undefined' || process.env.PASSENGER_APP_ENV) {
-    httpServer.listen('passenger', () => {
-      console.log('🌿 RJ Flowers API running under Phusion Passenger');
-    });
-  } else if (process.env.PORT) {
-    server = httpServer.listen(process.env.PORT, () => {
-      console.log(`🌿 RJ Flowers API listening on port ${process.env.PORT}`);
-    });
-  } else {
-    server = httpServer.listen(port, () => {
-      console.log(`🌿 RJ Flowers API is flourishing on port ${port}`);
-      console.log(`🚀 Health Check: http://localhost:${port}/api/health`);
-    });
-  }
+  server = httpServer.listen(target, () => {
+    console.log(`🌿 RJ Flowers API is flourishing on`, target);
+  });
 
-  const activeServer = server || httpServer;
-  if (activeServer) {
-    activeServer.keepAliveTimeout = 65000;
-    activeServer.headersTimeout = 66000;
+  if (server) {
+    server.keepAliveTimeout = 65000;
+    server.headersTimeout = 66000;
   }
 
   // 2. Connect to MySQL database in background without stalling HTTP listeners
