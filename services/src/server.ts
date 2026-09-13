@@ -73,26 +73,55 @@ app.use(
 );
 
 // 2. CORS Configuration (Dynamic Allowed Origins & Credentials)
-app.use(
-  cors({
-    origin: true, // Echo origin to allow localhost, staging, and production domains with cookies
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'x-session-id',
-      'x-refresh-token',
-      'Accept',
-      'Origin',
-      'X-Requested-With',
-    ],
-    exposedHeaders: ['set-cookie'],
-  })
-);
+const corsOptions: cors.CorsOptions = {
+  origin: true, // Echo origin to allow localhost, staging, and production domains with cookies
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'x-session-id',
+    'x-refresh-token',
+    'Accept',
+    'Origin',
+    'X-Requested-With',
+    'Cache-Control',
+    'cache-control',
+    'Pragma',
+    'pragma',
+    'Expires',
+    'expires',
+    'If-Modified-Since',
+  ],
+  exposedHeaders: ['set-cookie'],
+};
 
-// Explicit preflight handler
-app.options('*', cors());
+// Universal CORS & Preflight middleware to accept all browser headers
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+  const requestHeaders = req.headers['access-control-request-headers'];
+  if (requestHeaders) {
+    res.setHeader('Access-Control-Allow-Headers', requestHeaders);
+  } else {
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Authorization, x-session-id, x-refresh-token, Accept, Origin, X-Requested-With, Cache-Control, Pragma, Expires, If-Modified-Since'
+    );
+  }
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD');
+    res.setHeader('Access-Control-Max-Age', '86400');
+    return res.sendStatus(204);
+  }
+  next();
+});
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Request Logging
 app.use(morgan(ENV.NODE_ENV === 'development' ? 'dev' : 'combined'));

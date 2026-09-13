@@ -6,12 +6,16 @@ let io: SocketIOServer | null = null;
 export function initSocketIO(httpServer: HttpServer, allowedOrigin: string | boolean | string[] = true): SocketIOServer {
   io = new SocketIOServer(httpServer, {
     cors: {
-      origin: allowedOrigin,
-      methods: ['GET', 'POST'],
+      origin: (origin, callback) => callback(null, true),
+      methods: ['GET', 'POST', 'OPTIONS'],
       credentials: true,
+      allowedHeaders: ['*'],
     },
     path: '/socket.io',
-    transports: ['websocket', 'polling'],
+    transports: ['polling', 'websocket'],
+    allowEIO3: true,
+    pingTimeout: 60000,
+    pingInterval: 25000,
   });
 
   io.on('connection', (socket) => {

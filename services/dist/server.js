@@ -257,12 +257,16 @@ var io = null;
 function initSocketIO(httpServer2, allowedOrigin = true) {
   io = new import_socket.Server(httpServer2, {
     cors: {
-      origin: allowedOrigin,
-      methods: ["GET", "POST"],
-      credentials: true
+      origin: (origin, callback) => callback(null, true),
+      methods: ["GET", "POST", "OPTIONS"],
+      credentials: true,
+      allowedHeaders: ["*"]
     },
     path: "/socket.io",
-    transports: ["websocket", "polling"]
+    transports: ["polling", "websocket"],
+    allowEIO3: true,
+    pingTimeout: 6e4,
+    pingInterval: 25e3
   });
   io.on("connection", (socket) => {
     socket.on("join", (room) => {
@@ -5888,25 +5892,53 @@ app.use(
     referrerPolicy: { policy: "strict-origin-when-cross-origin" }
   })
 );
-app.use(
-  (0, import_cors.default)({
-    origin: true,
-    // Echo origin to allow localhost, staging, and production domains with cookies
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "x-session-id",
-      "x-refresh-token",
-      "Accept",
-      "Origin",
-      "X-Requested-With"
-    ],
-    exposedHeaders: ["set-cookie"]
-  })
-);
-app.options("*", (0, import_cors.default)());
+var corsOptions = {
+  origin: true,
+  // Echo origin to allow localhost, staging, and production domains with cookies
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "x-session-id",
+    "x-refresh-token",
+    "Accept",
+    "Origin",
+    "X-Requested-With",
+    "Cache-Control",
+    "cache-control",
+    "Pragma",
+    "pragma",
+    "Expires",
+    "expires",
+    "If-Modified-Since"
+  ],
+  exposedHeaders: ["set-cookie"]
+};
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+  }
+  const requestHeaders = req.headers["access-control-request-headers"];
+  if (requestHeaders) {
+    res.setHeader("Access-Control-Allow-Headers", requestHeaders);
+  } else {
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, x-session-id, x-refresh-token, Accept, Origin, X-Requested-With, Cache-Control, Pragma, Expires, If-Modified-Since"
+    );
+  }
+  if (req.method === "OPTIONS") {
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD");
+    res.setHeader("Access-Control-Max-Age", "86400");
+    return res.sendStatus(204);
+  }
+  next();
+});
+app.use((0, import_cors.default)(corsOptions));
+app.options("*", (0, import_cors.default)(corsOptions));
 app.use((0, import_morgan.default)(ENV.NODE_ENV === "development" ? "dev" : "combined"));
 app.use(import_express11.default.json({ limit: "10mb" }));
 app.use(import_express11.default.urlencoded({ extended: true, limit: "10mb" }));

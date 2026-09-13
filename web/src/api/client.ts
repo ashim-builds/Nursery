@@ -32,11 +32,6 @@ apiClient.interceptors.request.use(
 
     // Cache-busting for GET requests to guarantee instant reflection of admin updates
     if (config.method?.toUpperCase() === 'GET') {
-      config.headers = config.headers || {};
-      config.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
-      config.headers['Pragma'] = 'no-cache';
-      config.headers['Expires'] = '0';
-
       config.params = {
         ...config.params,
         _t: Date.now(),
