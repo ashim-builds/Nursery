@@ -1,7 +1,7 @@
 {
   "environment": "production",
   "app_type": "node",
-  "startup_file": "dist/server.js",
+  "startup_file": "app.js",
   "min_instances": 1,
   "max_pool_size": 2,
   "pool_idle_time": 300,

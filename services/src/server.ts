@@ -144,6 +144,21 @@ const checkoutLimiter = rateLimit({
 });
 app.use(['/api/orders', '/api/v1/orders'], checkoutLimiter);
 
+// Root Status Endpoint
+app.get('/', (_req: Request, res: Response) => {
+  res.status(200).json({
+    status: 'ok',
+    success: true,
+    message: '🌿 RJ Flowers API is flourishing',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      catalog: '/api/products',
+      sitemap: '/sitemap.xml',
+    },
+  });
+});
+
 // Health Endpoint with Memory & Cache Diagnostics
 app.get(['/health', '/api/health'], (req: Request, res: Response) => {
   const memoryUsage = process.memoryUsage();
