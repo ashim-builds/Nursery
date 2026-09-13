@@ -22,9 +22,9 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const origin = getBackendOrigin() || (typeof window !== 'undefined' ? window.location.origin : '');
     const socket = io(origin, {
       path: '/socket.io',
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'], // Polling first guarantees 100% compatibility across cPanel reverse proxies
       reconnectionAttempts: 5,
-      reconnectionDelay: 2000,
+      reconnectionDelay: 3000,
       withCredentials: true,
       autoConnect: true,
     });
@@ -36,6 +36,11 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
 
     socket.on('disconnect', () => {
+      setIsConnected(false);
+    });
+
+    // Handle connection errors gracefully without breaking application runtime
+    socket.on('connect_error', (_err) => {
       setIsConnected(false);
     });
 
