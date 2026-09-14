@@ -30,10 +30,11 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${inMemoryAccessToken}`;
     }
 
-    // Cache-busting for GET requests to guarantee instant reflection of admin updates
-    if (config.method?.toUpperCase() === 'GET') {
+    // Respect explicit noCache / _t params if provided, but do not bust cache indiscriminately on catalog/product GET requests
+    if (config.params?.noCache) {
+      const { noCache, ...restParams } = config.params;
       config.params = {
-        ...config.params,
+        ...restParams,
         _t: Date.now(),
       };
     }

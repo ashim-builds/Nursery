@@ -27,9 +27,28 @@ export interface CalculateZoneResponse {
   amountNeededForFreeDelivery: number;
 }
 
+// In-memory delivery zones cache (5 minutes TTL)
+let cachedZones: { data: DeliveryZoneDto[]; expiry: number } | null = null;
+
+export const invalidateZonesCache = () => {
+  cachedZones = null;
+};
+
 export const deliveryApi = {
-  getZones: async (all = false): Promise<DeliveryZoneDto[]> => {
-    const res = await apiClient.get('/delivery-zones', { params: { all } });
+  getZones: async (all?: boolean | any, options?: { forceRefresh?: boolean } | boolean): Promise<DeliveryZoneDto[]> => {
+    const isAll = typeof all === 'boolean' ? all : false;
+    const forceRefresh = typeof options === 'boolean' ? options : !!options?.forceRefresh;
+
+    if (!isAll && !forceRefresh && cachedZones && Date.now() < cachedZones.expiry) {
+      return cachedZones.data;
+    }
+    const res = await apiClient.get('/delivery-zones', { params: { all: isAll } });
+    if (!isAll) {
+      cachedZones = {
+        data: res.data.data,
+        expiry: Date.now() + 5 * 60 * 1000,
+      };
+    }
     return res.data.data;
   },
 

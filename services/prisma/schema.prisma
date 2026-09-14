@@ -204,7 +204,6 @@ model RefreshToken {
   createdAt DateTime  @default(now())
 
   @@index([userId])
-  @@index([token])
   @@map("refresh_tokens")
 }
 
@@ -243,7 +242,6 @@ model Category {
 
   products Product[]
 
-  @@index([slug])
   @@index([parentId])
   @@index([isActive])
   @@map("categories")
@@ -292,8 +290,6 @@ model Product {
   reviews       ProductReview[]
   wishlistItems WishlistItem[]
 
-  @@index([slug])
-  @@index([sku])
   @@index([categoryId])
   @@index([published])
   @@index([featured])
@@ -331,7 +327,6 @@ model ProductVariant {
   inventoryTransactions InventoryTransaction[]
 
   @@index([productId])
-  @@index([sku])
   @@index([stockStatus])
   @@index([isAvailable])
   @@map("product_variants")
@@ -399,7 +394,6 @@ model Inventory {
 
   transactions InventoryTransaction[]
 
-  @@index([variantId])
   @@index([availableQuantity])
   @@map("inventories")
 }
@@ -505,7 +499,6 @@ model Order {
   payments      Payment[]
   couponUsages  CouponUsage[]
 
-  @@index([orderNumber])
   @@index([userId])
   @@index([status])
   @@index([createdAt])
@@ -576,7 +569,6 @@ model DeliveryZone {
 
   deliveries Delivery[]
 
-  @@index([code])
   @@index([isActive])
   @@map("delivery_zones")
 }
@@ -611,10 +603,12 @@ model Delivery {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([orderId])
   @@index([zoneId])
   @@index([status])
   @@index([scheduledDate])
+  @@index([status, scheduledDate])
+  @@index([status, createdAt])
+  @@index([recipientPhone])
   @@map("deliveries")
 }
 
@@ -638,7 +632,6 @@ model Bill {
 
   payments Payment[]
 
-  @@index([billNumber])
   @@index([status])
   @@map("bills")
 }
@@ -661,6 +654,8 @@ model Payment {
   @@index([billId])
   @@index([paymentStatus])
   @@index([paymentMethod])
+  @@index([paymentStatus, createdAt])
+  @@index([createdAt])
   @@map("payments")
 }
 
@@ -741,7 +736,6 @@ model Coupon {
   orders Order[]
   usages CouponUsage[]
 
-  @@index([code])
   @@index([isActive])
   @@index([expiryDate])
   @@map("coupons")
@@ -818,6 +812,7 @@ model AuditLog {
   @@index([action])
   @@index([resource])
   @@index([createdAt])
+  @@index([resource, createdAt])
   @@map("audit_logs")
 }
 

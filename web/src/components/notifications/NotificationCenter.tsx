@@ -44,12 +44,15 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ variant 
     }
   }, []);
 
-  // Fetch notifications every 15 seconds if authenticated
+  // Fetch notifications with visibility check (pauses completely when tab is backgrounded / hidden)
   const { data, isLoading } = useQuery({
     queryKey: ['notifications', user?.id, variant],
     queryFn: () => notificationApi.getNotifications({ limit: 20 }),
     enabled: isAuthenticated,
-    refetchInterval: 15000,
+    refetchInterval: () =>
+      typeof document !== 'undefined' && document.visibilityState === 'visible' ? 60000 : false,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
 
   const notifications = data?.notifications || [];

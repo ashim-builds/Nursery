@@ -311,15 +311,34 @@ export class CartService {
   ) {
     const userCart = await this.getOrCreateCart(userId);
 
+    const variantIds = Array.from(new Set(guestItems.map((i) => i.variantId).filter(Boolean)));
+    if (variantIds.length === 0) {
+      return this.getCart(userId);
+    }
+
+    // Batch fetch variants and existing cart items in parallel
+    const [variants, existingItems] = await Promise.all([
+      prisma.productVariant.findMany({
+        where: { id: { in: variantIds } },
+        include: { product: true, inventory: true },
+      }),
+      prisma.cartItem.findMany({
+        where: {
+          cartId: userCart.id,
+          variantId: { in: variantIds },
+        },
+      }),
+    ]);
+
+    const variantMap = new Map(variants.map((v) => [v.id, v]));
+    const existingItemMap = new Map(existingItems.map((ei) => [ei.variantId, ei]));
+
     for (const item of guestItems) {
       try {
         if (!item.productId || !item.variantId || item.quantity <= 0) continue;
 
-        // Verify variant & product
-        const variant = await prisma.productVariant.findUnique({
-          where: { id: item.variantId },
-          include: { product: true, inventory: true },
-        });
+        // Verify variant & product from in-memory map
+        const variant = variantMap.get(item.variantId);
 
         if (!variant || !variant.isAvailable || !variant.product.available || !variant.product.published) {
           continue; // Skip inactive/deleted items
@@ -328,14 +347,7 @@ export class CartService {
         const availableStock = variant.inventory?.availableQuantity ?? variant.stock;
         if (availableStock <= 0) continue;
 
-        const existingItem = await prisma.cartItem.findUnique({
-          where: {
-            cartId_variantId: {
-              cartId: userCart.id,
-              variantId: item.variantId,
-            },
-          },
-        });
+        const existingItem = existingItemMap.get(item.variantId);
 
         if (existingItem) {
           // Merge is intentionally idempotent: repeated login/refresh syncs must not multiply quantity.
@@ -349,7 +361,7 @@ export class CartService {
           });
         } else {
           const qtyToAdd = Math.min(item.quantity, availableStock);
-          await prisma.cartItem.create({
+          const created = await prisma.cartItem.create({
             data: {
               cartId: userCart.id,
               productId: item.productId,
@@ -358,6 +370,7 @@ export class CartService {
               unitPrice: variant.price,
             },
           });
+          existingItemMap.set(item.variantId, created);
         }
       } catch (err) {
         console.error('Error merging cart item:', err);

@@ -1,3 +1,6 @@
+// 0. Cap libuv native worker thread pool to prevent CloudLinux NPROC task explosion
+process.env.UV_THREADPOOL_SIZE = '4';
+
 import path from 'path';
 import http from 'http';
 import express, { Request, Response } from 'express';
@@ -14,6 +17,7 @@ import { initSocketIO } from './utils/socket.js';
 
 import { authRoutes } from './modules/auth/auth.routes.js';
 import { productRoutes } from './modules/products/product.routes.js';
+import { categoryRoutes } from './modules/categories/category.routes.js';
 import { inventoryRoutes } from './modules/inventory/inventory.routes.js';
 import { cartRoutes } from './modules/cart/cart.routes.js';
 import { orderRoutes } from './modules/orders/order.routes.js';
@@ -45,11 +49,25 @@ app.use(
   })
 );
 
-// Cache-Busting Headers for Dynamic API Routes
-app.use('/api', (_req, res, next) => {
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
+// Differentiated Caching Headers:
+// Allow browser & proxy caching for public read-only catalog, categories, delivery zones, and site settings
+// Enforce strict no-cache, no-store for private/authenticated/transactional routes
+app.use('/api', (req, res, next) => {
+  const isPublicCatalogGet =
+    req.method === 'GET' &&
+    (req.path.startsWith('/products') ||
+      req.path.startsWith('/categories') ||
+      req.path.startsWith('/delivery-zones') ||
+      req.path.startsWith('/site-settings') ||
+      req.path === '/health');
+
+  if (isPublicCatalogGet) {
+    res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=120');
+  } else {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
   next();
 });
 
@@ -302,6 +320,7 @@ app.get(['/sitemap.xml', '/api/sitemap.xml'], async (_req: Request, res: Respons
 // Direct `/api/...` Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/categories', categoryRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/orders', orderRoutes);
@@ -315,6 +334,7 @@ app.use('/api/site-settings', siteSettingsRoutes);
 // Versioned `/api/v1/...` Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/products', productRoutes);
+app.use('/api/v1/categories', categoryRoutes);
 app.use('/api/v1/cart', cartRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/orders', orderRoutes);
@@ -365,8 +385,9 @@ async function startServer() {
   });
 
   if (server) {
-    server.keepAliveTimeout = 65000;
-    server.headersTimeout = 66000;
+    // Release idle Passenger / reverse-proxy connections promptly
+    server.keepAliveTimeout = 15000;
+    server.headersTimeout = 16000;
   }
 
   // 2. Connect to MySQL database in background without stalling HTTP listeners
@@ -380,6 +401,9 @@ const handleGracefulShutdown = async (signal: string) => {
   console.log(`\n🛑 Received ${signal}. Starting graceful shutdown...`);
   const activeServer = server || httpServer;
   if (activeServer) {
+    if (typeof activeServer.closeIdleConnections === 'function') {
+      activeServer.closeIdleConnections();
+    }
     activeServer.close(async () => {
       console.log('🔒 Closed HTTP server connections.');
       try {

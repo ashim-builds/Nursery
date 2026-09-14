@@ -86,27 +86,38 @@ export class OrderService {
         const orderItemsToCreate: any[] = [];
         const inventoryTransactionsToCreate: any[] = [];
 
-        // 2. Lock & Verify all item stocks and calculate exact server pricing
+        // 2. Batch product and variant lookups to eliminate N+1 queries in the transaction
+        const productIds = Array.from(new Set(data.items.map((i) => i.productId)));
+        const variantIds = Array.from(new Set(data.items.map((i) => i.variantId)));
+
+        const [products, variants] = await Promise.all([
+          tx.product.findMany({
+            where: { id: { in: productIds } },
+            select: { id: true, name: true, sku: true, available: true, published: true, stockStatus: true },
+          }),
+          tx.productVariant.findMany({
+            where: { id: { in: variantIds } },
+            include: { inventory: true },
+          }),
+        ]);
+
+        const productMap = new Map(products.map((p) => [p.id, p]));
+        const variantMap = new Map(variants.map((v) => [v.id, v]));
+
         for (const item of data.items) {
           if (item.quantity <= 0) {
             throw ApiError.badRequest('Item quantity must be at least 1');
           }
 
-          // Fetch product
-          const product = await tx.product.findUnique({
-            where: { id: item.productId },
-            select: { id: true, name: true, sku: true, available: true, published: true, stockStatus: true },
-          });
+          // Lookup product from batched map
+          const product = productMap.get(item.productId);
 
           if (!product || !product.available || !product.published) {
             throw ApiError.badRequest(`Product "${product?.name || item.productId}" is currently Out of Stock`);
           }
 
-          // Fetch variant and its inventory
-          const variant = await tx.productVariant.findUnique({
-            where: { id: item.variantId },
-            include: { inventory: true },
-          });
+          // Lookup variant from batched map
+          const variant = variantMap.get(item.variantId);
 
           if (!variant || !variant.isAvailable || variant.stockStatus === 'OUT_OF_STOCK' || variant.productId !== item.productId) {
             throw ApiError.badRequest(`Selected option for "${product.name}" is currently Out of Stock`);

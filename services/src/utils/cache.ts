@@ -16,6 +16,27 @@ export class MemoryCache {
 
   constructor(maxSize = 1000) {
     this.maxSize = maxSize;
+
+    // Background cleanup of expired keys every 60 seconds (unref prevents holding event loop open)
+    const cleanupTimer = setInterval(() => this.pruneExpired(), 60000);
+    if (typeof cleanupTimer.unref === 'function') {
+      cleanupTimer.unref();
+    }
+  }
+
+  /**
+   * Prune expired entries to maintain a tight memory footprint
+   */
+  pruneExpired(): number {
+    const now = Date.now();
+    let pruned = 0;
+    for (const [key, entry] of this.store.entries()) {
+      if (now > entry.expiresAt) {
+        this.store.delete(key);
+        pruned++;
+      }
+    }
+    return pruned;
   }
 
   /**

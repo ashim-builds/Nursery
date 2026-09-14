@@ -1,19 +1,27 @@
 import { prisma } from '../../config/database.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { DeliveryStatus, OrderStatus, NotificationType } from '@prisma/client';
+import { appCache } from '../../utils/cache.js';
+
+const ZONES_CACHE_KEY_ACTIVE = 'delivery_zones:active';
+const ZONES_CACHE_KEY_ALL = 'delivery_zones:all';
 
 export class DeliveryService {
   /**
-   * Get all active delivery zones
+   * Get all active delivery zones (with in-memory cache)
    */
   static async getZones(onlyActive = true) {
+    const cacheKey = onlyActive ? ZONES_CACHE_KEY_ACTIVE : ZONES_CACHE_KEY_ALL;
+    const cached = appCache.get<any[]>(cacheKey);
+    if (cached) return cached;
+
     const where = onlyActive ? { isActive: true } : {};
     const zones = await prisma.deliveryZone.findMany({
       where,
       orderBy: { baseDeliveryCharge: 'asc' },
     });
 
-    return zones.map((z) => ({
+    const result = zones.map((z) => ({
       id: z.id,
       name: z.name,
       code: z.code,
@@ -26,6 +34,9 @@ export class DeliveryService {
       isActive: z.isActive,
       active: z.isActive,
     }));
+
+    appCache.set(cacheKey, result, 600); // 10 minutes cache
+    return result;
   }
 
   /**
@@ -141,6 +152,7 @@ export class DeliveryService {
       },
     });
 
+    appCache.clearPattern('delivery_zones:*');
     return zone;
   }
 
@@ -165,6 +177,7 @@ export class DeliveryService {
       data: updatePayload,
     });
 
+    appCache.clearPattern('delivery_zones:*');
     return updated;
   }
 

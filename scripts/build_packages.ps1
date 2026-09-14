@@ -34,6 +34,9 @@ Add-FileToZip $backendArchive (Join-Path $root "services/prisma/schema.prisma") 
 Add-FileToZip $backendArchive (Join-Path $root "services/app.js") "app.js"
 Add-FileToZip $backendArchive (Join-Path $root "services/package.json") "package.json"
 Add-FileToZip $backendArchive (Join-Path $root "services/.htaccess") ".htaccess"
+if (Test-Path (Join-Path $root "services/.env.example")) {
+    Add-FileToZip $backendArchive (Join-Path $root "services/.env.example") ".env.example"
+}
 $backendArchive.Dispose()
 Write-Host "backend-update.zip created successfully!"
 
@@ -47,5 +50,5 @@ Add-DirectoryToZip $frontendArchive (Join-Path $root "web/dist") ""
 $frontendArchive.Dispose()
 Write-Host "frontend-deploy.zip created successfully!"
 
-Write-Host "`nSummary:"
+Write-Host "`nSummary of deployment packages:"
 Get-ChildItem -Path $deploymentDir | Select-Object Name, Length, LastWriteTime | Format-Table -AutoSize

@@ -35,7 +35,7 @@ __export(server_exports, {
 module.exports = __toCommonJS(server_exports);
 var import_path2 = __toESM(require("path"));
 var import_http = __toESM(require("http"));
-var import_express11 = __toESM(require("express"));
+var import_express12 = __toESM(require("express"));
 var import_cors = __toESM(require("cors"));
 var import_helmet = __toESM(require("helmet"));
 var import_morgan = __toESM(require("morgan"));
@@ -75,9 +75,11 @@ var ENV = {
 
 // src/config/database.ts
 var import_client = require("@prisma/client");
-var prisma = new import_client.PrismaClient({
+var globalForPrisma = globalThis;
+var prisma = globalForPrisma.prismaGlobal ?? new import_client.PrismaClient({
   log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"]
 });
+globalForPrisma.prismaGlobal = prisma;
 async function connectDB() {
   try {
     await prisma.$connect();
@@ -149,6 +151,24 @@ var MemoryCache = class {
   misses = 0;
   constructor(maxSize = 1e3) {
     this.maxSize = maxSize;
+    const cleanupTimer = setInterval(() => this.pruneExpired(), 6e4);
+    if (typeof cleanupTimer.unref === "function") {
+      cleanupTimer.unref();
+    }
+  }
+  /**
+   * Prune expired entries to maintain a tight memory footprint
+   */
+  pruneExpired() {
+    const now = Date.now();
+    let pruned = 0;
+    for (const [key, entry] of this.store.entries()) {
+      if (now > entry.expiresAt) {
+        this.store.delete(key);
+        pruned++;
+      }
+    }
+    return pruned;
   }
   /**
    * Retrieve a value from the cache if not expired.
@@ -2412,8 +2432,124 @@ router2.get("/slug/:slug", ProductController.getBySlug);
 router2.get("/:id", ProductController.getById);
 var productRoutes = router2;
 
-// src/modules/inventory/inventory.routes.ts
+// src/modules/categories/category.routes.ts
 var import_express3 = require("express");
+
+// src/modules/categories/category.service.ts
+var CATEGORIES_ALL_CACHE_KEY = "categories:all";
+var CATEGORIES_CACHE_TTL = 600;
+var CategoryService = class {
+  static async getAll() {
+    return appCache.getOrSet(
+      CATEGORIES_ALL_CACHE_KEY,
+      async () => {
+        return prisma.category.findMany({
+          where: { isActive: true },
+          orderBy: { displayOrder: "asc" },
+          include: {
+            _count: {
+              select: { products: true }
+            }
+          }
+        });
+      },
+      CATEGORIES_CACHE_TTL
+    );
+  }
+  static async getBySlug(slug) {
+    const category = await prisma.category.findUnique({
+      where: { slug },
+      include: {
+        products: {
+          where: { published: true, available: true },
+          include: {
+            variants: true,
+            images: true
+          }
+        }
+      }
+    });
+    if (!category) throw ApiError.notFound("Category not found");
+    return category;
+  }
+  static async create(data) {
+    const slug = data.name.toLowerCase().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-");
+    const created = await prisma.category.create({
+      data: {
+        ...data,
+        slug
+      }
+    });
+    appCache.del(CATEGORIES_ALL_CACHE_KEY);
+    appCache.clearPattern("system:sitemap.xml");
+    return created;
+  }
+  static async update(id, data) {
+    const updated = await prisma.category.update({
+      where: { id },
+      data
+    });
+    appCache.del(CATEGORIES_ALL_CACHE_KEY);
+    appCache.clearPattern("system:sitemap.xml");
+    return updated;
+  }
+  static async delete(id) {
+    const category = await prisma.category.findUnique({
+      where: { id },
+      include: { _count: { select: { products: true, children: true } } }
+    });
+    if (!category) throw ApiError.notFound("Category not found");
+    if (category._count.products > 0) {
+      throw ApiError.conflict(
+        `Cannot delete "${category.name}" while ${category._count.products} product(s) use it. Move or delete those products first.`
+      );
+    }
+    if (category._count.children > 0) {
+      throw ApiError.conflict(
+        `Cannot delete "${category.name}" while it has child categories. Move or delete the child categories first.`
+      );
+    }
+    const deleted = await prisma.category.delete({
+      where: { id }
+    });
+    appCache.del(CATEGORIES_ALL_CACHE_KEY);
+    appCache.clearPattern("system:sitemap.xml");
+    return deleted;
+  }
+};
+
+// src/modules/categories/category.controller.ts
+var CategoryController = class {
+  static getAll = asyncHandler(async (req, res) => {
+    const categories = await CategoryService.getAll();
+    res.status(200).json(ApiResponse.success(categories, "Categories retrieved"));
+  });
+  static getBySlug = asyncHandler(async (req, res) => {
+    const category = await CategoryService.getBySlug(req.params.slug);
+    res.status(200).json(ApiResponse.success(category, "Category details"));
+  });
+  static create = asyncHandler(async (req, res) => {
+    const created = await CategoryService.create(req.body);
+    res.status(201).json(ApiResponse.created(created, "Category created"));
+  });
+  static update = asyncHandler(async (req, res) => {
+    const updated = await CategoryService.update(req.params.id, req.body);
+    res.status(200).json(ApiResponse.success(updated, "Category updated"));
+  });
+  static delete = asyncHandler(async (req, res) => {
+    await CategoryService.delete(req.params.id);
+    res.status(200).json(ApiResponse.success(null, "Category deleted"));
+  });
+};
+
+// src/modules/categories/category.routes.ts
+var router3 = (0, import_express3.Router)();
+router3.get("/", CategoryController.getAll);
+router3.get("/:slug", CategoryController.getBySlug);
+var categoryRoutes = router3;
+
+// src/modules/inventory/inventory.routes.ts
+var import_express4 = require("express");
 
 // src/modules/inventory/inventory.service.ts
 var import_client3 = require("@prisma/client");
@@ -2724,19 +2860,19 @@ var InventoryController = class {
 
 // src/modules/inventory/inventory.routes.ts
 var import_client4 = require("@prisma/client");
-var router3 = (0, import_express3.Router)();
-router3.get("/low-stock", authenticateJWT, requireRole(import_client4.UserRole.ADMIN, import_client4.UserRole.STAFF), InventoryController.getLowStock);
-router3.get("/logs", authenticateJWT, requireRole(import_client4.UserRole.ADMIN, import_client4.UserRole.STAFF), InventoryController.getLogs);
-router3.post(
+var router4 = (0, import_express4.Router)();
+router4.get("/low-stock", authenticateJWT, requireRole(import_client4.UserRole.ADMIN, import_client4.UserRole.STAFF), InventoryController.getLowStock);
+router4.get("/logs", authenticateJWT, requireRole(import_client4.UserRole.ADMIN, import_client4.UserRole.STAFF), InventoryController.getLogs);
+router4.post(
   "/variants/:id/adjust",
   authenticateJWT,
   requireRole(import_client4.UserRole.ADMIN, import_client4.UserRole.STAFF),
   InventoryController.adjustStock
 );
-var inventoryRoutes = router3;
+var inventoryRoutes = router4;
 
 // src/modules/cart/cart.routes.ts
-var import_express4 = require("express");
+var import_express5 = require("express");
 
 // src/modules/cart/cart.controller.ts
 var import_crypto2 = __toESM(require("crypto"));
@@ -2999,26 +3135,34 @@ var CartService = class {
    */
   static async mergeGuestCart(userId, guestItems) {
     const userCart = await this.getOrCreateCart(userId);
+    const variantIds = Array.from(new Set(guestItems.map((i) => i.variantId).filter(Boolean)));
+    if (variantIds.length === 0) {
+      return this.getCart(userId);
+    }
+    const [variants, existingItems] = await Promise.all([
+      prisma.productVariant.findMany({
+        where: { id: { in: variantIds } },
+        include: { product: true, inventory: true }
+      }),
+      prisma.cartItem.findMany({
+        where: {
+          cartId: userCart.id,
+          variantId: { in: variantIds }
+        }
+      })
+    ]);
+    const variantMap = new Map(variants.map((v) => [v.id, v]));
+    const existingItemMap = new Map(existingItems.map((ei) => [ei.variantId, ei]));
     for (const item of guestItems) {
       try {
         if (!item.productId || !item.variantId || item.quantity <= 0) continue;
-        const variant = await prisma.productVariant.findUnique({
-          where: { id: item.variantId },
-          include: { product: true, inventory: true }
-        });
+        const variant = variantMap.get(item.variantId);
         if (!variant || !variant.isAvailable || !variant.product.available || !variant.product.published) {
           continue;
         }
         const availableStock = variant.inventory?.availableQuantity ?? variant.stock;
         if (availableStock <= 0) continue;
-        const existingItem = await prisma.cartItem.findUnique({
-          where: {
-            cartId_variantId: {
-              cartId: userCart.id,
-              variantId: item.variantId
-            }
-          }
-        });
+        const existingItem = existingItemMap.get(item.variantId);
         if (existingItem) {
           const mergedQty = Math.min(Math.max(existingItem.quantity, item.quantity), availableStock);
           await prisma.cartItem.update({
@@ -3030,7 +3174,7 @@ var CartService = class {
           });
         } else {
           const qtyToAdd = Math.min(item.quantity, availableStock);
-          await prisma.cartItem.create({
+          const created = await prisma.cartItem.create({
             data: {
               cartId: userCart.id,
               productId: item.productId,
@@ -3039,6 +3183,7 @@ var CartService = class {
               unitPrice: variant.price
             }
           });
+          existingItemMap.set(item.variantId, created);
         }
       } catch (err) {
         console.error("Error merging cart item:", err);
@@ -3146,17 +3291,17 @@ var wishlistParamSchema = import_zod4.z.object({
 });
 
 // src/modules/cart/cart.routes.ts
-var router4 = (0, import_express4.Router)();
-router4.get("/", optionalAuth, CartController.getCart);
-router4.post("/items", optionalAuth, validateRequest(addToCartSchema), CartController.addItem);
-router4.patch("/items/:id", optionalAuth, validateRequest(updateCartItemSchema), CartController.updateItem);
-router4.delete("/items/:id", optionalAuth, validateRequest(deleteCartItemSchema), CartController.removeItem);
-router4.delete("/", optionalAuth, CartController.clearCart);
-router4.post("/merge", authenticateJWT, validateRequest(mergeCartSchema), CartController.mergeCart);
-var cartRoutes = router4;
+var router5 = (0, import_express5.Router)();
+router5.get("/", optionalAuth, CartController.getCart);
+router5.post("/items", optionalAuth, validateRequest(addToCartSchema), CartController.addItem);
+router5.patch("/items/:id", optionalAuth, validateRequest(updateCartItemSchema), CartController.updateItem);
+router5.delete("/items/:id", optionalAuth, validateRequest(deleteCartItemSchema), CartController.removeItem);
+router5.delete("/", optionalAuth, CartController.clearCart);
+router5.post("/merge", authenticateJWT, validateRequest(mergeCartSchema), CartController.mergeCart);
+var cartRoutes = router5;
 
 // src/modules/orders/order.routes.ts
-var import_express5 = require("express");
+var import_express6 = require("express");
 
 // src/modules/orders/order.service.ts
 var import_client6 = require("@prisma/client");
@@ -3445,21 +3590,29 @@ var OrderService = class {
         let subtotal = 0;
         const orderItemsToCreate = [];
         const inventoryTransactionsToCreate = [];
+        const productIds = Array.from(new Set(data.items.map((i) => i.productId)));
+        const variantIds = Array.from(new Set(data.items.map((i) => i.variantId)));
+        const [products, variants] = await Promise.all([
+          tx.product.findMany({
+            where: { id: { in: productIds } },
+            select: { id: true, name: true, sku: true, available: true, published: true, stockStatus: true }
+          }),
+          tx.productVariant.findMany({
+            where: { id: { in: variantIds } },
+            include: { inventory: true }
+          })
+        ]);
+        const productMap = new Map(products.map((p) => [p.id, p]));
+        const variantMap = new Map(variants.map((v) => [v.id, v]));
         for (const item of data.items) {
           if (item.quantity <= 0) {
             throw ApiError.badRequest("Item quantity must be at least 1");
           }
-          const product = await tx.product.findUnique({
-            where: { id: item.productId },
-            select: { id: true, name: true, sku: true, available: true, published: true, stockStatus: true }
-          });
+          const product = productMap.get(item.productId);
           if (!product || !product.available || !product.published) {
             throw ApiError.badRequest(`Product "${product?.name || item.productId}" is currently Out of Stock`);
           }
-          const variant = await tx.productVariant.findUnique({
-            where: { id: item.variantId },
-            include: { inventory: true }
-          });
+          const variant = variantMap.get(item.variantId);
           if (!variant || !variant.isAvailable || variant.stockStatus === "OUT_OF_STOCK" || variant.productId !== item.productId) {
             throw ApiError.badRequest(`Selected option for "${product.name}" is currently Out of Stock`);
           }
@@ -4182,37 +4335,42 @@ var orderQuerySchema = import_zod5.z.object({
 
 // src/modules/orders/order.routes.ts
 var import_client8 = require("@prisma/client");
-var router5 = (0, import_express5.Router)();
-router5.post("/", authenticateJWT, validateRequest(createOrderSchema), OrderController.createOrder);
-router5.get("/", optionalAuth, validateRequest(orderQuerySchema), OrderController.getOrders);
-router5.get("/my-orders", authenticateJWT, validateRequest(orderQuerySchema), OrderController.getMyOrders);
-router5.get("/:id", optionalAuth, OrderController.getOrderById);
-router5.post("/:id/cancel", optionalAuth, validateRequest(cancelOrderSchema), OrderController.cancelOrder);
-router5.patch(
+var router6 = (0, import_express6.Router)();
+router6.post("/", authenticateJWT, validateRequest(createOrderSchema), OrderController.createOrder);
+router6.get("/", optionalAuth, validateRequest(orderQuerySchema), OrderController.getOrders);
+router6.get("/my-orders", authenticateJWT, validateRequest(orderQuerySchema), OrderController.getMyOrders);
+router6.get("/:id", optionalAuth, OrderController.getOrderById);
+router6.post("/:id/cancel", optionalAuth, validateRequest(cancelOrderSchema), OrderController.cancelOrder);
+router6.patch(
   "/:id/status",
   authenticateJWT,
   requireRole(import_client8.UserRole.ADMIN, import_client8.UserRole.STAFF),
   validateRequest(updateOrderStatusSchema),
   OrderController.updateOrderStatus
 );
-var orderRoutes = router5;
+var orderRoutes = router6;
 
 // src/modules/delivery/delivery.routes.ts
-var import_express6 = require("express");
+var import_express7 = require("express");
 
 // src/modules/delivery/delivery.service.ts
 var import_client9 = require("@prisma/client");
+var ZONES_CACHE_KEY_ACTIVE = "delivery_zones:active";
+var ZONES_CACHE_KEY_ALL = "delivery_zones:all";
 var DeliveryService = class {
   /**
-   * Get all active delivery zones
+   * Get all active delivery zones (with in-memory cache)
    */
   static async getZones(onlyActive = true) {
+    const cacheKey = onlyActive ? ZONES_CACHE_KEY_ACTIVE : ZONES_CACHE_KEY_ALL;
+    const cached = appCache.get(cacheKey);
+    if (cached) return cached;
     const where = onlyActive ? { isActive: true } : {};
     const zones = await prisma.deliveryZone.findMany({
       where,
       orderBy: { baseDeliveryCharge: "asc" }
     });
-    return zones.map((z8) => ({
+    const result = zones.map((z8) => ({
       id: z8.id,
       name: z8.name,
       code: z8.code,
@@ -4225,6 +4383,8 @@ var DeliveryService = class {
       isActive: z8.isActive,
       active: z8.isActive
     }));
+    appCache.set(cacheKey, result, 600);
+    return result;
   }
   /**
    * Get single delivery zone by ID
@@ -4306,6 +4466,7 @@ var DeliveryService = class {
         isActive: data.isActive !== void 0 ? data.isActive : true
       }
     });
+    appCache.clearPattern("delivery_zones:*");
     return zone;
   }
   /**
@@ -4326,6 +4487,7 @@ var DeliveryService = class {
       where: { id },
       data: updatePayload
     });
+    appCache.clearPattern("delivery_zones:*");
     return updated;
   }
   /**
@@ -4535,42 +4697,42 @@ var updateDeliveryStatusSchema = import_zod6.z.object({
 
 // src/modules/delivery/delivery.routes.ts
 var import_client10 = require("@prisma/client");
-var router6 = (0, import_express6.Router)();
-router6.get("/", DeliveryController.getZones);
-router6.post("/calculate", validateRequest(calculateZoneSchema), DeliveryController.calculateZone);
-router6.get("/:id", DeliveryController.getZoneById);
-router6.post(
+var router7 = (0, import_express7.Router)();
+router7.get("/", DeliveryController.getZones);
+router7.post("/calculate", validateRequest(calculateZoneSchema), DeliveryController.calculateZone);
+router7.get("/:id", DeliveryController.getZoneById);
+router7.post(
   "/",
   authenticateJWT,
   requireRole(import_client10.UserRole.ADMIN, import_client10.UserRole.STAFF),
   validateRequest(createZoneSchema),
   DeliveryController.createZone
 );
-router6.patch(
+router7.patch(
   "/:id",
   authenticateJWT,
   requireRole(import_client10.UserRole.ADMIN, import_client10.UserRole.STAFF),
   validateRequest(updateZoneSchema),
   DeliveryController.updateZone
 );
-router6.patch(
+router7.patch(
   "/deliveries/:id/assign",
   authenticateJWT,
   requireRole(import_client10.UserRole.ADMIN, import_client10.UserRole.STAFF),
   validateRequest(assignRiderSchema),
   DeliveryController.assignRider
 );
-router6.patch(
+router7.patch(
   "/deliveries/:id/status",
   authenticateJWT,
   requireRole(import_client10.UserRole.ADMIN, import_client10.UserRole.STAFF),
   validateRequest(updateDeliveryStatusSchema),
   DeliveryController.updateDeliveryStatus
 );
-var deliveryRoutes = router6;
+var deliveryRoutes = router7;
 
 // src/modules/admin/admin.routes.ts
-var import_express7 = require("express");
+var import_express8 = require("express");
 
 // src/modules/admin/admin.service.ts
 var import_client11 = require("@prisma/client");
@@ -5034,113 +5196,6 @@ var AdminController = class {
   });
 };
 
-// src/modules/categories/category.service.ts
-var CATEGORIES_ALL_CACHE_KEY = "categories:all";
-var CATEGORIES_CACHE_TTL = 600;
-var CategoryService = class {
-  static async getAll() {
-    return appCache.getOrSet(
-      CATEGORIES_ALL_CACHE_KEY,
-      async () => {
-        return prisma.category.findMany({
-          where: { isActive: true },
-          orderBy: { displayOrder: "asc" },
-          include: {
-            _count: {
-              select: { products: true }
-            }
-          }
-        });
-      },
-      CATEGORIES_CACHE_TTL
-    );
-  }
-  static async getBySlug(slug) {
-    const category = await prisma.category.findUnique({
-      where: { slug },
-      include: {
-        products: {
-          where: { published: true, available: true },
-          include: {
-            variants: true,
-            images: true
-          }
-        }
-      }
-    });
-    if (!category) throw ApiError.notFound("Category not found");
-    return category;
-  }
-  static async create(data) {
-    const slug = data.name.toLowerCase().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-");
-    const created = await prisma.category.create({
-      data: {
-        ...data,
-        slug
-      }
-    });
-    appCache.del(CATEGORIES_ALL_CACHE_KEY);
-    appCache.clearPattern("system:sitemap.xml");
-    return created;
-  }
-  static async update(id, data) {
-    const updated = await prisma.category.update({
-      where: { id },
-      data
-    });
-    appCache.del(CATEGORIES_ALL_CACHE_KEY);
-    appCache.clearPattern("system:sitemap.xml");
-    return updated;
-  }
-  static async delete(id) {
-    const category = await prisma.category.findUnique({
-      where: { id },
-      include: { _count: { select: { products: true, children: true } } }
-    });
-    if (!category) throw ApiError.notFound("Category not found");
-    if (category._count.products > 0) {
-      throw ApiError.conflict(
-        `Cannot delete "${category.name}" while ${category._count.products} product(s) use it. Move or delete those products first.`
-      );
-    }
-    if (category._count.children > 0) {
-      throw ApiError.conflict(
-        `Cannot delete "${category.name}" while it has child categories. Move or delete the child categories first.`
-      );
-    }
-    const deleted = await prisma.category.delete({
-      where: { id }
-    });
-    appCache.del(CATEGORIES_ALL_CACHE_KEY);
-    appCache.clearPattern("system:sitemap.xml");
-    return deleted;
-  }
-};
-
-// src/modules/categories/category.controller.ts
-var CategoryController = class {
-  static getAll = asyncHandler(async (req, res) => {
-    const categories = await CategoryService.getAll();
-    res.status(200).json(ApiResponse.success(categories, "Categories retrieved"));
-  });
-  static getBySlug = asyncHandler(async (req, res) => {
-    const category = await CategoryService.getBySlug(req.params.slug);
-    res.status(200).json(ApiResponse.success(category, "Category details"));
-  });
-  static create = asyncHandler(async (req, res) => {
-    const created = await CategoryService.create(req.body);
-    res.status(201).json(ApiResponse.created(created, "Category created"));
-  });
-  static update = asyncHandler(async (req, res) => {
-    const updated = await CategoryService.update(req.params.id, req.body);
-    res.status(200).json(ApiResponse.success(updated, "Category updated"));
-  });
-  static delete = asyncHandler(async (req, res) => {
-    await CategoryService.delete(req.params.id);
-    res.status(200).json(ApiResponse.success(null, "Category deleted"));
-  });
-};
-
 // src/validators/inventory.validator.ts
 var import_zod7 = require("zod");
 var adjustStockSchema = import_zod7.z.object({
@@ -5220,143 +5275,143 @@ var broadcastNotificationSchema = import_zod8.z.object({
 
 // src/modules/admin/admin.routes.ts
 var import_client12 = require("@prisma/client");
-var router7 = (0, import_express7.Router)();
-router7.get("/dashboard", authenticateJWT, requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF), AdminController.getDashboard);
-router7.get("/metrics", authenticateJWT, requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF), AdminController.getMetrics);
-router7.get("/orders", authenticateJWT, requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF), validateRequest(orderQuerySchema), OrderController.getOrders);
-router7.get("/orders/:id", authenticateJWT, requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF), OrderController.getOrderById);
-router7.patch(
+var router8 = (0, import_express8.Router)();
+router8.get("/dashboard", authenticateJWT, requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF), AdminController.getDashboard);
+router8.get("/metrics", authenticateJWT, requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF), AdminController.getMetrics);
+router8.get("/orders", authenticateJWT, requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF), validateRequest(orderQuerySchema), OrderController.getOrders);
+router8.get("/orders/:id", authenticateJWT, requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF), OrderController.getOrderById);
+router8.patch(
   "/orders/:id/status",
   authenticateJWT,
   requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF),
   validateRequest(updateOrderStatusSchema),
   OrderController.updateOrderStatus
 );
-router7.get(
+router8.get(
   "/inventory",
   authenticateJWT,
   requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF),
   validateRequest(inventoryQuerySchema),
   InventoryController.getInventory
 );
-router7.get(
+router8.get(
   "/inventory/transactions",
   authenticateJWT,
   requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF),
   InventoryController.getTransactions
 );
-router7.get(
+router8.get(
   "/inventory/:productId",
   authenticateJWT,
   requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF),
   InventoryController.getProductInventory
 );
-router7.post(
+router8.post(
   "/inventory/adjust",
   authenticateJWT,
   requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF),
   validateRequest(adjustStockSchema),
   InventoryController.adjustStock
 );
-router7.get("/customers", authenticateJWT, requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF), AdminController.getCustomers);
-router7.get("/payments", authenticateJWT, requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF), AdminController.getPayments);
-router7.get("/coupons", authenticateJWT, requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF), AdminController.getCoupons);
-router7.post(
+router8.get("/customers", authenticateJWT, requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF), AdminController.getCustomers);
+router8.get("/payments", authenticateJWT, requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF), AdminController.getPayments);
+router8.get("/coupons", authenticateJWT, requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF), AdminController.getCoupons);
+router8.post(
   "/coupons",
   authenticateJWT,
   requireRole(import_client12.UserRole.ADMIN),
   validateRequest(createCouponSchema),
   AdminController.createCoupon
 );
-router7.patch(
+router8.patch(
   "/coupons/:id",
   authenticateJWT,
   requireRole(import_client12.UserRole.ADMIN),
   validateRequest(updateCouponSchema),
   AdminController.updateCoupon
 );
-router7.delete("/coupons/:id", authenticateJWT, requireRole(import_client12.UserRole.ADMIN), AdminController.deleteCoupon);
-router7.post(
+router8.delete("/coupons/:id", authenticateJWT, requireRole(import_client12.UserRole.ADMIN), AdminController.deleteCoupon);
+router8.post(
   "/notifications/broadcast",
   authenticateJWT,
   requireRole(import_client12.UserRole.ADMIN),
   validateRequest(broadcastNotificationSchema),
   AdminController.broadcastNotification
 );
-router7.get("/audit-logs", authenticateJWT, requireRole(import_client12.UserRole.ADMIN), AdminController.getAuditLogs);
-router7.post(
+router8.get("/audit-logs", authenticateJWT, requireRole(import_client12.UserRole.ADMIN), AdminController.getAuditLogs);
+router8.post(
   "/categories",
   authenticateJWT,
   requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF),
   validateRequest(createCategorySchema),
   CategoryController.create
 );
-router7.patch(
+router8.patch(
   "/categories/:id",
   authenticateJWT,
   requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF),
   validateRequest(updateCategorySchema),
   CategoryController.update
 );
-router7.delete("/categories/:id", authenticateJWT, requireRole(import_client12.UserRole.ADMIN), CategoryController.delete);
-router7.post(
+router8.delete("/categories/:id", authenticateJWT, requireRole(import_client12.UserRole.ADMIN), CategoryController.delete);
+router8.post(
   "/products",
   authenticateJWT,
   requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF),
   validateRequest(createProductSchema),
   ProductController.createProduct
 );
-router7.patch(
+router8.patch(
   "/products/:id",
   authenticateJWT,
   requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF),
   validateRequest(updateProductSchema),
   ProductController.updateProduct
 );
-router7.delete("/products/:id", authenticateJWT, requireRole(import_client12.UserRole.ADMIN), ProductController.deleteProduct);
-router7.post(
+router8.delete("/products/:id", authenticateJWT, requireRole(import_client12.UserRole.ADMIN), ProductController.deleteProduct);
+router8.post(
   "/products/:id/variants",
   authenticateJWT,
   requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF),
   validateRequest(createVariantSchema),
   ProductController.createVariant
 );
-router7.patch(
+router8.patch(
   "/variants/:id",
   authenticateJWT,
   requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF),
   validateRequest(updateVariantSchema),
   ProductController.updateVariant
 );
-router7.delete("/variants/:id", authenticateJWT, requireRole(import_client12.UserRole.ADMIN), ProductController.deleteVariant);
-router7.post(
+router8.delete("/variants/:id", authenticateJWT, requireRole(import_client12.UserRole.ADMIN), ProductController.deleteVariant);
+router8.post(
   "/products/:id/images",
   authenticateJWT,
   requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF),
   ProductController.addImage
 );
-router7.delete(
+router8.delete(
   "/products/:id/images/:imageId",
   authenticateJWT,
   requireRole(import_client12.UserRole.ADMIN),
   ProductController.deleteImage
 );
-router7.patch(
+router8.patch(
   "/products/:id/images/:imageId/primary",
   authenticateJWT,
   requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF),
   ProductController.setPrimaryImage
 );
-router7.put(
+router8.put(
   "/products/:id/images/reorder",
   authenticateJWT,
   requireRole(import_client12.UserRole.ADMIN, import_client12.UserRole.STAFF),
   ProductController.reorderImages
 );
-var adminRoutes = router7;
+var adminRoutes = router8;
 
 // src/modules/upload/upload.routes.ts
-var import_express8 = require("express");
+var import_express9 = require("express");
 
 // src/modules/upload/upload.controller.ts
 var import_multer = __toESM(require("multer"));
@@ -5539,31 +5594,31 @@ var UploadController = class {
 
 // src/modules/upload/upload.routes.ts
 var import_client13 = require("@prisma/client");
-var router8 = (0, import_express8.Router)();
-router8.post(
+var router9 = (0, import_express9.Router)();
+router9.post(
   "/image",
   authenticateJWT,
   requireRole(import_client13.UserRole.ADMIN, import_client13.UserRole.STAFF),
   uploadMiddleware,
   UploadController.uploadImage
 );
-router8.get("/image/:id", UploadController.getImage);
-router8.post(
+router9.get("/image/:id", UploadController.getImage);
+router9.post(
   "/delete",
   authenticateJWT,
   requireRole(import_client13.UserRole.ADMIN, import_client13.UserRole.STAFF),
   UploadController.deleteImage
 );
-router8.delete(
+router9.delete(
   "/:id",
   authenticateJWT,
   requireRole(import_client13.UserRole.ADMIN, import_client13.UserRole.STAFF),
   UploadController.deleteImage
 );
-var uploadRoutes = router8;
+var uploadRoutes = router9;
 
 // src/modules/notifications/notification.routes.ts
-var import_express9 = require("express");
+var import_express10 = require("express");
 
 // src/modules/notifications/notification.controller.ts
 var NotificationController = class {
@@ -5642,18 +5697,18 @@ var NotificationController = class {
 };
 
 // src/modules/notifications/notification.routes.ts
-var router9 = (0, import_express9.Router)();
-router9.get("/", authenticateJWT, NotificationController.getMyNotifications);
-router9.patch("/read-all", authenticateJWT, NotificationController.markAllAsRead);
-router9.patch("/:id/read", authenticateJWT, NotificationController.markAsRead);
-router9.delete("/:id", authenticateJWT, NotificationController.deleteNotification);
-router9.get("/push/vapid-key", NotificationController.getVapidPublicKey);
-router9.post("/push/subscribe", authenticateJWT, NotificationController.subscribePush);
-router9.post("/push/unsubscribe", authenticateJWT, NotificationController.unsubscribePush);
-var notificationRoutes = router9;
+var router10 = (0, import_express10.Router)();
+router10.get("/", authenticateJWT, NotificationController.getMyNotifications);
+router10.patch("/read-all", authenticateJWT, NotificationController.markAllAsRead);
+router10.patch("/:id/read", authenticateJWT, NotificationController.markAsRead);
+router10.delete("/:id", authenticateJWT, NotificationController.deleteNotification);
+router10.get("/push/vapid-key", NotificationController.getVapidPublicKey);
+router10.post("/push/subscribe", authenticateJWT, NotificationController.subscribePush);
+router10.post("/push/unsubscribe", authenticateJWT, NotificationController.unsubscribePush);
+var notificationRoutes = router10;
 
 // src/modules/site-settings/site-settings.routes.ts
-var import_express10 = require("express");
+var import_express11 = require("express");
 
 // src/modules/site-settings/site-settings.controller.ts
 var SETTINGS_CACHE_KEY = "site_settings:global";
@@ -5836,29 +5891,30 @@ var SiteSettingsController = class {
 
 // src/modules/site-settings/site-settings.routes.ts
 var import_client14 = require("@prisma/client");
-var router10 = (0, import_express10.Router)();
-router10.get("/", SiteSettingsController.getSettings);
-router10.put(
+var router11 = (0, import_express11.Router)();
+router11.get("/", SiteSettingsController.getSettings);
+router11.put(
   "/",
   authenticateJWT,
   requireRole(import_client14.UserRole.ADMIN),
   SiteSettingsController.updateSettings
 );
-router10.post(
+router11.post(
   "/setup",
   authenticateJWT,
   requireRole(import_client14.UserRole.ADMIN),
   SiteSettingsController.completeSetupWizard
 );
-var siteSettingsRoutes = router10;
+var siteSettingsRoutes = router11;
 
 // src/server.ts
-var app = (0, import_express11.default)();
+process.env.UV_THREADPOOL_SIZE = "4";
+var app = (0, import_express12.default)();
 app.set("trust proxy", 1);
 app.use((0, import_compression.default)({ threshold: 1024 }));
 app.use(
   "/uploads",
-  import_express11.default.static(import_path2.default.resolve(process.cwd(), "uploads"), {
+  import_express12.default.static(import_path2.default.resolve(process.cwd(), "uploads"), {
     maxAge: "365d",
     immutable: true,
     setHeaders: (res) => {
@@ -5868,10 +5924,15 @@ app.use(
     }
   })
 );
-app.use("/api", (_req, res, next) => {
-  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  res.setHeader("Pragma", "no-cache");
-  res.setHeader("Expires", "0");
+app.use("/api", (req, res, next) => {
+  const isPublicCatalogGet = req.method === "GET" && (req.path.startsWith("/products") || req.path.startsWith("/categories") || req.path.startsWith("/delivery-zones") || req.path.startsWith("/site-settings") || req.path === "/health");
+  if (isPublicCatalogGet) {
+    res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=120");
+  } else {
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+  }
   next();
 });
 app.use(
@@ -5940,8 +6001,8 @@ app.use((req, res, next) => {
 app.use((0, import_cors.default)(corsOptions));
 app.options("*", (0, import_cors.default)(corsOptions));
 app.use((0, import_morgan.default)(ENV.NODE_ENV === "development" ? "dev" : "combined"));
-app.use(import_express11.default.json({ limit: "10mb" }));
-app.use(import_express11.default.urlencoded({ extended: true, limit: "10mb" }));
+app.use(import_express12.default.json({ limit: "10mb" }));
+app.use(import_express12.default.urlencoded({ extended: true, limit: "10mb" }));
 var globalLimiter = (0, import_express_rate_limit.default)({
   windowMs: 15 * 60 * 1e3,
   max: 300,
@@ -6107,6 +6168,7 @@ app.get(["/sitemap.xml", "/api/sitemap.xml"], async (_req, res) => {
 });
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/categories", categoryRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/orders", orderRoutes);
@@ -6118,6 +6180,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/site-settings", siteSettingsRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/products", productRoutes);
+app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/v1/cart", cartRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/orders", orderRoutes);
@@ -6158,8 +6221,8 @@ async function startServer() {
     console.log(`\u{1F33F} RJ Flowers API is flourishing on`, target);
   });
   if (server) {
-    server.keepAliveTimeout = 65e3;
-    server.headersTimeout = 66e3;
+    server.keepAliveTimeout = 15e3;
+    server.headersTimeout = 16e3;
   }
   connectDB().catch((err) => {
     console.error("\u26A0\uFE0F [DB] Connection warning on startup:", err?.message || err);
@@ -6170,6 +6233,9 @@ var handleGracefulShutdown = async (signal) => {
 \u{1F6D1} Received ${signal}. Starting graceful shutdown...`);
   const activeServer = server || httpServer;
   if (activeServer) {
+    if (typeof activeServer.closeIdleConnections === "function") {
+      activeServer.closeIdleConnections();
+    }
     activeServer.close(async () => {
       console.log("\u{1F512} Closed HTTP server connections.");
       try {

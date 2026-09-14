@@ -1,4 +1,6 @@
 // cPanel / Phusion Passenger entry point
+process.env.UV_THREADPOOL_SIZE = '4';
+
 try {
   const server = require('./dist/server.js');
   module.exports = server.default || server;

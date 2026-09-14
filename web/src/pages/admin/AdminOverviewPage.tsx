@@ -21,7 +21,10 @@ export const AdminOverviewPage: React.FC = () => {
   const { data: metrics, isLoading, refetch } = useQuery({
     queryKey: ['admin-metrics-full'],
     queryFn: adminApi.getDashboard,
-    refetchInterval: 30000,
+    refetchInterval: () =>
+      typeof document !== 'undefined' && document.visibilityState === 'visible' ? 60000 : false,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
 
   const { data: siteSettings } = useQuery({

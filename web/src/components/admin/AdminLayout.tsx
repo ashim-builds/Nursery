@@ -17,11 +17,14 @@ export const AdminLayout: React.FC = () => {
   const { user } = useAuth();
   const location = useLocation();
 
-  // Load metrics for badges
+  // Load metrics for badges with visibility check (pauses when hidden)
   const { data: metrics } = useQuery({
     queryKey: ['admin-metrics'],
     queryFn: adminApi.getMetrics,
-    refetchInterval: 30000, // auto refresh every 30s
+    refetchInterval: () =>
+      typeof document !== 'undefined' && document.visibilityState === 'visible' ? 60000 : false,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
 
   // Calculate current breadcrumb label
