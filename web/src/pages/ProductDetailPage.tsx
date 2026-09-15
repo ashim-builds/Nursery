@@ -127,12 +127,13 @@ export const ProductDetailPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
           {/* Left Column: Image Gallery */}
           <div className="lg:col-span-5 space-y-3 max-w-md mx-auto lg:max-w-none w-full">
-            <div className="relative aspect-[4/3] sm:aspect-square max-h-[380px] sm:max-h-[420px] rounded-2xl sm:rounded-3xl overflow-hidden bg-forest-50/50 border border-forest-100 shadow-soft">
+            <div className="relative aspect-square sm:aspect-[4/5] max-h-[460px] sm:max-h-[500px] rounded-2xl sm:rounded-3xl overflow-hidden bg-forest-50/30 border border-forest-100 shadow-soft flex items-center justify-center p-2 sm:p-3">
               <DatabaseImage
                 src={images[activeImageIndex]?.url || images[0].url}
                 alt={product.title}
                 preset="detail"
-                className="w-full h-full object-cover"
+                fit="contain"
+                className="w-full h-full"
               />
               {discountPriceNum && (
                 <div className="absolute top-3 left-3 bg-terracotta-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm z-10">
@@ -148,13 +149,13 @@ export const ProductDetailPage: React.FC = () => {
                   <button
                     key={idx}
                     onClick={() => setActiveImageIndex(idx)}
-                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${
+                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 transition-all shrink-0 cursor-pointer bg-sand-50/50 p-1 ${
                       activeImageIndex === idx
                         ? 'border-forest-800 ring-2 ring-forest-200'
                         : 'border-slate-200 opacity-70 hover:opacity-100'
                     }`}
                   >
-                    <DatabaseImage src={img.url} alt="" preset="thumbnail" className="w-full h-full object-cover" />
+                    <DatabaseImage src={img.url} alt="" preset="thumbnail" fit="contain" className="w-full h-full" />
                   </button>
                 ))}
               </div>

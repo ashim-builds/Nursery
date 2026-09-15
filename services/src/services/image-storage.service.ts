@@ -65,8 +65,8 @@ export class ImageStorageService {
     // 3. Write physical file to disk
     await fs.promises.writeFile(filePath, buffer);
 
-    // 4. Save metadata ONLY in MySQL (Zero BLOBs)
-    const publicUrl = `/api/upload/image/${uniqueId}`;
+    // 4. Save metadata in MySQL (Zero BLOBs) with direct static URL for maximum performance
+    const publicUrl = `/${storagePath}`;
     const image = await prisma.imageAsset.create({
       data: {
         id: uniqueId,
@@ -86,6 +86,58 @@ export class ImageStorageService {
       fileSize: buffer.length,
       storagePath,
     };
+  }
+
+  /**
+   * Save a base64 data URI to physical disk and return the public static URL.
+   */
+  static async saveBase64Image(
+    dataUri: string,
+    folder: 'products' | 'categories' | 'banners' | 'branding' = 'products'
+  ): Promise<string> {
+    if (!dataUri || !dataUri.startsWith('data:image/')) {
+      return dataUri;
+    }
+
+    try {
+      const match = dataUri.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
+      if (!match) return dataUri;
+
+      const mimeType = match[1];
+      const base64Data = match[2];
+      const buffer = Buffer.from(base64Data, 'base64');
+      const ext = mimeType.includes('png') ? '.png' : mimeType.includes('webp') ? '.webp' : '.jpg';
+
+      const uniqueId = crypto.randomUUID();
+      const filename = `${folder}-opt-${uniqueId}${ext}`;
+      const folderDir = path.join(UPLOADS_ROOT, folder);
+      await ensureDirExists(folderDir);
+
+      const filePath = path.join(folderDir, filename);
+      const storagePath = `uploads/${folder}/${filename}`;
+      await fs.promises.writeFile(filePath, buffer);
+
+      const publicUrl = `/${storagePath}`;
+      try {
+        await prisma.imageAsset.create({
+          data: {
+            id: uniqueId,
+            filename,
+            storagePath,
+            url: publicUrl,
+            mimeType,
+            fileSize: buffer.length,
+          },
+        });
+      } catch (dbErr) {
+        // Continue even if imageAsset table insert fails
+      }
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Failed to extract and persist base64 image to disk:', error);
+      return dataUri;
+    }
   }
 
   /**

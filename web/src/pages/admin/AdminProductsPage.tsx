@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { adminApi } from '../../api/admin.api';
 import { useUI } from '../../context/UIContext';
+import { getImageUrl } from '../../utils/image';
 import {
   Package,
   Plus,
@@ -162,9 +163,9 @@ export const AdminProductsPage: React.FC = () => {
                       <div className="flex items-center gap-3">
                         {p.images?.[0]?.url ? (
                           <img
-                            src={p.images[0].url}
+                            src={getImageUrl(p.images[0].url)}
                             alt={p.title}
-                            className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0"
+                            className="w-10 h-10 rounded-xl object-contain bg-sand-50/80 border border-slate-200 shrink-0 p-0.5"
                           />
                         ) : (
                           <div className="w-10 h-10 rounded-xl border border-dashed border-slate-300 bg-slate-50 text-[9px] text-slate-400 flex items-center justify-center text-center shrink-0">
@@ -241,9 +242,9 @@ export const AdminProductsPage: React.FC = () => {
                 <div className="flex items-start gap-3">
                   {p.images?.[0]?.url ? (
                     <img
-                      src={p.images[0].url}
+                      src={getImageUrl(p.images[0].url)}
                       alt={p.title}
-                      className="w-14 h-14 rounded-2xl object-cover border border-slate-200 shrink-0"
+                      className="w-14 h-14 rounded-2xl object-contain bg-sand-50/80 border border-slate-200 shrink-0 p-1"
                     />
                   ) : (
                     <div className="w-14 h-14 rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-[10px] text-slate-400 flex items-center justify-center text-center shrink-0">

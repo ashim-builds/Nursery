@@ -3,6 +3,7 @@ import { ApiError } from '../../utils/ApiError.js';
 import { SunlightRequirement, WateringRequirement, DifficultyLevel, Prisma } from '@prisma/client';
 import { catalogCache, appCache } from '../../utils/cache.js';
 import { emitLiveEvent } from '../../utils/socket.js';
+import { ImageStorageService } from '../../services/image-storage.service.js';
 
 export class ProductService {
   static async getAll(query: {
@@ -441,6 +442,23 @@ export class ProductService {
           },
         ];
 
+    // Auto-persist base64 images to physical disk storage
+    const sanitizedImages = data.images?.length
+      ? await Promise.all(
+          data.images.map(async (img: any, i: number) => {
+            const cleanUrl = img.url?.startsWith('data:image/')
+              ? await ImageStorageService.saveBase64Image(img.url, 'products')
+              : img.url;
+            return {
+              url: cleanUrl,
+              altText: img.altText || name,
+              isPrimary: img.isPrimary || i === 0,
+              sortOrder: img.sortOrder || i + 1,
+            };
+          })
+        )
+      : [];
+
     const product = await prisma.product.create({
       data: {
         name,
@@ -463,14 +481,9 @@ export class ProductService {
         difficultyLevel: data.difficultyLevel || data.difficulty,
         dimensions: data.dimensions,
         weight: data.weight,
-        images: data.images?.length
+        images: sanitizedImages.length
           ? {
-              create: data.images.map((img: any, i: number) => ({
-                url: img.url,
-                altText: img.altText || name,
-                isPrimary: img.isPrimary || i === 0,
-                sortOrder: img.sortOrder || i + 1,
-              })),
+              create: sanitizedImages,
             }
           : undefined,
         attributes: data.attributes?.length
@@ -533,6 +546,24 @@ export class ProductService {
     if (productData.available !== undefined) {
       productData.stockStatus = productData.available ? 'IN_STOCK' : 'OUT_OF_STOCK';
     }
+
+    let sanitizedImages = images;
+    if (images && images.length > 0) {
+      sanitizedImages = await Promise.all(
+        images.map(async (image: any, index: number) => {
+          const cleanUrl = image.url?.startsWith('data:image/')
+            ? await ImageStorageService.saveBase64Image(image.url, 'products')
+            : image.url;
+          return {
+            url: cleanUrl,
+            altText: image.altText || product.name,
+            isPrimary: image.isPrimary ?? index === 0,
+            sortOrder: image.sortOrder ?? index + 1,
+          };
+        })
+      );
+    }
+
     const updated = await prisma.$transaction(async (tx) => {
       if (images) {
         await tx.productImage.deleteMany({ where: { productId: id } });
@@ -542,14 +573,14 @@ export class ProductService {
         where: { id },
         data: {
           ...productData,
-          ...(images
+          ...(sanitizedImages && sanitizedImages.length > 0
             ? {
                 images: {
-                  create: images.map((image: any, index: number) => ({
+                  create: sanitizedImages.map((image: any) => ({
                     url: image.url,
-                    altText: image.altText || product.name,
-                    isPrimary: image.isPrimary ?? index === 0,
-                    sortOrder: image.sortOrder ?? index + 1,
+                    altText: image.altText,
+                    isPrimary: image.isPrimary,
+                    sortOrder: image.sortOrder,
                   })),
                 },
               }

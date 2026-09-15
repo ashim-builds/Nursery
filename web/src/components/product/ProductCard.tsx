@@ -58,8 +58,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <DatabaseImage
           src={primaryImage}
           alt={product.title}
-          loading="lazy"
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+          preset="card"
+          fit="contain"
+          className="w-full h-full p-2"
+          imgClassName="group-hover:scale-105 transition-transform duration-500 ease-out"
         />
 
         {/* Floating Stock & Savings Badges */}

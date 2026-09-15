@@ -7,7 +7,10 @@ interface PlantImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>
   preset?: string;
   responsive?: boolean;
   className?: string;
+  imgClassName?: string;
   fallbackSrc?: string;
+  fit?: 'contain' | 'cover' | 'fill';
+  showBackdrop?: boolean;
 }
 
 export const DatabaseImage: React.FC<PlantImageProps> = ({
@@ -16,7 +19,10 @@ export const DatabaseImage: React.FC<PlantImageProps> = ({
   preset: _preset,
   responsive: _responsive,
   className = '',
+  imgClassName = '',
   fallbackSrc = '',
+  fit = 'contain',
+  showBackdrop = true,
   ...props
 }) => {
   const [error, setError] = useState(false);
@@ -25,10 +31,21 @@ export const DatabaseImage: React.FC<PlantImageProps> = ({
   const finalSrc = error ? fallbackSrc : src ? getPlantImageUrl(src) : '';
 
   return (
-    <div className={`relative overflow-hidden ${className}`}>
+    <div className={`relative overflow-hidden flex items-center justify-center ${className}`}>
       {finalSrc ? (
         <>
-          {!loaded && <div className="absolute inset-0 bg-slate-200/80 animate-pulse" />}
+          {!loaded && <div className="absolute inset-0 bg-slate-200/80 animate-pulse z-10" />}
+
+          {/* Ambient blurred backdrop for letterboxed/portrait/landscape plant images */}
+          {fit === 'contain' && showBackdrop && (
+            <img
+              src={finalSrc}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-20 scale-125 pointer-events-none select-none"
+            />
+          )}
+
           <img
             src={finalSrc}
             alt={alt}
@@ -39,9 +56,13 @@ export const DatabaseImage: React.FC<PlantImageProps> = ({
               setError(true);
               setLoaded(true);
             }}
-            className={`w-full h-full object-cover transition-opacity duration-300 ${
-              loaded ? 'opacity-100' : 'opacity-0'
-            }`}
+            className={`relative z-1 max-w-full max-h-full transition-opacity duration-300 ${
+              fit === 'contain'
+                ? 'w-full h-full object-contain'
+                : fit === 'cover'
+                  ? 'w-full h-full object-cover'
+                  : 'w-full h-full object-fill'
+            } ${loaded ? 'opacity-100' : 'opacity-0'} ${imgClassName}`}
             {...props}
           />
         </>
@@ -52,4 +73,4 @@ export const DatabaseImage: React.FC<PlantImageProps> = ({
       )}
     </div>
   );
-};
+};

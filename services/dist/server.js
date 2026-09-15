@@ -1457,6 +1457,151 @@ var authRoutes = router;
 // src/modules/products/product.routes.ts
 var import_express2 = require("express");
 
+// src/services/image-storage.service.ts
+var import_fs = __toESM(require("fs"));
+var import_path = __toESM(require("path"));
+var import_crypto2 = __toESM(require("crypto"));
+var UPLOADS_ROOT = import_path.default.resolve(process.cwd(), "uploads");
+var ensureDirExists = async (dirPath) => {
+  try {
+    await import_fs.default.promises.access(dirPath);
+  } catch {
+    await import_fs.default.promises.mkdir(dirPath, { recursive: true });
+  }
+};
+var ImageStorageService = class {
+  /**
+   * Save uploaded image to server-side filesystem storage and store metadata in MySQL.
+   */
+  static async saveImage(buffer, originalName, mimeType, folder = "products") {
+    const allowedExtensions = {
+      "image/jpeg": ".jpg",
+      "image/jpg": ".jpg",
+      "image/png": ".png",
+      "image/webp": ".webp"
+    };
+    const ext = allowedExtensions[mimeType.toLowerCase()] || import_path.default.extname(originalName).toLowerCase() || ".webp";
+    if (![".jpg", ".jpeg", ".png", ".webp"].includes(ext)) {
+      throw ApiError.badRequest("Unsupported image format. Allowed formats: JPEG, PNG, WebP");
+    }
+    const uniqueId = import_crypto2.default.randomUUID();
+    const cleanBaseName = import_path.default.basename(originalName, import_path.default.extname(originalName)).toLowerCase().replace(/[^a-z0-9_-]/g, "-").substring(0, 30);
+    const filename = `${folder}-${cleanBaseName}-${uniqueId}${ext}`;
+    const folderDir = import_path.default.join(UPLOADS_ROOT, folder);
+    await ensureDirExists(folderDir);
+    const filePath = import_path.default.join(folderDir, filename);
+    const storagePath = `uploads/${folder}/${filename}`;
+    await import_fs.default.promises.writeFile(filePath, buffer);
+    const publicUrl = `/${storagePath}`;
+    const image = await prisma.imageAsset.create({
+      data: {
+        id: uniqueId,
+        filename,
+        storagePath,
+        url: publicUrl,
+        mimeType,
+        fileSize: buffer.length
+      }
+    });
+    return {
+      id: image.id,
+      filename,
+      url: image.url,
+      mimeType,
+      fileSize: buffer.length,
+      storagePath
+    };
+  }
+  /**
+   * Save a base64 data URI to physical disk and return the public static URL.
+   */
+  static async saveBase64Image(dataUri, folder = "products") {
+    if (!dataUri || !dataUri.startsWith("data:image/")) {
+      return dataUri;
+    }
+    try {
+      const match = dataUri.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
+      if (!match) return dataUri;
+      const mimeType = match[1];
+      const base64Data = match[2];
+      const buffer = Buffer.from(base64Data, "base64");
+      const ext = mimeType.includes("png") ? ".png" : mimeType.includes("webp") ? ".webp" : ".jpg";
+      const uniqueId = import_crypto2.default.randomUUID();
+      const filename = `${folder}-opt-${uniqueId}${ext}`;
+      const folderDir = import_path.default.join(UPLOADS_ROOT, folder);
+      await ensureDirExists(folderDir);
+      const filePath = import_path.default.join(folderDir, filename);
+      const storagePath = `uploads/${folder}/${filename}`;
+      await import_fs.default.promises.writeFile(filePath, buffer);
+      const publicUrl = `/${storagePath}`;
+      try {
+        await prisma.imageAsset.create({
+          data: {
+            id: uniqueId,
+            filename,
+            storagePath,
+            url: publicUrl,
+            mimeType,
+            fileSize: buffer.length
+          }
+        });
+      } catch (dbErr) {
+      }
+      return publicUrl;
+    } catch (error) {
+      console.error("Failed to extract and persist base64 image to disk:", error);
+      return dataUri;
+    }
+  }
+  /**
+   * Read an image from disk for streaming via API endpoint.
+   */
+  static async getImage(id) {
+    const record = await prisma.imageAsset.findUnique({
+      where: { id },
+      select: { id: true, filename: true, storagePath: true, mimeType: true, fileSize: true }
+    });
+    if (!record) return null;
+    const fullPath = import_path.default.resolve(process.cwd(), record.storagePath);
+    try {
+      await import_fs.default.promises.access(fullPath);
+      const data = await import_fs.default.promises.readFile(fullPath);
+      return {
+        data,
+        mimeType: record.mimeType,
+        filename: record.filename
+      };
+    } catch {
+      return null;
+    }
+  }
+  /**
+   * Delete an image from disk and remove its metadata from MySQL.
+   */
+  static async deleteImage(id) {
+    if (!id) return false;
+    try {
+      const record = await prisma.imageAsset.findUnique({
+        where: { id },
+        select: { storagePath: true }
+      });
+      if (record) {
+        const fullPath = import_path.default.resolve(process.cwd(), record.storagePath);
+        try {
+          await import_fs.default.promises.unlink(fullPath);
+        } catch {
+        }
+        await prisma.imageAsset.delete({ where: { id } });
+        return true;
+      }
+      return false;
+    } catch (error) {
+      if (error?.code === "P2025") return false;
+      throw error;
+    }
+  }
+};
+
 // src/modules/products/product.service.ts
 var ProductService = class {
   static async getAll(query) {
@@ -1838,6 +1983,17 @@ var ProductService = class {
         isAvailable: data.available !== false
       }
     ];
+    const sanitizedImages = data.images?.length ? await Promise.all(
+      data.images.map(async (img, i) => {
+        const cleanUrl = img.url?.startsWith("data:image/") ? await ImageStorageService.saveBase64Image(img.url, "products") : img.url;
+        return {
+          url: cleanUrl,
+          altText: img.altText || name,
+          isPrimary: img.isPrimary || i === 0,
+          sortOrder: img.sortOrder || i + 1
+        };
+      })
+    ) : [];
     const product = await prisma.product.create({
       data: {
         name,
@@ -1860,13 +2016,8 @@ var ProductService = class {
         difficultyLevel: data.difficultyLevel || data.difficulty,
         dimensions: data.dimensions,
         weight: data.weight,
-        images: data.images?.length ? {
-          create: data.images.map((img, i) => ({
-            url: img.url,
-            altText: img.altText || name,
-            isPrimary: img.isPrimary || i === 0,
-            sortOrder: img.sortOrder || i + 1
-          }))
+        images: sanitizedImages.length ? {
+          create: sanitizedImages
         } : void 0,
         attributes: data.attributes?.length ? {
           create: data.attributes.map((attr) => ({
@@ -1921,6 +2072,20 @@ var ProductService = class {
     if (productData.available !== void 0) {
       productData.stockStatus = productData.available ? "IN_STOCK" : "OUT_OF_STOCK";
     }
+    let sanitizedImages = images;
+    if (images && images.length > 0) {
+      sanitizedImages = await Promise.all(
+        images.map(async (image, index) => {
+          const cleanUrl = image.url?.startsWith("data:image/") ? await ImageStorageService.saveBase64Image(image.url, "products") : image.url;
+          return {
+            url: cleanUrl,
+            altText: image.altText || product.name,
+            isPrimary: image.isPrimary ?? index === 0,
+            sortOrder: image.sortOrder ?? index + 1
+          };
+        })
+      );
+    }
     const updated = await prisma.$transaction(async (tx) => {
       if (images) {
         await tx.productImage.deleteMany({ where: { productId: id } });
@@ -1929,13 +2094,13 @@ var ProductService = class {
         where: { id },
         data: {
           ...productData,
-          ...images ? {
+          ...sanitizedImages && sanitizedImages.length > 0 ? {
             images: {
-              create: images.map((image, index) => ({
+              create: sanitizedImages.map((image) => ({
                 url: image.url,
-                altText: image.altText || product.name,
-                isPrimary: image.isPrimary ?? index === 0,
-                sortOrder: image.sortOrder ?? index + 1
+                altText: image.altText,
+                isPrimary: image.isPrimary,
+                sortOrder: image.sortOrder
               }))
             }
           } : {}
@@ -2875,7 +3040,7 @@ var inventoryRoutes = router4;
 var import_express5 = require("express");
 
 // src/modules/cart/cart.controller.ts
-var import_crypto2 = __toESM(require("crypto"));
+var import_crypto3 = __toESM(require("crypto"));
 
 // src/modules/cart/cart.service.ts
 var CartService = class {
@@ -3198,7 +3363,7 @@ var getSessionId = (req, res) => {
   if (req.user?.id) return void 0;
   let sessionId = req.headers["x-session-id"] || extractCookie(req, "ktm_session_id");
   if (!sessionId) {
-    sessionId = `guest_${import_crypto2.default.randomUUID()}`;
+    sessionId = `guest_${import_crypto3.default.randomUUID()}`;
     res.cookie("ktm_session_id", sessionId, {
       httpOnly: false,
       // Accessible to client if needed
@@ -5415,112 +5580,6 @@ var import_express9 = require("express");
 
 // src/modules/upload/upload.controller.ts
 var import_multer = __toESM(require("multer"));
-
-// src/services/image-storage.service.ts
-var import_fs = __toESM(require("fs"));
-var import_path = __toESM(require("path"));
-var import_crypto3 = __toESM(require("crypto"));
-var UPLOADS_ROOT = import_path.default.resolve(process.cwd(), "uploads");
-var ensureDirExists = async (dirPath) => {
-  try {
-    await import_fs.default.promises.access(dirPath);
-  } catch {
-    await import_fs.default.promises.mkdir(dirPath, { recursive: true });
-  }
-};
-var ImageStorageService = class {
-  /**
-   * Save uploaded image to server-side filesystem storage and store metadata in MySQL.
-   */
-  static async saveImage(buffer, originalName, mimeType, folder = "products") {
-    const allowedExtensions = {
-      "image/jpeg": ".jpg",
-      "image/jpg": ".jpg",
-      "image/png": ".png",
-      "image/webp": ".webp"
-    };
-    const ext = allowedExtensions[mimeType.toLowerCase()] || import_path.default.extname(originalName).toLowerCase() || ".webp";
-    if (![".jpg", ".jpeg", ".png", ".webp"].includes(ext)) {
-      throw ApiError.badRequest("Unsupported image format. Allowed formats: JPEG, PNG, WebP");
-    }
-    const uniqueId = import_crypto3.default.randomUUID();
-    const cleanBaseName = import_path.default.basename(originalName, import_path.default.extname(originalName)).toLowerCase().replace(/[^a-z0-9_-]/g, "-").substring(0, 30);
-    const filename = `${folder}-${cleanBaseName}-${uniqueId}${ext}`;
-    const folderDir = import_path.default.join(UPLOADS_ROOT, folder);
-    await ensureDirExists(folderDir);
-    const filePath = import_path.default.join(folderDir, filename);
-    const storagePath = `uploads/${folder}/${filename}`;
-    await import_fs.default.promises.writeFile(filePath, buffer);
-    const publicUrl = `/api/upload/image/${uniqueId}`;
-    const image = await prisma.imageAsset.create({
-      data: {
-        id: uniqueId,
-        filename,
-        storagePath,
-        url: publicUrl,
-        mimeType,
-        fileSize: buffer.length
-      }
-    });
-    return {
-      id: image.id,
-      filename,
-      url: image.url,
-      mimeType,
-      fileSize: buffer.length,
-      storagePath
-    };
-  }
-  /**
-   * Read an image from disk for streaming via API endpoint.
-   */
-  static async getImage(id) {
-    const record = await prisma.imageAsset.findUnique({
-      where: { id },
-      select: { id: true, filename: true, storagePath: true, mimeType: true, fileSize: true }
-    });
-    if (!record) return null;
-    const fullPath = import_path.default.resolve(process.cwd(), record.storagePath);
-    try {
-      await import_fs.default.promises.access(fullPath);
-      const data = await import_fs.default.promises.readFile(fullPath);
-      return {
-        data,
-        mimeType: record.mimeType,
-        filename: record.filename
-      };
-    } catch {
-      return null;
-    }
-  }
-  /**
-   * Delete an image from disk and remove its metadata from MySQL.
-   */
-  static async deleteImage(id) {
-    if (!id) return false;
-    try {
-      const record = await prisma.imageAsset.findUnique({
-        where: { id },
-        select: { storagePath: true }
-      });
-      if (record) {
-        const fullPath = import_path.default.resolve(process.cwd(), record.storagePath);
-        try {
-          await import_fs.default.promises.unlink(fullPath);
-        } catch {
-        }
-        await prisma.imageAsset.delete({ where: { id } });
-        return true;
-      }
-      return false;
-    } catch (error) {
-      if (error?.code === "P2025") return false;
-      throw error;
-    }
-  }
-};
-
-// src/modules/upload/upload.controller.ts
 var ALLOWED_MIME_TYPES = [
   "image/jpeg",
   "image/jpg",

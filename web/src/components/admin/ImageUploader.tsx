@@ -307,11 +307,11 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                   img.isPrimary ? 'border-amber-400 ring-2 ring-amber-400/20' : 'border-slate-200'
                 }`}
               >
-                <div className="aspect-square relative">
+                <div className="aspect-square relative bg-sand-50/70 flex items-center justify-center p-1.5">
                   <img
                     src={img.url}
                     alt={img.altText || `Plant photo ${idx + 1}`}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
 
                   {img.isPrimary && (

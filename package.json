@@ -19,6 +19,8 @@
     "prisma:migrate": "npm run prisma:migrate --workspace=services",
     "prisma:seed": "npm run prisma:seed --workspace=services",
     "prisma:studio": "npm run prisma:studio --workspace=services",
+    "deploy:pack": "powershell -ExecutionPolicy Bypass -File scripts/build_packages.ps1",
+    "deploy:build": "npm run build && npm run deploy:pack",
 
     "start": "docker compose up -d",
     "docker:start": "docker compose up -d --build",
