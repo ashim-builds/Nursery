@@ -2090,6 +2090,22 @@ var ProductService = class {
       if (images) {
         await tx.productImage.deleteMany({ where: { productId: id } });
       }
+      if (productData.basePrice !== void 0) {
+        await tx.productVariant.updateMany({
+          where: { productId: id },
+          data: { price: Number(productData.basePrice) }
+        });
+      }
+      if (productData.available !== void 0) {
+        const isAvail = Boolean(productData.available);
+        await tx.productVariant.updateMany({
+          where: { productId: id },
+          data: {
+            isAvailable: isAvail,
+            stockStatus: isAvail ? "IN_STOCK" : "OUT_OF_STOCK"
+          }
+        });
+      }
       return tx.product.update({
         where: { id },
         data: {
@@ -2897,9 +2913,22 @@ var InventoryService = class {
           availableQuantity: newAvailable
         }
       });
+      const isAvailable = newAvailable > 0;
+      const stockStatus = isAvailable ? "IN_STOCK" : "OUT_OF_STOCK";
       await tx.productVariant.update({
         where: { id: data.variantId },
-        data: { stock: newStock }
+        data: {
+          stock: newStock,
+          stockStatus,
+          isAvailable
+        }
+      });
+      await tx.product.update({
+        where: { id: variant.productId },
+        data: {
+          stockStatus,
+          available: isAvailable
+        }
       });
       const transaction = await tx.inventoryTransaction.create({
         data: {
@@ -5983,15 +6012,10 @@ app.use(
     }
   })
 );
-app.use("/api", (req, res, next) => {
-  const isPublicCatalogGet = req.method === "GET" && (req.path.startsWith("/products") || req.path.startsWith("/categories") || req.path.startsWith("/delivery-zones") || req.path.startsWith("/site-settings") || req.path === "/health");
-  if (isPublicCatalogGet) {
-    res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=120");
-  } else {
-    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    res.setHeader("Pragma", "no-cache");
-    res.setHeader("Expires", "0");
-  }
+app.use("/api", (_req, res, next) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
   next();
 });
 app.use(

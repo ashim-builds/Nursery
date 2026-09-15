@@ -569,6 +569,26 @@ export class ProductService {
         await tx.productImage.deleteMany({ where: { productId: id } });
       }
 
+      // Keep default/child variant pricing in sync with product basePrice
+      if (productData.basePrice !== undefined) {
+        await tx.productVariant.updateMany({
+          where: { productId: id },
+          data: { price: Number(productData.basePrice) },
+        });
+      }
+
+      // Keep variant stockStatus in sync with product availability
+      if (productData.available !== undefined) {
+        const isAvail = Boolean(productData.available);
+        await tx.productVariant.updateMany({
+          where: { productId: id },
+          data: {
+            isAvailable: isAvail,
+            stockStatus: isAvail ? 'IN_STOCK' : 'OUT_OF_STOCK',
+          },
+        });
+      }
+
       return tx.product.update({
         where: { id },
         data: {

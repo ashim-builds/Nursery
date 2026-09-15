@@ -53,9 +53,9 @@ import { InstallInstructionsModal } from './components/common/InstallInstruction
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 5, // 5 minutes fresh cache
-      gcTime: 1000 * 60 * 15,    // 15 minutes garbage collection
+      refetchOnWindowFocus: true, // Instantly refresh when returning to tab/window
+      staleTime: 1000 * 5,        // 5 seconds (near real-time updates instead of 5-minute freeze)
+      gcTime: 1000 * 60 * 15,     // 15 minutes garbage collection
       retry: 1,
     },
   },

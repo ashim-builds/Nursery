@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../../api/admin.api';
 import { useUI } from '../../context/UIContext';
+import { invalidateAllProductQueries } from '../../utils/queryInvalidation';
 import {
   Boxes,
   AlertTriangle,
@@ -51,9 +52,7 @@ export const AdminInventoryPage: React.FC = () => {
       adminApi.adjustStock(data),
     onSuccess: () => {
       showToast('Inventory adjusted successfully', 'success');
-      queryClient.invalidateQueries({ queryKey: ['admin-inventory-list'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-metrics'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-inventory-transactions'] });
+      invalidateAllProductQueries(queryClient);
       setAdjustModalOpen(false);
     },
     onError: (err: any) => {

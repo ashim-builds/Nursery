@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { getBackendOrigin } from '../utils/image';
+import { invalidateAllProductQueries } from '../utils/queryInvalidation';
 
 interface SocketContextValue {
   socket: Socket | null;
@@ -46,21 +47,11 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     // Real-time Event Listeners -> Trigger React Query Invalidations
     const handleProductChange = () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['latest-products'] });
-      queryClient.invalidateQueries({ queryKey: ['featured-products'] });
-      queryClient.invalidateQueries({ queryKey: ['products-catalog-simple'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-products-list'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-metrics'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-metrics-full'] });
+      invalidateAllProductQueries(queryClient);
     };
 
     const handleInventoryChange = () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-inventory-list'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-low-stock'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-inventory-transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['products-catalog-simple'] });
+      invalidateAllProductQueries(queryClient);
     };
 
     const handleOrderChange = () => {

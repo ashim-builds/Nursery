@@ -224,10 +224,26 @@ export class InventoryService {
         },
       });
 
-      // Keep productVariant.stock in sync
+      const isAvailable = newAvailable > 0;
+      const stockStatus = isAvailable ? 'IN_STOCK' : 'OUT_OF_STOCK';
+
+      // Keep productVariant.stock, stockStatus & availability in sync
       await tx.productVariant.update({
         where: { id: data.variantId },
-        data: { stock: newStock },
+        data: {
+          stock: newStock,
+          stockStatus,
+          isAvailable,
+        },
+      });
+
+      // Keep parent product stockStatus & availability in sync
+      await tx.product.update({
+        where: { id: variant.productId },
+        data: {
+          stockStatus,
+          available: isAvailable,
+        },
       });
 
       // 4. Create immutable inventory audit transaction

@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../../api/admin.api';
 import { useUI } from '../../context/UIContext';
+import { invalidateAllProductQueries } from '../../utils/queryInvalidation';
 import {
   ArrowLeft,
   ArrowRight,
@@ -107,10 +108,7 @@ export const AdminProductFormPage: React.FC = () => {
         isEdit ? 'Plant updated successfully!' : 'New plant added successfully!',
         'success'
       );
-      queryClient.invalidateQueries({ queryKey: ['admin-products-list'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-metrics'] });
-      queryClient.invalidateQueries({ queryKey: ['featured-products'] });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      invalidateAllProductQueries(queryClient);
       navigate('/admin/products');
     },
     onError: (err: any) => {

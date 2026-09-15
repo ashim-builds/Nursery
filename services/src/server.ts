@@ -49,25 +49,11 @@ app.use(
   })
 );
 
-// Differentiated Caching Headers:
-// Allow browser & proxy caching for public read-only catalog, categories, delivery zones, and site settings
-// Enforce strict no-cache, no-store for private/authenticated/transactional routes
-app.use('/api', (req, res, next) => {
-  const isPublicCatalogGet =
-    req.method === 'GET' &&
-    (req.path.startsWith('/products') ||
-      req.path.startsWith('/categories') ||
-      req.path.startsWith('/delivery-zones') ||
-      req.path.startsWith('/site-settings') ||
-      req.path === '/health');
-
-  if (isPublicCatalogGet) {
-    res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=120');
-  } else {
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-  }
+// Disable browser/proxy caching for all API endpoints to guarantee instant reflection of changes (prices, stock, products)
+app.use('/api', (_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   next();
 });
 

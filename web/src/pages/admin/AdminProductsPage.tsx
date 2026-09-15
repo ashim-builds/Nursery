@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { adminApi } from '../../api/admin.api';
 import { useUI } from '../../context/UIContext';
 import { getImageUrl } from '../../utils/image';
+import { invalidateAllProductQueries } from '../../utils/queryInvalidation';
 import {
   Package,
   Plus,
@@ -39,8 +40,7 @@ export const AdminProductsPage: React.FC = () => {
     mutationFn: (id: string) => adminApi.deleteProduct(id),
     onSuccess: () => {
       showToast('Product deleted/archived successfully', 'success');
-      queryClient.invalidateQueries({ queryKey: ['admin-products-list'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-metrics'] });
+      invalidateAllProductQueries(queryClient);
     },
     onError: (err: any) => {
       showToast(err.response?.data?.message || 'Failed to delete product', 'error');
@@ -52,8 +52,7 @@ export const AdminProductsPage: React.FC = () => {
       adminApi.updateProduct(id, { available }),
     onSuccess: (_, variables) => {
       showToast(variables.available ? 'Product marked In Stock' : 'Product marked Out of Stock', 'success');
-      queryClient.invalidateQueries({ queryKey: ['admin-products-list'] });
-      queryClient.invalidateQueries({ queryKey: ['latest-products'] });
+      invalidateAllProductQueries(queryClient);
     },
     onError: (err: any) => {
       showToast(err.response?.data?.message || 'Failed to update product availability', 'error');
