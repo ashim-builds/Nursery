@@ -38,7 +38,7 @@ const compressImageFile = (file: File): Promise<string> => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_DIMENSION = 1000;
+        const MAX_DIMENSION = 900;
         let width = img.width;
         let height = img.height;
 
@@ -63,8 +63,16 @@ const compressImageFile = (file: File): Promise<string> => {
         }
 
         ctx.drawImage(img, 0, 0, width, height);
-        // Output clean JPEG data URI
-        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.82);
+        // Try WebP first for ultra-lean payload, fallback to JPEG
+        let compressedBase64: string;
+        try {
+          compressedBase64 = canvas.toDataURL('image/webp', 0.82);
+          if (!compressedBase64.startsWith('data:image/webp')) {
+            compressedBase64 = canvas.toDataURL('image/jpeg', 0.80);
+          }
+        } catch {
+          compressedBase64 = canvas.toDataURL('image/jpeg', 0.80);
+        }
         resolve(compressedBase64);
       };
       img.onerror = () => resolve(e.target?.result as string);
@@ -89,21 +97,27 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
   const { showToast } = useUI();
 
-  const handleProcessFile = async (file: File) => {
+  const handleProcessBatch = async (files: File[]) => {
+    if (!files.length) return;
     try {
       setIsProcessing(true);
-      const base64Data = await compressImageFile(file);
+      const newItems: ManagedImage[] = await Promise.all(
+        files.map(async (file, idx) => {
+          const base64Data = await compressImageFile(file);
+          return {
+            url: base64Data,
+            isPrimary: images.length === 0 && idx === 0,
+            sortOrder: images.length + idx + 1,
+            altText: file.name.replace(/\.[^/.]+$/, ''),
+          };
+        })
+      );
 
-      const isFirst = images.length === 0;
-      const newImage: ManagedImage = {
-        url: base64Data,
-        isPrimary: isFirst,
-        sortOrder: images.length + 1,
-        altText: file.name.replace(/\.[^/.]+$/, ''),
-      };
-
-      onChange([...images, newImage]);
-      showToast('Image attached and stored in MySQL database', 'success');
+      onChange([...images, ...newItems]);
+      showToast(
+        files.length > 1 ? `${files.length} images attached!` : 'Image attached successfully!',
+        'success'
+      );
     } catch (err) {
       showToast('Failed to process image file', 'error');
     } finally {
@@ -120,9 +134,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       return;
     }
 
-    for (const file of files) {
-      await handleProcessFile(file);
-    }
+    await handleProcessBatch(files);
 
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -136,9 +148,12 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     if (!e.dataTransfer.files?.length) return;
     const files = Array.from(e.dataTransfer.files);
 
-    for (const file of files) {
-      await handleProcessFile(file);
+    if (images.length + files.length > maxImages) {
+      showToast(`Maximum ${maxImages} images allowed per plant.`, 'error');
+      return;
     }
+
+    await handleProcessBatch(files);
   };
 
   const handleAddUrl = () => {

@@ -218,6 +218,23 @@ export const AdminProductFormPage: React.FC = () => {
             </p>
           </div>
         </div>
+
+        {isEdit && (
+          <button
+            type="button"
+            disabled={mutation.isPending || !name.trim() || !basePrice}
+            onClick={handleFinalSave}
+            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-forest-950 font-bold text-xs sm:text-sm rounded-2xl shadow-xs flex items-center gap-2 transition-all disabled:opacity-40"
+            title="Save changes immediately"
+          >
+            {mutation.isPending ? (
+              <div className="w-4 h-4 border-2 border-forest-950 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <CheckCircle2 size={16} />
+            )}
+            <span>Quick Save</span>
+          </button>
+        )}
       </div>
 
       {/* 3-Step Visual Progress Stepper */}
@@ -369,7 +386,21 @@ export const AdminProductFormPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-6 border-t border-slate-100">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-6 border-t border-slate-100">
+            {isEdit ? (
+              <button
+                type="button"
+                disabled={mutation.isPending || !name.trim()}
+                onClick={handleFinalSave}
+                className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-800 font-bold text-xs sm:text-sm hover:bg-emerald-100 transition-all flex items-center justify-center gap-1.5"
+              >
+                <CheckCircle2 size={15} />
+                <span>Save Now (अहिले सेभ गर्नुहोस्)</span>
+              </button>
+            ) : (
+              <div />
+            )}
+
             <button
               type="button"
               onClick={handleGoToStep2}
@@ -470,14 +501,28 @@ export const AdminProductFormPage: React.FC = () => {
               ⬅ Back
             </button>
 
-            <button
-              type="button"
-              onClick={handleGoToStep3}
-              className="w-full sm:w-auto px-6 py-3.5 bg-forest-900 hover:bg-forest-800 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-md flex items-center justify-center gap-2 active:scale-98 transition-all"
-            >
-              <span>Next: Add Image & Save (फोटो राख्नुहोस्)</span>
-              <ArrowRight size={16} />
-            </button>
+            <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+              {isEdit && (
+                <button
+                  type="button"
+                  disabled={mutation.isPending || !name.trim() || !basePrice}
+                  onClick={handleFinalSave}
+                  className="w-full sm:w-auto px-5 py-3.5 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-800 font-bold text-xs sm:text-sm hover:bg-emerald-100 transition-all flex items-center justify-center gap-1.5"
+                >
+                  <CheckCircle2 size={15} />
+                  <span>Save Price & Stock</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleGoToStep3}
+                className="w-full sm:w-auto px-6 py-3.5 bg-forest-900 hover:bg-forest-800 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-md flex items-center justify-center gap-2 active:scale-98 transition-all"
+              >
+                <span>Next: Add Image & Save (फोटो राख्नुहोस्)</span>
+                <ArrowRight size={16} />
+              </button>
+            </div>
           </div>
         </div>
       )}

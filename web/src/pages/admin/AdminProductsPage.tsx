@@ -18,11 +18,15 @@ import {
   CheckCircle2,
   ChevronRight,
   Sprout,
+  Check,
+  X,
 } from 'lucide-react';
 
 export const AdminProductsPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
+  const [priceInput, setPriceInput] = useState<string>('');
   const { showToast, confirmAction } = useUI();
   const queryClient = useQueryClient();
 
@@ -35,6 +39,33 @@ export const AdminProductsPage: React.FC = () => {
         limit: 20,
       }),
   });
+
+  const priceMutation = useMutation({
+    mutationFn: ({ id, basePrice }: { id: string; basePrice: number }) =>
+      adminApi.updateProduct(id, { basePrice }),
+    onSuccess: (_, variables) => {
+      showToast(`Price updated to रू ${Number(variables.basePrice).toLocaleString()}`, 'success');
+      invalidateAllProductQueries(queryClient);
+      setEditingPriceId(null);
+    },
+    onError: (err: any) => {
+      showToast(err.response?.data?.message || 'Failed to update price', 'error');
+    },
+  });
+
+  const handleStartEditPrice = (p: any) => {
+    setEditingPriceId(p.id);
+    setPriceInput(String(p.basePrice || ''));
+  };
+
+  const handleSavePrice = (id: string) => {
+    const num = Number(priceInput);
+    if (!num || num <= 0) {
+      showToast('Please enter a valid price in NPR रू', 'error');
+      return;
+    }
+    priceMutation.mutate({ id, basePrice: num });
+  };
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => adminApi.deleteProduct(id),
@@ -181,8 +212,53 @@ export const AdminProductsPage: React.FC = () => {
                       </div>
                     </td>
 
-                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
-                      रू {Number(p.basePrice).toLocaleString()}
+                    <td className="py-3.5 px-4">
+                      {editingPriceId === p.id ? (
+                        <form
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            handleSavePrice(p.id);
+                          }}
+                          className="flex items-center gap-1.5"
+                        >
+                          <span className="text-xs text-forest-700 font-bold">रू</span>
+                          <input
+                            type="number"
+                            min="1"
+                            autoFocus
+                            value={priceInput}
+                            onChange={(e) => setPriceInput(e.target.value)}
+                            className="w-24 px-2 py-1 text-xs font-mono font-bold border-2 border-forest-600 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-forest-600"
+                          />
+                          <button
+                            type="submit"
+                            disabled={priceMutation.isPending}
+                            className="p-1 text-emerald-700 bg-emerald-100 hover:bg-emerald-200 rounded-md transition-colors"
+                            title="Save price"
+                          >
+                            <Check size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingPriceId(null)}
+                            className="p-1 text-slate-500 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
+                            title="Cancel"
+                          >
+                            <X size={14} />
+                          </button>
+                        </form>
+                      ) : (
+                        <div
+                          onClick={() => handleStartEditPrice(p)}
+                          className="group/price inline-flex items-center gap-1.5 cursor-pointer py-1 px-1.5 rounded-lg hover:bg-sand-100/80 transition-colors"
+                          title="Click to edit price instantly"
+                        >
+                          <span className="font-mono font-bold text-slate-900">
+                            रू {Number(p.basePrice).toLocaleString()}
+                          </span>
+                          <Edit2 size={12} className="text-slate-400 opacity-0 group-hover/price:opacity-100 transition-opacity" />
+                        </div>
+                      )}
                     </td>
 
                     <td className="py-3.5 px-4">
@@ -262,9 +338,51 @@ export const AdminProductsPage: React.FC = () => {
                 </div>
 
                 <div className="flex justify-between items-center text-xs py-2 border-y border-slate-100">
-                  <div>
-                    <span className="text-slate-400 block text-[10px]">Price</span>
-                    <span className="font-bold text-slate-900 font-mono">रू {Number(p.basePrice).toLocaleString()}</span>
+                  <div className="flex-1">
+                    <span className="text-slate-400 block text-[10px]">Price (Click to edit)</span>
+                    {editingPriceId === p.id ? (
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleSavePrice(p.id);
+                        }}
+                        className="flex items-center gap-1.5 mt-1"
+                      >
+                        <span className="text-xs text-forest-700 font-bold">रू</span>
+                        <input
+                          type="number"
+                          min="1"
+                          autoFocus
+                          value={priceInput}
+                          onChange={(e) => setPriceInput(e.target.value)}
+                          className="w-20 px-2 py-1 text-xs font-mono font-bold border-2 border-forest-600 rounded-lg bg-white focus:outline-none"
+                        />
+                        <button
+                          type="submit"
+                          disabled={priceMutation.isPending}
+                          className="p-1 text-emerald-700 bg-emerald-100 rounded-md"
+                        >
+                          <Check size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingPriceId(null)}
+                          className="p-1 text-slate-500 bg-slate-100 rounded-md"
+                        >
+                          <X size={14} />
+                        </button>
+                      </form>
+                    ) : (
+                      <div
+                        onClick={() => handleStartEditPrice(p)}
+                        className="inline-flex items-center gap-1.5 cursor-pointer py-0.5"
+                      >
+                        <span className="font-bold text-slate-900 font-mono">
+                          रू {Number(p.basePrice).toLocaleString()}
+                        </span>
+                        <Edit2 size={11} className="text-slate-400" />
+                      </div>
+                    )}
                   </div>
                   <button
                     onClick={() => availabilityMutation.mutate({ id: p.id, available: !p.isAvailable })}
