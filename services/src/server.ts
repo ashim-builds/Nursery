@@ -1,5 +1,5 @@
-// 0. Cap libuv native worker thread pool to prevent CloudLinux NPROC task explosion
-process.env.UV_THREADPOOL_SIZE = '4';
+process.env.TOKIO_WORKER_THREADS = process.env.TOKIO_WORKER_THREADS || '1';
+process.env.UV_THREADPOOL_SIZE = process.env.UV_THREADPOOL_SIZE || '2';
 
 import path from 'path';
 import http from 'http';
@@ -366,14 +366,17 @@ async function startServer() {
   httpServer = http.createServer(app);
   initSocketIO(httpServer);
 
+  // Shorten keep-alive timeouts so reverse proxy connections release workers immediately
+  httpServer.keepAliveTimeout = 2000;
+  httpServer.headersTimeout = 3000;
+
   server = httpServer.listen(target, () => {
     console.log(`🌿 RJ Flowers API is flourishing on`, target);
   });
 
   if (server) {
-    // Release idle Passenger / reverse-proxy connections promptly
-    server.keepAliveTimeout = 15000;
-    server.headersTimeout = 16000;
+    server.keepAliveTimeout = 2000;
+    server.headersTimeout = 3000;
   }
 
   // 2. Connect to MySQL database in background without stalling HTTP listeners
@@ -405,8 +408,11 @@ const handleGracefulShutdown = async (signal: string) => {
   }
 };
 
-process.on('SIGTERM', () => handleGracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => handleGracefulShutdown('SIGINT'));
+const gracefulShutdown = handleGracefulShutdown;
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGUSR2', () => gracefulShutdown('SIGUSR2'));
 
 startServer();
 

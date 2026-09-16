@@ -205,3 +205,4 @@ export class SiteSettingsController {
     return res.status(200).json(ApiResponse.success(updated, 'Admin onboarding setup completed successfully!'));
   });
 }
+

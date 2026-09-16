@@ -107,11 +107,35 @@ export const ProductDetailPage: React.FC = () => {
     <div className="pb-32 sm:pb-16 animate-in fade-in duration-300">
       {/* Dynamic SEO Meta */}
       <SEO
-        title={`${product.title} | RJ Flowers`}
-        description={product.shortDescription || product.description || `Buy ${product.title} in Pokhara`}
+        title={`${product.title} | The Bloom Patch Pokhara`}
+        description={product.shortDescription || product.description || `Buy ${product.title} at The Bloom Patch in Pokhara. Delivery available.`}
+        keywords={`${product.title}, buy ${product.title} Pokhara, The Bloom Patch ${product.title}, plants Pokhara, flowers Pokhara`}
         ogType="product"
         ogImage={images[0]?.url}
         canonical={`${typeof window !== 'undefined' ? window.location.origin : ''}/product/${product.slug}`}
+        structuredData={{
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: product.title,
+          image: images.map((img: any) => img.url),
+          description: product.shortDescription || product.description,
+          sku: product.sku || product.id,
+          brand: {
+            '@type': 'Brand',
+            name: 'The Bloom Patch',
+          },
+          offers: {
+            '@type': 'Offer',
+            url: `${typeof window !== 'undefined' ? window.location.origin : 'https://rjflowers.com'}/product/${product.slug}`,
+            priceCurrency: 'NPR',
+            price: Number(product.discountPrice || product.basePrice || 0),
+            availability: product.isAvailable !== false ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+            seller: {
+              '@type': 'Organization',
+              name: 'The Bloom Patch',
+            },
+          },
+        }}
       />
 
       {/* Breadcrumbs */}

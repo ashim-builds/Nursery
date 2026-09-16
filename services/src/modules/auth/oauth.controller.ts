@@ -190,7 +190,7 @@ export class OAuthController {
     // If initiated from standard browser redirect (GET), redirect to frontend
     if (req.method === 'GET') {
       const frontendUrl = ENV.FRONTEND_URL || 'https://rjflowers.com';
-      return res.redirect(`${frontendUrl}/`);
+      return res.redirect(`${frontendUrl}/?token=${encodeURIComponent(accessToken)}`);
     }
 
     return res.status(200).json(

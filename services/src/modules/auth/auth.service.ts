@@ -49,6 +49,15 @@ export class AuthService {
     });
 
     if (!emailResult.success && !emailResult.simulated) {
+      if (ENV.NODE_ENV !== 'production' || process.env.ALLOW_DEV_OTP === 'true') {
+        console.warn(`⚠️ [OTP] SMTP delivery failed (${emailResult.error}). Non-production mode fallback: OTP is [ ${otp} ].`);
+        return {
+          message: `OTP generated (Check server console: ${otp})`,
+          email: normalizedEmail,
+          type,
+          simulated: true,
+        };
+      }
       throw ApiError.badRequest(`Could not send OTP email: ${emailResult.error || 'SMTP delivery error'}. Please verify your email or try again.`);
     }
 

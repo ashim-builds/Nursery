@@ -75,8 +75,20 @@ var ENV = {
 
 // src/config/database.ts
 var import_client = require("@prisma/client");
+process.env.TOKIO_WORKER_THREADS = process.env.TOKIO_WORKER_THREADS || "1";
+process.env.UV_THREADPOOL_SIZE = process.env.UV_THREADPOOL_SIZE || "2";
+var dbUrl = process.env.DATABASE_URL || "";
+if (!dbUrl.includes("connection_limit")) {
+  dbUrl += (dbUrl.includes("?") ? "&" : "?") + "connection_limit=3&pool_timeout=10";
+}
+process.env.DATABASE_URL = dbUrl;
 var globalForPrisma = globalThis;
 var prisma = globalForPrisma.prismaGlobal ?? new import_client.PrismaClient({
+  datasources: {
+    db: {
+      url: dbUrl
+    }
+  },
   log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"]
 });
 globalForPrisma.prismaGlobal = prisma;
@@ -628,6 +640,15 @@ var AuthService = class {
       userName: recipientName
     });
     if (!emailResult.success && !emailResult.simulated) {
+      if (ENV.NODE_ENV !== "production" || process.env.ALLOW_DEV_OTP === "true") {
+        console.warn(`\u26A0\uFE0F [OTP] SMTP delivery failed (${emailResult.error}). Non-production mode fallback: OTP is [ ${otp} ].`);
+        return {
+          message: `OTP generated (Check server console: ${otp})`,
+          email: normalizedEmail,
+          type,
+          simulated: true
+        };
+      }
       throw ApiError.badRequest(`Could not send OTP email: ${emailResult.error || "SMTP delivery error"}. Please verify your email or try again.`);
     }
     return {
@@ -1085,6 +1106,9 @@ var AuthController = class {
     res.status(200).json(ApiResponse.success(result, "Token refreshed successfully"));
   });
   static getMe = asyncHandler(async (req, res) => {
+    if (!req.user) {
+      return res.status(200).json(ApiResponse.success(null, "No active session"));
+    }
     const userId = req.user.id;
     const profile = await AuthService.getMe(userId);
     res.status(200).json(ApiResponse.success(profile, "User profile retrieved"));
@@ -1248,7 +1272,7 @@ var OAuthController = class {
     });
     if (req.method === "GET") {
       const frontendUrl = ENV.FRONTEND_URL || "https://rjflowers.com";
-      return res.redirect(`${frontendUrl}/`);
+      return res.redirect(`${frontendUrl}/?token=${encodeURIComponent(accessToken)}`);
     }
     return res.status(200).json(
       ApiResponse.success(
@@ -1445,7 +1469,7 @@ router.post("/register", validateRequest(registerSchema), AuthController.registe
 router.post("/login", validateRequest(loginSchema), AuthController.login);
 router.post("/admin-login", AuthController.adminPasswordLogin);
 router.post("/logout", optionalAuth, AuthController.logout);
-router.get("/me", authenticateJWT, AuthController.getMe);
+router.get("/me", optionalAuth, AuthController.getMe);
 router.post("/refresh", AuthController.refresh);
 router.post("/refresh-token", AuthController.refresh);
 router.get("/google/url", OAuthController.getGoogleAuthUrl);
@@ -5996,7 +6020,8 @@ router11.post(
 var siteSettingsRoutes = router11;
 
 // src/server.ts
-process.env.UV_THREADPOOL_SIZE = "4";
+process.env.TOKIO_WORKER_THREADS = process.env.TOKIO_WORKER_THREADS || "1";
+process.env.UV_THREADPOOL_SIZE = process.env.UV_THREADPOOL_SIZE || "2";
 var app = (0, import_express12.default)();
 app.set("trust proxy", 1);
 app.use((0, import_compression.default)({ threshold: 1024 }));
@@ -6300,12 +6325,14 @@ async function startServer() {
   const target = getListenTarget();
   httpServer = import_http.default.createServer(app);
   initSocketIO(httpServer);
+  httpServer.keepAliveTimeout = 2e3;
+  httpServer.headersTimeout = 3e3;
   server = httpServer.listen(target, () => {
     console.log(`\u{1F33F} RJ Flowers API is flourishing on`, target);
   });
   if (server) {
-    server.keepAliveTimeout = 15e3;
-    server.headersTimeout = 16e3;
+    server.keepAliveTimeout = 2e3;
+    server.headersTimeout = 3e3;
   }
   connectDB().catch((err) => {
     console.error("\u26A0\uFE0F [DB] Connection warning on startup:", err?.message || err);
@@ -6333,7 +6360,9 @@ var handleGracefulShutdown = async (signal) => {
     process.exit(0);
   }
 };
-process.on("SIGTERM", () => handleGracefulShutdown("SIGTERM"));
-process.on("SIGINT", () => handleGracefulShutdown("SIGINT"));
+var gracefulShutdown = handleGracefulShutdown;
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+process.on("SIGUSR2", () => gracefulShutdown("SIGUSR2"));
 startServer();
 var server_default = app;

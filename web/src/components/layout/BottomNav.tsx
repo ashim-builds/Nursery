@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Grid, Package, User, Shield } from 'lucide-react';
+import { Home, Grid, Package, User, Shield, Phone } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export const BottomNav: React.FC = () => {
@@ -17,7 +17,7 @@ export const BottomNav: React.FC = () => {
       aria-label="Mobile Bottom Navigation"
       className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#071a14] border-t border-forest-800 shadow-2xl safe-bottom"
     >
-      <div className={`grid ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'} h-14 items-center max-w-md mx-auto px-1.5`}>
+      <div className={`grid ${isAdmin ? 'grid-cols-6' : 'grid-cols-5'} h-14 items-center max-w-md mx-auto px-1.5`}>
         {/* 1. Home */}
         <NavLink
           to="/"
@@ -44,7 +44,20 @@ export const BottomNav: React.FC = () => {
           <span className="text-[10px] tracking-tight">Catalog</span>
         </NavLink>
 
-        {/* 3. Orders */}
+        {/* 3. Contact */}
+        <NavLink
+          to="/contact"
+          className={({ isActive }) =>
+            `flex flex-col items-center justify-center gap-0.5 py-1 h-full touch-target transition-all ${
+              isActive ? 'text-white font-bold scale-105' : 'text-white/70 hover:text-white'
+            }`
+          }
+        >
+          <Phone size={19} />
+          <span className="text-[10px] tracking-tight">Contact</span>
+        </NavLink>
+
+        {/* 4. Orders */}
         <NavLink
           to={isAuthenticated ? '/orders' : '/login?redirect=/orders'}
           className={({ isActive }) =>

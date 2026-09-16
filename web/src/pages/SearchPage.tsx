@@ -138,15 +138,16 @@ export const SearchPage: React.FC = () => {
   };
 
   const seoTitle = query
-    ? `Search Results for "${query}" | RJ Flowers Nursery`
-    : 'Search Plants, Pots & Flowers | RJ Flowers';
+    ? `Search: "${query}" | The Bloom Patch Pokhara`
+    : 'Search Plants & Flowers | The Bloom Patch Pokhara';
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 pb-24">
       {/* Dynamic SEO Meta */}
       <SEO
         title={seoTitle}
-        description={`Find healthy plants and planters matching ${query || 'flowers and greenery'} in Pokhara with local delivery.`}
+        description={`Find healthy plants, fresh flowers, and nursery supplies matching ${query || 'greenery'} from The Bloom Patch & RJ Flowers in Pokhara.`}
+        keywords="The Bloom Patch search, The Bloom Patch plants, buy flowers Pokhara, plant delivery Pokhara"
         canonical={`${typeof window !== 'undefined' ? window.location.origin : ''}/search${query ? '?q=' + encodeURIComponent(query) : ''}`}
       />
       {/* Search Input Bar */}

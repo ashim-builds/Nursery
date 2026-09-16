@@ -63,15 +63,27 @@ export const HomePage: React.FC = () => {
 
   const nurserySchema = {
     "@context": "https://schema.org",
-    "@type": "GardenStore",
-    name: businessName,
-    image:
-      "https://images.unsplash.com/photo-1545241047-6083a3684587?auto=format&fit=crop&w=1200&q=80",
-    url: typeof window !== "undefined" ? window.location.origin : "/",
-    telephone: siteSettings?.phone
-      ? `+977-${siteSettings.phone}`
-      : "+977-9815155580",
+    "@type": ["GardenStore", "Florist", "LocalBusiness"],
+    name: "The Bloom Patch",
+    legalName: "RJ Flowers & Nursery",
+    alternateName: [
+      "The Bloom Patch",
+      "The Bloom Patch Pokhara",
+      "The Bloom Patch & Nursery",
+      "The Bloom Patch by RJ Flowers",
+      "RJ Flowers",
+      "RJ Flowers & Nursery"
+    ],
+    image: [
+      "https://rjflowers.com/the-bloom-patch-logo.png",
+      "https://rjflowers.com/hero-flowers-banner.jpg",
+      "https://rjflowers.com/hero-plant.jpg"
+    ],
+    url: typeof window !== "undefined" ? window.location.origin : "https://rjflowers.com",
+    telephone: siteSettings?.phone ? `+977-${siteSettings.phone}` : "+977-9815155580",
     priceRange: "रू 200 - रू 25,000",
+    currenciesAccepted: "NPR",
+    paymentAccepted: "Cash, eSewa, Khalti, Mobile Banking, Card",
     address: {
       "@type": "PostalAddress",
       streetAddress: siteSettings?.address || "Pokhara-26, Arghau Chowk",
@@ -85,14 +97,26 @@ export const HomePage: React.FC = () => {
       latitude: Number(siteSettings?.latitude) || 28.2365,
       longitude: Number(siteSettings?.longitude) || 84.0036,
     },
+    openingHoursSpecification: [
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+        opens: "07:00",
+        closes: "19:00"
+      }
+    ],
+    sameAs: [
+      "https://www.facebook.com/p/RJ-Flower-Nursery-100038914454450/"
+    ]
   };
 
   return (
     <div className="space-y-8 sm:space-y-12 pb-16">
       {/* Dynamic SEO Meta */}
       <SEO
-        title={`${businessName} | Flowers and Nursery in Pokhara`}
-        description={`${businessName} and Nursery in Pokhara-26, Arghau Chowk. Shop flowers and plants with delivery across Pokhara.`}
+        title="The Bloom Patch | RJ Flowers & Nursery Pokhara"
+        description="The Bloom Patch (RJ Flowers & Nursery) in Pokhara-26, Arghau Chowk. Order fresh flower bouquets, indoor plants, succulents, outdoor blooms, and garden accessories with delivery across Pokhara."
+        keywords="The Bloom Patch, The Bloom Patch Pokhara, The Bloom Patch Nursery, The Bloom Patch Nepal, RJ Flowers, RJ Flowers & Nursery, nursery in Pokhara, flower delivery Pokhara, plant shop Pokhara, buy plants Pokhara"
         canonical={
           typeof window !== "undefined" ? `${window.location.origin}/` : "/"
         }
@@ -176,7 +200,7 @@ export const HomePage: React.FC = () => {
           {/* Left Content Column */}
           <div className="relative z-10 p-8 lg:p-14 xl:p-16 max-w-xl flex flex-col justify-center min-h-[360px] lg:min-h-[420px] xl:min-h-[460px] space-y-4 lg:space-y-6">
             <span className="text-forest-700 font-bold text-xs tracking-widest uppercase">
-              Fresh Flowers
+              The Bloom Patch &bull; Fresh Flowers
             </span>
 
             <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-[#14281d] leading-[1.12] tracking-tight">
@@ -185,7 +209,7 @@ export const HomePage: React.FC = () => {
             </h1>
 
             <p className="text-slate-600 text-sm sm:text-base font-normal max-w-md leading-relaxed">
-              Beautiful bouquets for birthdays, anniversaries, gifts and more.
+              The Bloom Patch by RJ Flowers & Nursery — Handcrafted bouquets, rare houseplants, outdoor blooms, and garden supplies delivered across Pokhara.
             </p>
 
             <div className="pt-2">
@@ -214,7 +238,7 @@ export const HomePage: React.FC = () => {
           {/* Left Content Column */}
           <div className="relative z-10 p-5 sm:p-6 max-w-[62%] flex flex-col justify-center min-h-[220px] sm:min-h-[250px] space-y-2">
             <span className="text-forest-700 font-bold text-[10px] uppercase tracking-widest">
-              Fresh Flowers
+              The Bloom Patch
             </span>
 
             <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#14281d] leading-tight">
@@ -223,7 +247,7 @@ export const HomePage: React.FC = () => {
             </h2>
 
             <p className="text-slate-600 text-[11px] leading-snug line-clamp-2">
-              Beautiful bouquets for birthdays, anniversaries, and gifts.
+              The Bloom Patch by RJ Flowers & Nursery. Fresh flowers & plants delivered across Pokhara.
             </p>
 
             <div className="pt-1.5">

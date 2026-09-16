@@ -87,7 +87,10 @@ export class AuthController {
   });
 
   static getMe = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const userId = req.user!.id;
+    if (!req.user) {
+      return res.status(200).json(ApiResponse.success(null, 'No active session'));
+    }
+    const userId = req.user.id;
     const profile = await AuthService.getMe(userId);
     res.status(200).json(ApiResponse.success(profile, 'User profile retrieved'));
   });

@@ -23,7 +23,8 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const origin = getBackendOrigin() || (typeof window !== 'undefined' ? window.location.origin : '');
     const socket = io(origin, {
       path: '/socket.io',
-      transports: ['polling', 'websocket'], // Polling first guarantees 100% compatibility across cPanel reverse proxies
+      transports: ['polling'], // cPanel Phusion Passenger does not support raw WebSocket proxying; long-polling is 100% reliable
+      upgrade: false,
       reconnectionAttempts: 5,
       reconnectionDelay: 3000,
       withCredentials: true,

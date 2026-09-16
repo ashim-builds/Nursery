@@ -49,8 +49,9 @@ export const CatalogPage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 pb-24">
       {/* Dynamic SEO Meta */}
       <SEO
-        title={search ? `Search: "${search}" | RJ Flowers Shop` : 'Shop All Plants & Flowers | RJ Flowers'}
-        description="Browse our collection of healthy plants, flowers, and nursery products available for delivery across Pokhara."
+        title={search ? `Search: "${search}" | The Bloom Patch Pokhara` : 'Shop Plants & Flowers | The Bloom Patch Pokhara'}
+        description="Browse handcrafted flower bouquets, indoor foliage, outdoor blooms, and garden supplies from The Bloom Patch & RJ Flowers with delivery in Pokhara."
+        keywords="The Bloom Patch plants, The Bloom Patch flowers, buy plants Pokhara, flower bouquets Pokhara, RJ Flowers nursery catalog"
         canonical={typeof window !== 'undefined' ? `${window.location.origin}/catalog` : '/catalog'}
       />
 

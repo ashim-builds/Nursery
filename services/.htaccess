@@ -5,3 +5,8 @@ PassengerNodejs "/home/rjflower/nodevenv/api.rjflowers.com/20/bin/node"
 PassengerAppType node
 PassengerStartupFile app.js
 # DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END
+
+# CloudLinux NPROC & Passenger Worker Optimization
+PassengerMaxInstances 1
+PassengerMinInstances 1
+PassengerPoolIdleTime 300

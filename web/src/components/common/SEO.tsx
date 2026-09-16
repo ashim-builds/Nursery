@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 export interface SEOProps {
   title?: string;
   description?: string;
+  keywords?: string;
   canonical?: string;
   ogType?: 'website' | 'product' | 'article';
   ogImage?: string;
@@ -11,15 +12,18 @@ export interface SEOProps {
   noIndex?: boolean;
 }
 
-const DEFAULT_TITLE = "RJ Flowers";
+const DEFAULT_TITLE = "The Bloom Patch | RJ Flowers & Nursery Pokhara";
 const DEFAULT_DESCRIPTION =
-  "RJ Flowers nursery in Pokhara-26, Arghau Chowk. Shop flowers and plants with delivery across Pokhara.";
-const DEFAULT_IMAGE = "/rj-flowers-icon-512.png";
-const SITE_NAME = "RJ Flowers";
+  "The Bloom Patch (RJ Flowers & Nursery) in Pokhara-26, Arghau Chowk. Order fresh flower bouquets, indoor plants, succulents, outdoor blooms, and garden accessories with delivery across Pokhara.";
+const DEFAULT_KEYWORDS =
+  "The Bloom Patch, The Bloom Patch Pokhara, The Bloom Patch Nursery, The Bloom Patch Nepal, RJ Flowers, RJ Flowers & Nursery, nursery in Pokhara, plant shop Pokhara, fresh flowers Pokhara, online plant delivery Pokhara, flower bouquet Pokhara";
+const DEFAULT_IMAGE = "/the-bloom-patch-logo.png";
+const SITE_NAME = "The Bloom Patch — RJ Flowers & Nursery";
 
 export const SEO: React.FC<SEOProps> = ({
   title,
   description = DEFAULT_DESCRIPTION,
+  keywords = DEFAULT_KEYWORDS,
   canonical,
   ogType = 'website',
   ogImage = DEFAULT_IMAGE,
@@ -46,7 +50,14 @@ export const SEO: React.FC<SEOProps> = ({
 
     // 2. Standard Meta Tags
     setMetaTag('name', 'description', description);
+    if (keywords) {
+      setMetaTag('name', 'keywords', keywords);
+    }
     setMetaTag('name', 'robots', noIndex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large');
+    setMetaTag('name', 'geo.region', 'NP-GA');
+    setMetaTag('name', 'geo.placename', 'Pokhara');
+    setMetaTag('name', 'geo.position', '28.2365;84.0036');
+    setMetaTag('name', 'ICBM', '28.2365, 84.0036');
 
     // 3. Open Graph Metadata
     const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://rjflowers.com';
@@ -96,7 +107,7 @@ export const SEO: React.FC<SEOProps> = ({
       const oldScript = document.getElementById(jsonLdId);
       if (oldScript) oldScript.remove();
     };
-  }, [title, description, canonical, ogType, ogImage, structuredData, noIndex, location.pathname]);
+  }, [title, description, keywords, canonical, ogType, ogImage, structuredData, noIndex, location.pathname]);
 
   return null;
 };

@@ -62,6 +62,10 @@ export const Header: React.FC = () => {
               Shop
             </Link>
 
+            <Link to="/contact" className="hover:text-forest-600 transition-colors font-medium">
+              Contact
+            </Link>
+
             {isAdmin && (
               <Link
                 to="/admin"

@@ -1,5 +1,6 @@
 // cPanel / Phusion Passenger entry point
-process.env.UV_THREADPOOL_SIZE = '4';
+process.env.TOKIO_WORKER_THREADS = process.env.TOKIO_WORKER_THREADS || '1';
+process.env.UV_THREADPOOL_SIZE = process.env.UV_THREADPOOL_SIZE || '2';
 
 try {
   const server = require('./dist/server.js');

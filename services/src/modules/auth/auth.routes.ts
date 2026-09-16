@@ -23,7 +23,7 @@ router.post('/register', validateRequest(registerSchema), AuthController.registe
 router.post('/login', validateRequest(loginSchema), AuthController.login);
 router.post('/admin-login', AuthController.adminPasswordLogin);
 router.post('/logout', optionalAuth, AuthController.logout);
-router.get('/me', authenticateJWT, AuthController.getMe);
+router.get('/me', optionalAuth, AuthController.getMe);
 router.post('/refresh', AuthController.refresh);
 router.post('/refresh-token', AuthController.refresh);
 
