@@ -6185,6 +6185,7 @@ app.get(["/robots.txt", "/api/robots.txt"], async (_req, res) => {
     async () => `# RJ Flowers Robots.txt
 User-agent: *
 Allow: /
+Allow: /bloom-patch
 Allow: /product/
 Allow: /products/
 Allow: /category/
@@ -6229,6 +6230,7 @@ app.get(["/sitemap.xml", "/api/sitemap.xml"], async (_req, res) => {
 `;
         const staticPages = [
           { loc: `${baseUrl}/`, priority: "1.0", changefreq: "daily" },
+          { loc: `${baseUrl}/bloom-patch`, priority: "0.9", changefreq: "weekly" },
           { loc: `${baseUrl}/catalog`, priority: "0.9", changefreq: "daily" },
           { loc: `${baseUrl}/categories`, priority: "0.8", changefreq: "weekly" },
           { loc: `${baseUrl}/search`, priority: "0.7", changefreq: "weekly" },

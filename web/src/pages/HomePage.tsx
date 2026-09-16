@@ -63,15 +63,15 @@ export const HomePage: React.FC = () => {
 
   const nurserySchema = {
     "@context": "https://schema.org",
-    "@type": ["GardenStore", "Florist", "LocalBusiness"],
-    name: "The Bloom Patch",
+    "@type": ["Florist", "GardenStore", "LocalBusiness"],
+    "@id": "https://rjflowers.com/#business",
+    name: "RJ Flowers & Nursery",
     legalName: "RJ Flowers & Nursery",
     alternateName: [
-      "The Bloom Patch",
-      "The Bloom Patch Pokhara",
-      "The Bloom Patch & Nursery",
-      "The Bloom Patch by RJ Flowers",
       "RJ Flowers",
+      "Bloom Patch",
+      "The Bloom Patch",
+      "Bloom Patch Pokhara",
       "RJ Flowers & Nursery"
     ],
     image: [
@@ -79,7 +79,7 @@ export const HomePage: React.FC = () => {
       "https://rjflowers.com/hero-flowers-banner.jpg",
       "https://rjflowers.com/hero-plant.jpg"
     ],
-    url: typeof window !== "undefined" ? window.location.origin : "https://rjflowers.com",
+    url: "https://rjflowers.com/",
     telephone: siteSettings?.phone ? `+977-${siteSettings.phone}` : "+977-9815155580",
     priceRange: "रू 200 - रू 25,000",
     currenciesAccepted: "NPR",
@@ -97,6 +97,7 @@ export const HomePage: React.FC = () => {
       latitude: Number(siteSettings?.latitude) || 28.2365,
       longitude: Number(siteSettings?.longitude) || 84.0036,
     },
+    hasMap: "https://maps.google.com/?q=28.2365,84.0036",
     openingHoursSpecification: [
       {
         "@type": "OpeningHoursSpecification",
@@ -114,12 +115,10 @@ export const HomePage: React.FC = () => {
     <div className="space-y-8 sm:space-y-12 pb-16">
       {/* Dynamic SEO Meta */}
       <SEO
-        title="The Bloom Patch | RJ Flowers & Nursery Pokhara"
-        description="The Bloom Patch (RJ Flowers & Nursery) in Pokhara-26, Arghau Chowk. Order fresh flower bouquets, indoor plants, succulents, outdoor blooms, and garden accessories with delivery across Pokhara."
-        keywords="The Bloom Patch, The Bloom Patch Pokhara, The Bloom Patch Nursery, The Bloom Patch Nepal, RJ Flowers, RJ Flowers & Nursery, nursery in Pokhara, flower delivery Pokhara, plant shop Pokhara, buy plants Pokhara"
-        canonical={
-          typeof window !== "undefined" ? `${window.location.origin}/` : "/"
-        }
+        title="RJ Flowers | Bloom Patch & Flower Nursery in Pokhara"
+        description="RJ Flowers is Pokhara's premier flower shop and plant nursery at Arghau Chowk. Discover fresh floral bouquets, indoor plants, and garden supplies through our Bloom Patch collection with delivery across Pokhara."
+        keywords="RJ Flowers, RJ Flowers Pokhara, Flower shop Pokhara, Flower nursery Pokhara, Bloom Patch Pokhara, buy plants Pokhara, flower delivery Pokhara"
+        canonical="https://rjflowers.com/"
         structuredData={nurserySchema}
       />
 
@@ -200,7 +199,7 @@ export const HomePage: React.FC = () => {
           {/* Left Content Column */}
           <div className="relative z-10 p-8 lg:p-14 xl:p-16 max-w-xl flex flex-col justify-center min-h-[360px] lg:min-h-[420px] xl:min-h-[460px] space-y-4 lg:space-y-6">
             <span className="text-forest-700 font-bold text-xs tracking-widest uppercase">
-              The Bloom Patch &bull; Fresh Flowers
+              RJ Flowers &bull; Bloom Patch Collection
             </span>
 
             <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-[#14281d] leading-[1.12] tracking-tight">
@@ -209,16 +208,26 @@ export const HomePage: React.FC = () => {
             </h1>
 
             <p className="text-slate-600 text-sm sm:text-base font-normal max-w-md leading-relaxed">
-              The Bloom Patch by RJ Flowers & Nursery — Handcrafted bouquets, rare houseplants, outdoor blooms, and garden supplies delivered across Pokhara.
+              RJ Flowers &amp; Nursery in Pokhara — Handcrafted bouquets through our signature{' '}
+              <Link to="/bloom-patch" className="text-forest-800 font-semibold underline underline-offset-2 hover:text-forest-950">
+                Bloom Patch
+              </Link>{' '}
+              collection, rare houseplants, outdoor blooms, and garden supplies delivered across Pokhara.
             </p>
 
-            <div className="pt-2">
+            <div className="pt-2 flex flex-wrap items-center gap-3">
               <Link
                 to="/catalog"
                 className="bg-[#1b4332] hover:bg-[#143225] text-white font-medium text-xs sm:text-sm px-7 py-3 rounded-full inline-flex items-center gap-2 shadow-sm hover:shadow-md transition-all active:scale-98"
               >
                 <span>Shop Now</span>
                 <ArrowRight size={15} />
+              </Link>
+              <Link
+                to="/bloom-patch"
+                className="bg-white/90 hover:bg-white text-forest-900 border border-forest-200 font-medium text-xs sm:text-sm px-5 py-3 rounded-full inline-flex items-center gap-1.5 shadow-2xs transition-colors"
+              >
+                <span>Explore Bloom Patch</span>
               </Link>
             </div>
           </div>
@@ -238,7 +247,7 @@ export const HomePage: React.FC = () => {
           {/* Left Content Column */}
           <div className="relative z-10 p-5 sm:p-6 max-w-[62%] flex flex-col justify-center min-h-[220px] sm:min-h-[250px] space-y-2">
             <span className="text-forest-700 font-bold text-[10px] uppercase tracking-widest">
-              The Bloom Patch
+              RJ Flowers &bull; Bloom Patch
             </span>
 
             <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#14281d] leading-tight">
@@ -247,10 +256,14 @@ export const HomePage: React.FC = () => {
             </h2>
 
             <p className="text-slate-600 text-[11px] leading-snug line-clamp-2">
-              The Bloom Patch by RJ Flowers & Nursery. Fresh flowers & plants delivered across Pokhara.
+              Fresh flowers &amp; plants by RJ Flowers Pokhara. Explore our{' '}
+              <Link to="/bloom-patch" className="underline font-semibold text-forest-900">
+                Bloom Patch
+              </Link>{' '}
+              collection.
             </p>
 
-            <div className="pt-1.5">
+            <div className="pt-1.5 flex items-center gap-2">
               <Link
                 to="/catalog"
                 className="bg-[#1b4332] hover:bg-[#143225] active:scale-95 text-white text-[11px] font-semibold px-4 py-2 rounded-full inline-flex items-center gap-1.5 shadow-sm shadow-emerald-950/20 transition-transform"
@@ -258,8 +271,45 @@ export const HomePage: React.FC = () => {
                 <span>Shop Now</span>
                 <ArrowRight size={13} />
               </Link>
+              <Link
+                to="/bloom-patch"
+                className="text-[11px] font-semibold text-forest-800 hover:text-forest-950 px-2 py-1"
+              >
+                Bloom Patch →
+              </Link>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Bloom Patch Floral Boutique Spotlight Card */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-[#f4f7f5] border border-forest-100 rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-forest-800 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Sprout size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-serif font-bold text-sm sm:text-base text-forest-950">
+                  Bloom Patch at RJ Flowers
+                </h3>
+                <span className="text-[10px] bg-emerald-100 text-forest-800 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                  Floral Boutique
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 mt-0.5 max-w-xl">
+                Looking for fresh flower bouquets, celebratory arrangements, or acclimatized houseplants in Pokhara? Discover the story and floral varieties behind Bloom Patch.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/bloom-patch"
+            className="shrink-0 inline-flex items-center gap-1.5 text-xs font-bold text-forest-800 hover:text-forest-950 bg-white border border-forest-200 px-4 py-2 rounded-full shadow-2xs hover:shadow-xs transition-all"
+          >
+            <span>Learn about Bloom Patch Pokhara</span>
+            <ArrowRight size={13} />
+          </Link>
         </div>
       </section>
 

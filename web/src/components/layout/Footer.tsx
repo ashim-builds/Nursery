@@ -87,6 +87,12 @@ export const Footer: React.FC = () => {
                   Shop all plants <ArrowUpRight size={13} />
                 </Link>
                 <Link
+                  to="/bloom-patch"
+                  className="flex items-center gap-1 hover:text-white transition-colors"
+                >
+                  Bloom Patch Pokhara <ArrowUpRight size={13} />
+                </Link>
+                <Link
                   to="/orders"
                   className="flex items-center gap-1 hover:text-white transition-colors"
                 >

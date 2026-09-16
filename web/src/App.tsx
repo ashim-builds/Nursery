@@ -28,6 +28,7 @@ const LoginPage = React.lazy(() => import('./pages/LoginPage').then((m) => ({ de
 const RegisterPage = React.lazy(() => import('./pages/RegisterPage').then((m) => ({ default: m.RegisterPage })));
 const ForgotPasswordPage = React.lazy(() => import('./pages/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })));
 const ContactPage = React.lazy(() => import('./pages/ContactPage').then((m) => ({ default: m.ContactPage })));
+const BloomPatchPage = React.lazy(() => import('./pages/BloomPatchPage').then((m) => ({ default: m.BloomPatchPage })));
 const PrivacyPage = React.lazy(() => import('./pages/PrivacyPage').then((m) => ({ default: m.PrivacyPage })));
 const TermsPage = React.lazy(() => import('./pages/TermsPage').then((m) => ({ default: m.TermsPage })));
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })));
@@ -76,6 +77,7 @@ export const App: React.FC = () => {
                       {/* 1. PUBLIC STOREFRONT & CUSTOMER ROUTES */}
                       <Route element={<StorefrontLayout />}>
                         <Route path="/" element={<HomePage />} />
+                        <Route path="/bloom-patch" element={<BloomPatchPage />} />
                         <Route path="/catalog" element={<CatalogPage />} />
                         <Route path="/products/:slug" element={<ProductDetailPage />} />
                         <Route path="/product/:slug" element={<ProductDetailPage />} />

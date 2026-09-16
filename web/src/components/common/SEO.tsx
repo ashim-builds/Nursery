@@ -12,13 +12,13 @@ export interface SEOProps {
   noIndex?: boolean;
 }
 
-const DEFAULT_TITLE = "The Bloom Patch | RJ Flowers & Nursery Pokhara";
+const DEFAULT_TITLE = "RJ Flowers | Bloom Patch & Flower Nursery in Pokhara";
 const DEFAULT_DESCRIPTION =
-  "The Bloom Patch (RJ Flowers & Nursery) in Pokhara-26, Arghau Chowk. Order fresh flower bouquets, indoor plants, succulents, outdoor blooms, and garden accessories with delivery across Pokhara.";
+  "RJ Flowers is Pokhara's premier flower shop and plant nursery at Arghau Chowk. Discover fresh floral bouquets, indoor plants, and garden supplies through our Bloom Patch collection with delivery across Pokhara.";
 const DEFAULT_KEYWORDS =
-  "The Bloom Patch, The Bloom Patch Pokhara, The Bloom Patch Nursery, The Bloom Patch Nepal, RJ Flowers, RJ Flowers & Nursery, nursery in Pokhara, plant shop Pokhara, fresh flowers Pokhara, online plant delivery Pokhara, flower bouquet Pokhara";
+  "RJ Flowers, RJ Flowers Pokhara, Flower shop Pokhara, Flower nursery Pokhara, Bloom Patch, Bloom Patch Pokhara, buy plants Pokhara, flower delivery Pokhara";
 const DEFAULT_IMAGE = "/the-bloom-patch-logo.png";
-const SITE_NAME = "The Bloom Patch — RJ Flowers & Nursery";
+const SITE_NAME = "RJ Flowers & Nursery — Bloom Patch Pokhara";
 
 export const SEO: React.FC<SEOProps> = ({
   title,

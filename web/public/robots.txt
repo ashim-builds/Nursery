@@ -1,11 +1,10 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
 Allow: /
+Allow: /bloom-patch
+Allow: /catalog
 Allow: /product/
 Allow: /products/
-Allow: /category/
-Allow: /categories/
-Allow: /catalog
 Allow: /search
 Allow: /contact
 Allow: /privacy
