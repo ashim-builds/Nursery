@@ -10,3 +10,25 @@ PassengerStartupFile app.js
 PassengerMaxInstances 1
 PassengerMinInstances 1
 PassengerPoolIdleTime 300
+
+# Environment variables for Passenger
+SetEnv DATABASE_URL "mysql://rjflower_rjflowers:Rjflowers%402026!@localhost:3306/rjflower_nurserydb?connection_limit=3&pool_timeout=10"
+SetEnv NODE_ENV "production"
+SetEnv PORT "5000"
+SetEnv JWT_SECRET "20ctA0szmkzihsPnKEJeZoZAa3NaO6mDeo9xvWdEBCp"
+SetEnv JWT_REFRESH_SECRET "viHMvaBl1vdFdVIn1It8gSCvrui8yx8eGmEBAkcaXLF"
+SetEnv COOKIE_SECRET "XHC2Gt3tgQ994mBfVIcacuAMPy6Ks28Ef23pl7CTGQV"
+SetEnv FRONTEND_URL "https://rjflowers.com"
+SetEnv BACKEND_URL "https://api.rjflowers.com"
+SetEnv CORS_ORIGIN "https://rjflowers.com"
+
+
+# Global CORS Headers for Apache (guarantees CORS headers even on 5xx error responses)
+<IfModule mod_headers.c>
+    SetEnvIf Origin "^(https?://(www\.)?rjflowers\.com(:[0-9]+)?|https?://localhost(:[0-9]+)?)$" CORS_ORIGIN=$0
+    Header always set Access-Control-Allow-Origin "%{CORS_ORIGIN}e" env=CORS_ORIGIN
+    Header always set Access-Control-Allow-Credentials "true" env=CORS_ORIGIN
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, x-session-id, x-refresh-token, Accept, Origin, X-Requested-With, Cache-Control, Pragma, Expires, If-Modified-Since"
+</IfModule>
+

@@ -33,7 +33,8 @@ __export(server_exports, {
   default: () => server_default
 });
 module.exports = __toCommonJS(server_exports);
-var import_path2 = __toESM(require("path"));
+var import_path3 = __toESM(require("path"));
+var import_fs3 = __toESM(require("fs"));
 var import_http = __toESM(require("http"));
 var import_express12 = __toESM(require("express"));
 var import_cors = __toESM(require("cors"));
@@ -44,19 +45,46 @@ var import_express_rate_limit = __toESM(require("express-rate-limit"));
 
 // src/config/env.ts
 var import_dotenv = __toESM(require("dotenv"));
-import_dotenv.default.config();
+var import_path = __toESM(require("path"));
+var import_fs = __toESM(require("fs"));
+var candidateNames = [".env", "env", ".env.txt", "env.txt", "production.env", ".env.production"];
+var candidateDirs = [
+  process.cwd(),
+  __dirname,
+  import_path.default.resolve(__dirname, ".."),
+  import_path.default.resolve(__dirname, "../.."),
+  "/home/rjflower/api.rjflowers.com"
+];
+var envLoaded = false;
+for (const dir of candidateDirs) {
+  for (const name of candidateNames) {
+    try {
+      const fullPath = import_path.default.resolve(dir, name);
+      if (import_fs.default.existsSync(fullPath)) {
+        import_dotenv.default.config({ path: fullPath });
+        envLoaded = true;
+        break;
+      }
+    } catch {
+    }
+  }
+  if (envLoaded) break;
+}
+if (!envLoaded) {
+  import_dotenv.default.config();
+}
 var ENV = {
   PORT: process.env.PORT ? parseInt(process.env.PORT, 10) : 5e3,
   NODE_ENV: process.env.NODE_ENV || "development",
-  DATABASE_URL: process.env.DATABASE_URL || "mysql://root:root@localhost:3306/nursery_db",
+  DATABASE_URL: process.env.DATABASE_URL || "",
   JWT_SECRET: process.env.JWT_SECRET || "nursery_super_secret_jwt_access_token_2026",
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "7d",
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || "nursery_super_secret_jwt_refresh_token_2026",
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || "30d",
   COOKIE_SECRET: process.env.COOKIE_SECRET || "nursery_secure_cookie_signing_secret_2026",
-  FRONTEND_URL: process.env.FRONTEND_URL || process.env.CLIENT_URL || "http://localhost",
-  BACKEND_URL: process.env.BACKEND_URL || "http://localhost:5000",
-  CORS_ORIGIN: process.env.CORS_ORIGIN || process.env.FRONTEND_URL || "http://localhost",
+  FRONTEND_URL: process.env.FRONTEND_URL || process.env.CLIENT_URL || "https://rjflowers.com",
+  BACKEND_URL: process.env.BACKEND_URL || "https://api.rjflowers.com",
+  CORS_ORIGIN: process.env.CORS_ORIGIN || process.env.FRONTEND_URL || "https://rjflowers.com",
   // Google OAuth
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || "",
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || "",
@@ -77,27 +105,50 @@ var ENV = {
 var import_client = require("@prisma/client");
 process.env.TOKIO_WORKER_THREADS = process.env.TOKIO_WORKER_THREADS || "1";
 process.env.UV_THREADPOOL_SIZE = process.env.UV_THREADPOOL_SIZE || "2";
-var dbUrl = process.env.DATABASE_URL || "";
-if (!dbUrl.includes("connection_limit")) {
-  dbUrl += (dbUrl.includes("?") ? "&" : "?") + "connection_limit=3&pool_timeout=10";
+var rawUrl = (process.env.DATABASE_URL || "mysql://rjflower_rjflowers:Rjflowers%402026!@localhost:3306/rjflower_nurserydb").trim();
+if (!rawUrl && (process.env.DB_NAME || process.env.MYSQL_DATABASE)) {
+  const user = process.env.DB_USER || process.env.MYSQL_USER || "rjflowe_dbuser";
+  const pass = process.env.DB_PASSWORD || process.env.DB_PASS || process.env.MYSQL_PASSWORD || "";
+  const host = process.env.DB_HOST || process.env.MYSQL_HOST || "localhost";
+  const port = process.env.DB_PORT || process.env.MYSQL_PORT || "3306";
+  const name = process.env.DB_NAME || process.env.MYSQL_DATABASE || "rjflowe_nurserydb";
+  rawUrl = `mysql://${encodeURIComponent(user)}:${encodeURIComponent(pass)}@${host}:${port}/${name}`;
 }
-process.env.DATABASE_URL = dbUrl;
+if (rawUrl.startsWith('"') && rawUrl.endsWith('"') || rawUrl.startsWith("'") && rawUrl.endsWith("'")) {
+  rawUrl = rawUrl.slice(1, -1).trim();
+}
+var finalDbUrl = "";
+if (rawUrl && rawUrl.startsWith("mysql://")) {
+  finalDbUrl = rawUrl;
+  if (!finalDbUrl.includes("connection_limit")) {
+    finalDbUrl += (finalDbUrl.includes("?") ? "&" : "?") + "connection_limit=3&pool_timeout=10";
+  }
+  process.env.DATABASE_URL = finalDbUrl;
+} else {
+  console.error("\u274C [DATABASE_URL CONFIG ERROR] DATABASE_URL is missing or does not start with mysql://");
+}
 var globalForPrisma = globalThis;
 var prisma = globalForPrisma.prismaGlobal ?? new import_client.PrismaClient({
-  datasources: {
+  datasources: finalDbUrl ? {
     db: {
-      url: dbUrl
+      url: finalDbUrl
     }
-  },
+  } : void 0,
   log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"]
 });
 globalForPrisma.prismaGlobal = prisma;
 async function connectDB() {
+  if (!finalDbUrl || !finalDbUrl.startsWith("mysql://")) {
+    console.error("\u274C [DB] Cannot connect to MySQL: DATABASE_URL is not configured or invalid.");
+    return false;
+  }
   try {
     await prisma.$connect();
     console.log("\u{1F332} Successfully connected to MySQL database via Prisma");
+    return true;
   } catch (error) {
     console.error("\u274C Failed to connect to MySQL database:", error.message);
+    return false;
   }
 }
 
@@ -140,10 +191,18 @@ var ApiError = class _ApiError extends Error {
 // src/middlewares/error.middleware.ts
 var errorHandler = (err, req, res, next) => {
   let error = err;
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+  }
+  let message = error?.message || "Internal Server Error";
+  if (message.includes("Error validating datasource `db`") || message.includes("DATABASE_URL")) {
+    message = "Database configuration error: Please verify that DATABASE_URL is properly configured in the server .env file (must start with mysql://).";
+  }
   if (!(error instanceof ApiError)) {
     const statusCode = error.statusCode || 500;
-    const message = error.message || "Internal Server Error";
-    error = new ApiError(statusCode, message, [], err.stack);
+    error = new ApiError(statusCode, message, [], err?.stack);
   }
   const response = {
     success: false,
@@ -289,10 +348,24 @@ var io = null;
 function initSocketIO(httpServer2, allowedOrigin = true) {
   io = new import_socket.Server(httpServer2, {
     cors: {
-      origin: (origin, callback) => callback(null, true),
+      origin: (origin, callback) => {
+        callback(null, origin || true);
+      },
       methods: ["GET", "POST", "OPTIONS"],
       credentials: true,
-      allowedHeaders: ["*"]
+      allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "x-session-id",
+        "x-refresh-token",
+        "Accept",
+        "Origin",
+        "X-Requested-With",
+        "Cache-Control",
+        "Pragma",
+        "Expires",
+        "If-Modified-Since"
+      ]
     },
     path: "/socket.io",
     transports: ["polling", "websocket"],
@@ -1482,15 +1555,15 @@ var authRoutes = router;
 var import_express2 = require("express");
 
 // src/services/image-storage.service.ts
-var import_fs = __toESM(require("fs"));
-var import_path = __toESM(require("path"));
+var import_fs2 = __toESM(require("fs"));
+var import_path2 = __toESM(require("path"));
 var import_crypto2 = __toESM(require("crypto"));
-var UPLOADS_ROOT = import_path.default.resolve(process.cwd(), "uploads");
+var UPLOADS_ROOT = import_path2.default.resolve(process.cwd(), "uploads");
 var ensureDirExists = async (dirPath) => {
   try {
-    await import_fs.default.promises.access(dirPath);
+    await import_fs2.default.promises.access(dirPath);
   } catch {
-    await import_fs.default.promises.mkdir(dirPath, { recursive: true });
+    await import_fs2.default.promises.mkdir(dirPath, { recursive: true });
   }
 };
 var ImageStorageService = class {
@@ -1504,18 +1577,18 @@ var ImageStorageService = class {
       "image/png": ".png",
       "image/webp": ".webp"
     };
-    const ext = allowedExtensions[mimeType.toLowerCase()] || import_path.default.extname(originalName).toLowerCase() || ".webp";
+    const ext = allowedExtensions[mimeType.toLowerCase()] || import_path2.default.extname(originalName).toLowerCase() || ".webp";
     if (![".jpg", ".jpeg", ".png", ".webp"].includes(ext)) {
       throw ApiError.badRequest("Unsupported image format. Allowed formats: JPEG, PNG, WebP");
     }
     const uniqueId = import_crypto2.default.randomUUID();
-    const cleanBaseName = import_path.default.basename(originalName, import_path.default.extname(originalName)).toLowerCase().replace(/[^a-z0-9_-]/g, "-").substring(0, 30);
+    const cleanBaseName = import_path2.default.basename(originalName, import_path2.default.extname(originalName)).toLowerCase().replace(/[^a-z0-9_-]/g, "-").substring(0, 30);
     const filename = `${folder}-${cleanBaseName}-${uniqueId}${ext}`;
-    const folderDir = import_path.default.join(UPLOADS_ROOT, folder);
+    const folderDir = import_path2.default.join(UPLOADS_ROOT, folder);
     await ensureDirExists(folderDir);
-    const filePath = import_path.default.join(folderDir, filename);
+    const filePath = import_path2.default.join(folderDir, filename);
     const storagePath = `uploads/${folder}/${filename}`;
-    await import_fs.default.promises.writeFile(filePath, buffer);
+    await import_fs2.default.promises.writeFile(filePath, buffer);
     const publicUrl = `/${storagePath}`;
     const image = await prisma.imageAsset.create({
       data: {
@@ -1552,11 +1625,11 @@ var ImageStorageService = class {
       const ext = mimeType.includes("png") ? ".png" : mimeType.includes("webp") ? ".webp" : ".jpg";
       const uniqueId = import_crypto2.default.randomUUID();
       const filename = `${folder}-opt-${uniqueId}${ext}`;
-      const folderDir = import_path.default.join(UPLOADS_ROOT, folder);
+      const folderDir = import_path2.default.join(UPLOADS_ROOT, folder);
       await ensureDirExists(folderDir);
-      const filePath = import_path.default.join(folderDir, filename);
+      const filePath = import_path2.default.join(folderDir, filename);
       const storagePath = `uploads/${folder}/${filename}`;
-      await import_fs.default.promises.writeFile(filePath, buffer);
+      await import_fs2.default.promises.writeFile(filePath, buffer);
       const publicUrl = `/${storagePath}`;
       try {
         await prisma.imageAsset.create({
@@ -1586,10 +1659,10 @@ var ImageStorageService = class {
       select: { id: true, filename: true, storagePath: true, mimeType: true, fileSize: true }
     });
     if (!record) return null;
-    const fullPath = import_path.default.resolve(process.cwd(), record.storagePath);
+    const fullPath = import_path2.default.resolve(process.cwd(), record.storagePath);
     try {
-      await import_fs.default.promises.access(fullPath);
-      const data = await import_fs.default.promises.readFile(fullPath);
+      await import_fs2.default.promises.access(fullPath);
+      const data = await import_fs2.default.promises.readFile(fullPath);
       return {
         data,
         mimeType: record.mimeType,
@@ -1610,9 +1683,9 @@ var ImageStorageService = class {
         select: { storagePath: true }
       });
       if (record) {
-        const fullPath = import_path.default.resolve(process.cwd(), record.storagePath);
+        const fullPath = import_path2.default.resolve(process.cwd(), record.storagePath);
         try {
-          await import_fs.default.promises.unlink(fullPath);
+          await import_fs2.default.promises.unlink(fullPath);
         } catch {
         }
         await prisma.imageAsset.delete({ where: { id } });
@@ -6027,7 +6100,7 @@ app.set("trust proxy", 1);
 app.use((0, import_compression.default)({ threshold: 1024 }));
 app.use(
   "/uploads",
-  import_express12.default.static(import_path2.default.resolve(process.cwd(), "uploads"), {
+  import_express12.default.static(import_path3.default.resolve(process.cwd(), "uploads"), {
     maxAge: "365d",
     immutable: true,
     setHeaders: (res) => {
@@ -6052,7 +6125,7 @@ app.use(
         scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com"],
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://unpkg.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
-        connectSrc: ["'self'", ENV.FRONTEND_URL || "http://localhost:5173", "https://*.tile.openstreetmap.org"]
+        connectSrc: ["'self'", "https://rjflowers.com", "https://*.rjflowers.com", "https://api.rjflowers.com", ENV.FRONTEND_URL || "http://localhost:5173", "https://*.tile.openstreetmap.org"]
       }
     },
     crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -6160,12 +6233,43 @@ app.get("/", (_req, res) => {
     }
   });
 });
-app.get(["/health", "/api/health"], (req, res) => {
+app.get(["/health", "/api/health"], async (_req, res) => {
   const memoryUsage = process.memoryUsage();
-  res.status(200).json({
-    status: "ok",
-    success: true,
-    message: "Nursery API is running",
+  let dbStatus = "unconfigured";
+  let dbError = null;
+  const isDbConfigured = Boolean(process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith("mysql://"));
+  if (isDbConfigured) {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      dbStatus = "connected";
+    } catch (err) {
+      dbStatus = "disconnected";
+      dbError = err?.message || "Database query check failed";
+    }
+  } else {
+    dbStatus = "missing_database_url";
+    dbError = "DATABASE_URL environment variable is missing or invalid (must start with mysql://)";
+  }
+  const isHealthy = dbStatus === "connected";
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? "ok" : "degraded",
+    success: isHealthy,
+    message: isHealthy ? "Nursery API is running and database is connected" : "Database connection issue detected",
+    database: {
+      status: dbStatus,
+      isConfigured: isDbConfigured,
+      error: dbError
+    },
+    env: {
+      nodeEnv: process.env.NODE_ENV || "production",
+      cwd: process.cwd(),
+      hasAppEnvFile: [".env", "env", ".env.txt", "production.env"].some(
+        (f) => import_fs3.default.existsSync(import_path3.default.resolve(process.cwd(), f)) || import_fs3.default.existsSync(import_path3.default.resolve("/home/rjflower/api.rjflowers.com", f))
+      ),
+      foundEnvFile: [".env", "env", ".env.txt", "production.env"].find(
+        (f) => import_fs3.default.existsSync(import_path3.default.resolve(process.cwd(), f)) || import_fs3.default.existsSync(import_path3.default.resolve("/home/rjflower/api.rjflowers.com", f))
+      ) || null
+    },
     timestamp: (/* @__PURE__ */ new Date()).toISOString(),
     process: {
       uptime: process.uptime(),

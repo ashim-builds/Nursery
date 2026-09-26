@@ -2,6 +2,7 @@ process.env.TOKIO_WORKER_THREADS = process.env.TOKIO_WORKER_THREADS || '1';
 process.env.UV_THREADPOOL_SIZE = process.env.UV_THREADPOOL_SIZE || '2';
 
 import path from 'path';
+import fs from 'fs';
 import http from 'http';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
@@ -67,7 +68,7 @@ app.use(
         scriptSrc: ["'self'", "'unsafe-inline'", 'https://unpkg.com'],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://unpkg.com'],
         fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-        connectSrc: ["'self'", ENV.FRONTEND_URL || 'http://localhost:5173', 'https://*.tile.openstreetmap.org'],
+        connectSrc: ["'self'", 'https://rjflowers.com', 'https://*.rjflowers.com', 'https://api.rjflowers.com', ENV.FRONTEND_URL || 'http://localhost:5173', 'https://*.tile.openstreetmap.org'],
       },
     },
     crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -192,13 +193,49 @@ app.get('/', (_req: Request, res: Response) => {
   });
 });
 
-// Health Endpoint with Memory & Cache Diagnostics
-app.get(['/health', '/api/health'], (req: Request, res: Response) => {
+// Health Endpoint with Memory, Database & Cache Diagnostics
+app.get(['/health', '/api/health'], async (_req: Request, res: Response) => {
   const memoryUsage = process.memoryUsage();
-  res.status(200).json({
-    status: 'ok',
-    success: true,
-    message: 'Nursery API is running',
+
+  let dbStatus = 'unconfigured';
+  let dbError: string | null = null;
+  const isDbConfigured = Boolean(process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('mysql://'));
+
+  if (isDbConfigured) {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      dbStatus = 'connected';
+    } catch (err: any) {
+      dbStatus = 'disconnected';
+      dbError = err?.message || 'Database query check failed';
+    }
+  } else {
+    dbStatus = 'missing_database_url';
+    dbError = 'DATABASE_URL environment variable is missing or invalid (must start with mysql://)';
+  }
+
+  const isHealthy = dbStatus === 'connected';
+
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? 'ok' : 'degraded',
+    success: isHealthy,
+    message: isHealthy ? 'Nursery API is running and database is connected' : 'Database connection issue detected',
+    database: {
+      status: dbStatus,
+      isConfigured: isDbConfigured,
+      error: dbError,
+    },
+    env: {
+      nodeEnv: process.env.NODE_ENV || 'production',
+      cwd: process.cwd(),
+      hasAppEnvFile: ['.env', 'env', '.env.txt', 'production.env'].some(
+        (f) => fs.existsSync(path.resolve(process.cwd(), f)) || fs.existsSync(path.resolve('/home/rjflower/api.rjflowers.com', f))
+      ),
+      foundEnvFile:
+        ['.env', 'env', '.env.txt', 'production.env'].find(
+          (f) => fs.existsSync(path.resolve(process.cwd(), f)) || fs.existsSync(path.resolve('/home/rjflower/api.rjflowers.com', f))
+        ) || null,
+    },
     timestamp: new Date().toISOString(),
     process: {
       uptime: process.uptime(),

@@ -6,10 +6,24 @@ let io: SocketIOServer | null = null;
 export function initSocketIO(httpServer: HttpServer, allowedOrigin: string | boolean | string[] = true): SocketIOServer {
   io = new SocketIOServer(httpServer, {
     cors: {
-      origin: (origin, callback) => callback(null, true),
+      origin: (origin, callback) => {
+        callback(null, origin || true);
+      },
       methods: ['GET', 'POST', 'OPTIONS'],
       credentials: true,
-      allowedHeaders: ['*'],
+      allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'x-session-id',
+        'x-refresh-token',
+        'Accept',
+        'Origin',
+        'X-Requested-With',
+        'Cache-Control',
+        'Pragma',
+        'Expires',
+        'If-Modified-Since',
+      ],
     },
     path: '/socket.io',
     transports: ['polling', 'websocket'],

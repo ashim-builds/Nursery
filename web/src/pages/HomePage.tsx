@@ -17,7 +17,7 @@ import {
   Download,
   CheckCircle,
   Shield,
-  Search,
+  Sparkles,
   X,
 } from "lucide-react";
 import { siteSettingsApi } from "../api/site-settings.api";
@@ -153,38 +153,8 @@ export const HomePage: React.FC = () => {
         </div>
       )}
 
-      {/* Mobile Search Bar (as shown in mobile mockup) */}
-      <div className="md:hidden px-3 sm:px-6">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            const form = e.currentTarget;
-            const input = form.elements.namedItem(
-              "mobileSearch",
-            ) as HTMLInputElement;
-            if (input?.value.trim()) {
-              navigate(
-                `/catalog?search=${encodeURIComponent(input.value.trim())}`,
-              );
-            }
-          }}
-          className="relative flex items-center"
-        >
-          <Search
-            size={17}
-            className="absolute left-3.5 text-slate-400 pointer-events-none"
-          />
-          <input
-            type="text"
-            name="mobileSearch"
-            placeholder="Search flowers..."
-            className="w-full bg-[#f8faf9] border border-slate-200/90 text-slate-800 placeholder-slate-400 text-xs sm:text-sm pl-10 pr-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-forest-600/30 focus:border-forest-600 transition-all shadow-2xs"
-          />
-        </form>
-      </div>
-
       {/* 1. Hero Section (Seamless Floral Panorama for Web & Mobile, No Borders) */}
-      <section className="mx-3 sm:mx-6 lg:mx-8 mt-1 sm:mt-4">
+      <section className="mx-3 sm:mx-6 lg:mx-8 mt-2 sm:mt-4">
         {/* Desktop / Tablet Hero Banner (Seamless Full-Width Floral Panorama, No Borders) */}
         <div className="hidden md:block relative rounded-3xl overflow-hidden shadow-xs bg-[#fbf6f5] min-h-[360px] lg:min-h-[420px] xl:min-h-[460px]">
           {/* Background Floral Image positioned on the right */}
@@ -218,15 +188,16 @@ export const HomePage: React.FC = () => {
             <div className="pt-2 flex flex-wrap items-center gap-3">
               <Link
                 to="/catalog"
-                className="bg-[#1b4332] hover:bg-[#143225] text-white font-medium text-xs sm:text-sm px-7 py-3 rounded-full inline-flex items-center gap-2 shadow-sm hover:shadow-md transition-all active:scale-98"
+                className="bg-[#1b4332] hover:bg-[#143225] text-white font-semibold text-xs sm:text-sm px-7 py-3 rounded-full inline-flex items-center gap-2 shadow-sm hover:shadow-md transition-all active:scale-98"
               >
                 <span>Shop Now</span>
                 <ArrowRight size={15} />
               </Link>
               <Link
                 to="/bloom-patch"
-                className="bg-white/90 hover:bg-white text-forest-900 border border-forest-200 font-medium text-xs sm:text-sm px-5 py-3 rounded-full inline-flex items-center gap-1.5 shadow-2xs transition-colors"
+                className="bg-white/90 hover:bg-white text-forest-900 border border-forest-300 font-semibold text-xs sm:text-sm px-5 py-3 rounded-full inline-flex items-center gap-1.5 shadow-2xs transition-all active:scale-98"
               >
+                <Sparkles size={14} className="text-forest-600" />
                 <span>Explore Bloom Patch</span>
               </Link>
             </div>
@@ -234,7 +205,7 @@ export const HomePage: React.FC = () => {
         </div>
 
         {/* Mobile Hero Banner (Seamless Floral Panorama matching Web feel, No Borders) */}
-        <div className="md:hidden relative rounded-2xl overflow-hidden shadow-xs bg-[#fbf6f5] min-h-[220px] sm:min-h-[250px]">
+        <div className="md:hidden relative rounded-2xl overflow-hidden shadow-xs bg-[#fbf6f5] min-h-[230px] xs:min-h-[250px]">
           {/* Background Floral Image positioned on the right */}
           <img
             src="/hero-flowers-banner.jpg"
@@ -242,10 +213,10 @@ export const HomePage: React.FC = () => {
             className="absolute inset-0 w-full h-full object-cover object-right select-none pointer-events-none"
           />
           {/* Soft Left Gradient Overlay for seamless text readability */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#fbf6f5] via-[#fbf6f5]/90 to-transparent w-[72%] pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#fbf6f5] via-[#fbf6f5]/95 to-transparent w-[80%] xs:w-[75%] pointer-events-none" />
 
           {/* Left Content Column */}
-          <div className="relative z-10 p-5 sm:p-6 max-w-[62%] flex flex-col justify-center min-h-[220px] sm:min-h-[250px] space-y-2">
+          <div className="relative z-10 p-4 xs:p-5 max-w-[82%] xs:max-w-[74%] flex flex-col justify-center min-h-[230px] xs:min-h-[250px] space-y-2">
             <span className="text-forest-700 font-bold text-[10px] uppercase tracking-widest">
               RJ Flowers &bull; Bloom Patch
             </span>
@@ -256,62 +227,33 @@ export const HomePage: React.FC = () => {
             </h2>
 
             <p className="text-slate-600 text-[11px] leading-snug line-clamp-2">
-              Fresh flowers &amp; plants by RJ Flowers Pokhara. Explore our{' '}
+              Fresh flowers &amp; plants in Pokhara. Explore our{' '}
               <Link to="/bloom-patch" className="underline font-semibold text-forest-900">
                 Bloom Patch
               </Link>{' '}
               collection.
             </p>
 
-            <div className="pt-1.5 flex items-center gap-2">
+            <div className="pt-2 flex flex-wrap items-center gap-2">
               <Link
                 to="/catalog"
-                className="bg-[#1b4332] hover:bg-[#143225] active:scale-95 text-white text-[11px] font-semibold px-4 py-2 rounded-full inline-flex items-center gap-1.5 shadow-sm shadow-emerald-950/20 transition-transform"
+                className="bg-[#1b4332] hover:bg-[#143225] active:scale-95 text-white text-xs font-semibold px-4 py-2 rounded-full inline-flex items-center gap-1.5 shadow-sm shadow-emerald-950/20 transition-transform"
               >
                 <span>Shop Now</span>
                 <ArrowRight size={13} />
               </Link>
               <Link
                 to="/bloom-patch"
-                className="text-[11px] font-semibold text-forest-800 hover:text-forest-950 px-2 py-1"
+                className="bg-white/90 hover:bg-white active:scale-95 text-forest-900 border border-forest-300 text-xs font-semibold px-3 py-2 rounded-full inline-flex items-center gap-1 shadow-2xs backdrop-blur-xs transition-transform"
               >
-                Bloom Patch →
+                <Sparkles size={12} className="text-forest-600" />
+                <span>Bloom Patch</span>
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Bloom Patch Floral Boutique Spotlight Card */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-[#f4f7f5] border border-forest-100 rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-forest-800 text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Sprout size={20} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-serif font-bold text-sm sm:text-base text-forest-950">
-                  Bloom Patch at RJ Flowers
-                </h3>
-                <span className="text-[10px] bg-emerald-100 text-forest-800 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                  Floral Boutique
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 mt-0.5 max-w-xl">
-                Looking for fresh flower bouquets, celebratory arrangements, or acclimatized houseplants in Pokhara? Discover the story and floral varieties behind Bloom Patch.
-              </p>
-            </div>
-          </div>
-          <Link
-            to="/bloom-patch"
-            className="shrink-0 inline-flex items-center gap-1.5 text-xs font-bold text-forest-800 hover:text-forest-950 bg-white border border-forest-200 px-4 py-2 rounded-full shadow-2xs hover:shadow-xs transition-all"
-          >
-            <span>Learn about Bloom Patch Pokhara</span>
-            <ArrowRight size={13} />
-          </Link>
-        </div>
-      </section>
 
       {/* 2. PWA Mobile App Installation Banner (Ultra-Compact & High-UX) */}
       {!isBannerDismissed && (
