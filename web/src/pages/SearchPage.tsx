@@ -6,6 +6,7 @@ import { ProductCard } from '../components/product/ProductCard';
 import { MobileFilterDrawer, FilterState } from '../components/filter/MobileFilterDrawer';
 import { SEO } from '../components/common/SEO';
 import { useUI } from '../context/UIContext';
+import { getSessionCache, setSessionCache } from '../utils/sessionCache';
 import { Search, Sprout, X, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
 
 const POPULAR_SEARCH_TAGS = [
@@ -40,6 +41,8 @@ export const SearchPage: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState(query);
 
+  const searchSessionKey = `search:${query}:${category || 'all'}:${sortBy}`;
+
   const { data: searchResults, isLoading } = useQuery({
     queryKey: [
       'search-products',
@@ -58,8 +61,8 @@ export const SearchPage: React.FC = () => {
       airPurifying,
       sortBy,
     ],
-    queryFn: () =>
-      productApi.getProducts({
+    queryFn: async () => {
+      const res = await productApi.getProducts({
         search: query || undefined,
         category,
         minPrice,
@@ -75,12 +78,23 @@ export const SearchPage: React.FC = () => {
         airPurifying: airPurifying ? true : undefined,
         sortBy: sortBy as any,
         limit: 30,
-      }),
+      });
+      setSessionCache(searchSessionKey, res);
+      return res;
+    },
+    initialData: () => getSessionCache<any>(searchSessionKey) ?? undefined,
+    initialDataUpdatedAt: () => 0,
   });
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
-    queryFn: productApi.getCategories,
+    queryFn: async () => {
+      const cats = await productApi.getCategories();
+      setSessionCache('categories:list', cats);
+      return cats;
+    },
+    initialData: () => getSessionCache<any>('categories:list') ?? undefined,
+    initialDataUpdatedAt: () => 0,
   });
 
   const activeFiltersCount = [
@@ -256,7 +270,7 @@ export const SearchPage: React.FC = () => {
       </div>
 
       {/* Results Grid */}
-      {isLoading ? (
+      {isLoading && !searchResults?.products?.length ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-6">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="h-64 bg-slate-100 rounded-2xl animate-pulse" />
@@ -288,7 +302,7 @@ export const SearchPage: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-6">
-          {searchResults?.products?.map((product) => (
+          {searchResults?.products?.map((product: any) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>

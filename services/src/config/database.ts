@@ -24,12 +24,36 @@ if ((rawUrl.startsWith('"') && rawUrl.endsWith('"')) || (rawUrl.startsWith("'") 
   rawUrl = rawUrl.slice(1, -1).trim();
 }
 
-// 4. Validate and append connection limit pool options only if it's a valid mysql URL
+// 4. Validate, parse, and enforce CloudLinux low-resource pool limits
+export const POOL_CONFIG = {
+  connectionLimit: 3,
+  maxIdle: 2,
+  idleTimeout: 30000, // 30 seconds idle timeout to prevent connection leaks
+  pool_timeout: 10,
+  queueLimit: 20,
+};
+
 let finalDbUrl = '';
 if (rawUrl && rawUrl.startsWith('mysql://')) {
-  finalDbUrl = rawUrl;
-  if (!finalDbUrl.includes('connection_limit')) {
-    finalDbUrl += (finalDbUrl.includes('?') ? '&' : '?') + 'connection_limit=3&pool_timeout=10';
+  try {
+    const parsed = new URL(rawUrl);
+    // Hard cap connection_limit to max 3
+    const existingLimit = parseInt(parsed.searchParams.get('connection_limit') || '0', 10);
+    const cappedLimit = existingLimit > 0 ? Math.min(existingLimit, POOL_CONFIG.connectionLimit) : POOL_CONFIG.connectionLimit;
+    parsed.searchParams.set('connection_limit', String(cappedLimit));
+    parsed.searchParams.set('pool_timeout', String(POOL_CONFIG.pool_timeout));
+    finalDbUrl = parsed.toString();
+  } catch {
+    // Fallback URL string formatting if URL parsing fails
+    finalDbUrl = rawUrl;
+    if (finalDbUrl.includes('connection_limit=')) {
+      finalDbUrl = finalDbUrl.replace(/connection_limit=\d+/, `connection_limit=${POOL_CONFIG.connectionLimit}`);
+    } else {
+      finalDbUrl += (finalDbUrl.includes('?') ? '&' : '?') + `connection_limit=${POOL_CONFIG.connectionLimit}`;
+    }
+    if (!finalDbUrl.includes('pool_timeout=')) {
+      finalDbUrl += `&pool_timeout=${POOL_CONFIG.pool_timeout}`;
+    }
   }
   process.env.DATABASE_URL = finalDbUrl;
 } else {
@@ -65,6 +89,19 @@ export async function connectDB(): Promise<boolean> {
   } catch (error: any) {
     console.error('❌ Failed to connect to MySQL database:', error.message);
     return false;
+  }
+}
+
+/**
+ * Cleanly close all connections in the database pool.
+ * Prevents orphaned/zombie connection accumulation on CloudLinux / cPanel.
+ */
+export async function closePool(): Promise<void> {
+  try {
+    await prisma.$disconnect();
+    console.log('📦 Successfully closed database connection pool.');
+  } catch (err: any) {
+    console.error('❌ Error closing database connection pool:', err?.message || err);
   }
 }
 

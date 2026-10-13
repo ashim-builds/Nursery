@@ -7,6 +7,7 @@ import { useUI } from '../context/UIContext';
 import { VariantSelector } from '../components/product/VariantSelector';
 import { DatabaseImage } from '../components/common/DatabaseImage';
 import { SEO } from '../components/common/SEO';
+import { getSessionCache, setSessionCache } from '../utils/sessionCache';
 import { 
   ShoppingBag, 
   Truck, 
@@ -16,7 +17,7 @@ import {
   ShieldCheck,
   Sprout
 } from 'lucide-react';
-import { ProductVariant } from '../types/product';
+import { Product, ProductVariant } from '../types/product';
 
 export const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -27,17 +28,24 @@ export const ProductDetailPage: React.FC = () => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
 
-  // 1. Fetch Product by Slug
+  // 1. Fetch Product by Slug with 0ms SWR hydration
+  const detailCacheKey = `product:slug:${slug}`;
   const { data: product, isLoading, error } = useQuery({
     queryKey: ['product', slug],
-    queryFn: () => productApi.getProductBySlug(slug!),
+    queryFn: async () => {
+      const p = await productApi.getProductBySlug(slug!);
+      setSessionCache(detailCacheKey, p);
+      return p;
+    },
     enabled: !!slug,
+    initialData: () => (slug ? getSessionCache<Product>(detailCacheKey) ?? undefined : undefined),
+    initialDataUpdatedAt: () => 0,
   });
 
   // Set default variant when product loads
   React.useEffect(() => {
     if (product && product.variants?.length > 0 && !selectedVariant) {
-      const defaultVar = product.variants.find((v) => v.isDefault) || product.variants[0];
+      const defaultVar = product.variants.find((v: ProductVariant) => v.isDefault) || product.variants[0];
       setSelectedVariant(defaultVar);
     }
   }, [product, selectedVariant]);
@@ -56,7 +64,7 @@ export const ProductDetailPage: React.FC = () => {
     openCartDrawer();
   };
 
-  if (isLoading) {
+  if (isLoading && !product) {
     return (
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-pulse">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
@@ -169,17 +177,17 @@ export const ProductDetailPage: React.FC = () => {
             {/* Thumbnails */}
             {images.length > 1 && (
               <div className="flex gap-2.5 overflow-x-auto no-scrollbar py-1">
-                {images.map((img, idx) => (
+                {images.map((img: any, idx: number) => (
                   <button
                     key={idx}
                     onClick={() => setActiveImageIndex(idx)}
-                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 transition-all shrink-0 cursor-pointer bg-sand-50/50 p-1 ${
+                    className={`w-14 h-14 sm:w-16 sm:h-16 aspect-square rounded-xl overflow-hidden border-2 transition-all shrink-0 cursor-pointer bg-sand-50/50 p-1 ${
                       activeImageIndex === idx
                         ? 'border-forest-800 ring-2 ring-forest-200'
                         : 'border-slate-200 opacity-70 hover:opacity-100'
                     }`}
                   >
-                    <DatabaseImage src={img.url} alt="" preset="thumbnail" fit="contain" className="w-full h-full" />
+                    <DatabaseImage src={img.url} alt="" preset="thumbnail" fit="contain" aspectRatio="square" className="w-full h-full" />
                   </button>
                 ))}
               </div>

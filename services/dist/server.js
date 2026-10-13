@@ -117,11 +117,33 @@ if (!rawUrl && (process.env.DB_NAME || process.env.MYSQL_DATABASE)) {
 if (rawUrl.startsWith('"') && rawUrl.endsWith('"') || rawUrl.startsWith("'") && rawUrl.endsWith("'")) {
   rawUrl = rawUrl.slice(1, -1).trim();
 }
+var POOL_CONFIG = {
+  connectionLimit: 3,
+  maxIdle: 2,
+  idleTimeout: 3e4,
+  // 30 seconds idle timeout to prevent connection leaks
+  pool_timeout: 10,
+  queueLimit: 20
+};
 var finalDbUrl = "";
 if (rawUrl && rawUrl.startsWith("mysql://")) {
-  finalDbUrl = rawUrl;
-  if (!finalDbUrl.includes("connection_limit")) {
-    finalDbUrl += (finalDbUrl.includes("?") ? "&" : "?") + "connection_limit=3&pool_timeout=10";
+  try {
+    const parsed = new URL(rawUrl);
+    const existingLimit = parseInt(parsed.searchParams.get("connection_limit") || "0", 10);
+    const cappedLimit = existingLimit > 0 ? Math.min(existingLimit, POOL_CONFIG.connectionLimit) : POOL_CONFIG.connectionLimit;
+    parsed.searchParams.set("connection_limit", String(cappedLimit));
+    parsed.searchParams.set("pool_timeout", String(POOL_CONFIG.pool_timeout));
+    finalDbUrl = parsed.toString();
+  } catch {
+    finalDbUrl = rawUrl;
+    if (finalDbUrl.includes("connection_limit=")) {
+      finalDbUrl = finalDbUrl.replace(/connection_limit=\d+/, `connection_limit=${POOL_CONFIG.connectionLimit}`);
+    } else {
+      finalDbUrl += (finalDbUrl.includes("?") ? "&" : "?") + `connection_limit=${POOL_CONFIG.connectionLimit}`;
+    }
+    if (!finalDbUrl.includes("pool_timeout=")) {
+      finalDbUrl += `&pool_timeout=${POOL_CONFIG.pool_timeout}`;
+    }
   }
   process.env.DATABASE_URL = finalDbUrl;
 } else {
@@ -149,6 +171,14 @@ async function connectDB() {
   } catch (error) {
     console.error("\u274C Failed to connect to MySQL database:", error.message);
     return false;
+  }
+}
+async function closePool() {
+  try {
+    await prisma.$disconnect();
+    console.log("\u{1F4E6} Successfully closed database connection pool.");
+  } catch (err) {
+    console.error("\u274C Error closing database connection pool:", err?.message || err);
   }
 }
 
@@ -220,8 +250,8 @@ var MemoryCache = class {
   maxSize;
   hits = 0;
   misses = 0;
-  constructor(maxSize = 1e3) {
-    this.maxSize = maxSize;
+  constructor(maxSize = 200) {
+    this.maxSize = Math.min(maxSize, 200);
     const cleanupTimer = setInterval(() => this.pruneExpired(), 6e4);
     if (typeof cleanupTimer.unref === "function") {
       cleanupTimer.unref();
@@ -261,10 +291,12 @@ var MemoryCache = class {
     return entry.value;
   }
   /**
-   * Store a value with a TTL (in seconds).
+   * Store a value with a TTL (in seconds) and LRU eviction.
    */
-  set(key, value, ttlSeconds = 300) {
-    if (this.store.size >= this.maxSize) {
+  set(key, value, ttlSeconds = 60) {
+    if (this.store.has(key)) {
+      this.store.delete(key);
+    } else if (this.store.size >= this.maxSize) {
       const oldestKey = this.store.keys().next().value;
       if (oldestKey) {
         this.store.delete(oldestKey);
@@ -316,7 +348,7 @@ var MemoryCache = class {
   /**
    * Get cached value or fetch fresh from producer function.
    */
-  async getOrSet(key, fetcher, ttlSeconds = 300) {
+  async getOrSet(key, fetcher, ttlSeconds = 60) {
     const cached = this.get(key);
     if (cached !== null) {
       return cached;
@@ -338,9 +370,9 @@ var MemoryCache = class {
     };
   }
 };
-var appCache = new MemoryCache(1500);
-var siteSettingsCache = new MemoryCache(100);
-var catalogCache = new MemoryCache(800);
+var appCache = new MemoryCache(150);
+var siteSettingsCache = new MemoryCache(50);
+var catalogCache = new MemoryCache(200);
 
 // src/utils/socket.ts
 var import_socket = require("socket.io");
@@ -1911,10 +1943,15 @@ var ProductService = class {
         totalPages: Math.ceil(total / limit)
       }
     };
-    catalogCache.set(cacheKey, result, 120);
+    catalogCache.set(cacheKey, result, 60);
     return result;
   }
   static async getBySlug(slug) {
+    const cacheKey = `products:slug:${slug}`;
+    const cached = catalogCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
     const product = await prisma.product.findUnique({
       where: { slug, published: true },
       select: {
@@ -1967,7 +2004,7 @@ var ProductService = class {
     }
     const avgRating = 5;
     const totalStock = product.variants.reduce((acc, v) => acc + (v.inventory?.availableQuantity ?? v.stock), 0);
-    return {
+    const result = {
       id: product.id,
       name: product.name,
       title: product.name,
@@ -2030,8 +2067,25 @@ var ProductService = class {
       reviewCount: 0,
       createdAt: product.createdAt
     };
+    catalogCache.set(cacheKey, result, 60);
+    return result;
+  }
+  static async getFeatured(limit = 8) {
+    const cacheKey = `products:featured:${limit}`;
+    const cached = catalogCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+    const result = await this.getAll({ featured: "true", limit: String(limit) });
+    catalogCache.set(cacheKey, result, 60);
+    return result;
   }
   static async getById(id, includeCostPrice = false) {
+    const cacheKey = `products:id:${id}:${includeCostPrice ? "cost" : "nocost"}`;
+    const cached = catalogCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
     const product = await prisma.product.findUnique({
       where: { id },
       include: {
@@ -2048,6 +2102,7 @@ var ProductService = class {
     if (!includeCostPrice) {
       delete product.costPrice;
     }
+    catalogCache.set(cacheKey, product, 60);
     return product;
   }
   // Admin Methods
@@ -2317,6 +2372,8 @@ var ProductService = class {
         details: { product: product.name, variant: variant.name }
       }
     });
+    catalogCache.clear();
+    emitLiveEvent("product:changed", { action: "variant_created", productId });
     return variant;
   }
   static async updateVariant(id, data, userId) {
@@ -2336,6 +2393,8 @@ var ProductService = class {
         details: { fields: Object.keys(data) }
       }
     });
+    catalogCache.clear();
+    emitLiveEvent("product:changed", { action: "variant_updated", productId: variant.productId });
     return updated;
   }
   static async deleteVariant(id, userId) {
@@ -2344,6 +2403,8 @@ var ProductService = class {
       include: { orderItems: { take: 1 } }
     });
     if (!variant) throw ApiError.notFound("Product variant not found");
+    catalogCache.clear();
+    emitLiveEvent("product:changed", { action: "variant_deleted", productId: variant.productId });
     if (variant.orderItems.length > 0) {
       await prisma.productVariant.update({
         where: { id },
@@ -2391,6 +2452,8 @@ var ProductService = class {
         details: { productId, url: newImage.url, isPrimary }
       }
     });
+    catalogCache.clear();
+    emitLiveEvent("product:changed", { action: "image_added", productId });
     return newImage;
   }
   static async deleteProductImage(productId, imageId, userId) {
@@ -2420,6 +2483,8 @@ var ProductService = class {
         details: { productId }
       }
     });
+    catalogCache.clear();
+    emitLiveEvent("product:changed", { action: "image_deleted", productId });
     return { message: "Product image deleted successfully" };
   }
   static async setPrimaryImage(productId, imageId, userId) {
@@ -2444,6 +2509,8 @@ var ProductService = class {
         details: { productId }
       }
     });
+    catalogCache.clear();
+    emitLiveEvent("product:changed", { action: "image_primary_set", productId });
     return updated;
   }
   static async reorderProductImages(productId, orders, userId) {
@@ -2463,6 +2530,8 @@ var ProductService = class {
         details: { orderCount: orders.length }
       }
     });
+    catalogCache.clear();
+    emitLiveEvent("product:changed", { action: "image_reordered", productId });
     return prisma.productImage.findMany({
       where: { productId },
       orderBy: { sortOrder: "asc" }
@@ -2475,6 +2544,11 @@ var ProductController = class {
   static getAll = asyncHandler(async (req, res) => {
     const result = await ProductService.getAll(req.query);
     res.status(200).json(ApiResponse.success(result.products, "Products retrieved", 200, result.meta));
+  });
+  static getFeatured = asyncHandler(async (req, res) => {
+    const limit = parseInt(req.query.limit || "8", 10);
+    const result = await ProductService.getFeatured(limit);
+    res.status(200).json(ApiResponse.success(result.products, "Featured products retrieved", 200, result.meta));
   });
   static getBySlug = asyncHandler(async (req, res) => {
     const product = await ProductService.getBySlug(req.params.slug);
@@ -2706,6 +2780,7 @@ var updateCategorySchema = import_zod3.z.object({
 // src/modules/products/product.routes.ts
 var router2 = (0, import_express2.Router)();
 router2.get("/", validateRequest(productQuerySchema), ProductController.getAll);
+router2.get("/featured", ProductController.getFeatured);
 router2.get("/slug/:slug", ProductController.getBySlug);
 router2.get("/:id", ProductController.getById);
 var productRoutes = router2;
@@ -2715,7 +2790,7 @@ var import_express3 = require("express");
 
 // src/modules/categories/category.service.ts
 var CATEGORIES_ALL_CACHE_KEY = "categories:all";
-var CATEGORIES_CACHE_TTL = 600;
+var CATEGORIES_CACHE_TTL = 60;
 var CategoryService = class {
   static async getAll() {
     return appCache.getOrSet(
@@ -2735,20 +2810,27 @@ var CategoryService = class {
     );
   }
   static async getBySlug(slug) {
-    const category = await prisma.category.findUnique({
-      where: { slug },
-      include: {
-        products: {
-          where: { published: true, available: true },
+    const cacheKey = `categories:slug:${slug}`;
+    return appCache.getOrSet(
+      cacheKey,
+      async () => {
+        const category = await prisma.category.findUnique({
+          where: { slug },
           include: {
-            variants: true,
-            images: true
+            products: {
+              where: { published: true, available: true },
+              include: {
+                variants: true,
+                images: true
+              }
+            }
           }
-        }
-      }
-    });
-    if (!category) throw ApiError.notFound("Category not found");
-    return category;
+        });
+        if (!category) throw ApiError.notFound("Category not found");
+        return category;
+      },
+      CATEGORIES_CACHE_TTL
+    );
   }
   static async create(data) {
     const slug = data.name.toLowerCase().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-");
@@ -2759,6 +2841,8 @@ var CategoryService = class {
       }
     });
     appCache.del(CATEGORIES_ALL_CACHE_KEY);
+    appCache.clearPattern("categories:slug:*");
+    catalogCache.clear();
     appCache.clearPattern("system:sitemap.xml");
     return created;
   }
@@ -2768,6 +2852,8 @@ var CategoryService = class {
       data
     });
     appCache.del(CATEGORIES_ALL_CACHE_KEY);
+    appCache.clearPattern("categories:slug:*");
+    catalogCache.clear();
     appCache.clearPattern("system:sitemap.xml");
     return updated;
   }
@@ -2791,6 +2877,8 @@ var CategoryService = class {
       where: { id }
     });
     appCache.del(CATEGORIES_ALL_CACHE_KEY);
+    appCache.clearPattern("categories:slug:*");
+    catalogCache.clear();
     appCache.clearPattern("system:sitemap.xml");
     return deleted;
   }
@@ -5897,7 +5985,8 @@ var import_express11 = require("express");
 
 // src/modules/site-settings/site-settings.controller.ts
 var SETTINGS_CACHE_KEY = "site_settings:global";
-var SETTINGS_CACHE_TTL = 600;
+var SETTINGS_STATUS_CACHE_KEY = "site_settings:operational_status";
+var SETTINGS_CACHE_TTL = 45;
 var SiteSettingsController = class {
   // 1. Get current site settings (with in-memory cache)
   static getSettings = asyncHandler(async (_req, res) => {
@@ -5929,6 +6018,33 @@ var SiteSettingsController = class {
     }
     siteSettingsCache.set(SETTINGS_CACHE_KEY, settings, SETTINGS_CACHE_TTL);
     return res.status(200).json(ApiResponse.success(settings, "Site settings retrieved successfully"));
+  });
+  // 1b. Get store operational status & hours (with 45s TTL cache)
+  static getOperationalStatus = asyncHandler(async (_req, res) => {
+    const cached = siteSettingsCache.get(SETTINGS_STATUS_CACHE_KEY);
+    if (cached) {
+      return res.status(200).json(ApiResponse.success(cached, "Operational status retrieved successfully (cached)"));
+    }
+    let settings = await prisma.siteSettings.findFirst();
+    const hours = settings?.openingHours || "Every day: 7:00 AM - 7:00 PM (Closed on festivals)";
+    const nowUtc = Date.now();
+    const nepalOffsetMs = (5 * 60 + 45) * 60 * 1e3;
+    const nepalDate = new Date(nowUtc + nepalOffsetMs);
+    const hour = nepalDate.getUTCHours();
+    const minute = nepalDate.getUTCMinutes();
+    const decimalHour = hour + minute / 60;
+    const isOpen = decimalHour >= 7 && decimalHour < 19;
+    const statusData = {
+      isOpen,
+      openingHours: hours,
+      currentTimeNepal: `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
+      statusMessage: isOpen ? "Open Now \u2014 Handcrafted bouquets & plant delivery across Pokhara" : "Closed Now \u2014 Opens at 7:00 AM",
+      nextOpening: isOpen ? "Closes at 7:00 PM" : "Opens tomorrow at 7:00 AM",
+      businessName: settings?.businessName || "RJ Flowers",
+      phone: settings?.phone || "9815155580"
+    };
+    siteSettingsCache.set(SETTINGS_STATUS_CACHE_KEY, statusData, SETTINGS_CACHE_TTL);
+    return res.status(200).json(ApiResponse.success(statusData, "Operational status retrieved successfully"));
   });
   // 2. Update site settings (Admin only)
   static updateSettings = asyncHandler(async (req, res) => {
@@ -6006,6 +6122,7 @@ var SiteSettingsController = class {
       }
     });
     siteSettingsCache.del(SETTINGS_CACHE_KEY);
+    siteSettingsCache.del(SETTINGS_STATUS_CACHE_KEY);
     emitLiveEvent("settings:updated", { settings });
     return res.status(200).json(ApiResponse.success(settings, "Site settings updated successfully"));
   });
@@ -6069,6 +6186,7 @@ var SiteSettingsController = class {
       }
     });
     siteSettingsCache.del(SETTINGS_CACHE_KEY);
+    siteSettingsCache.del(SETTINGS_STATUS_CACHE_KEY);
     emitLiveEvent("settings:updated", { settings: updated });
     return res.status(200).json(ApiResponse.success(updated, "Admin onboarding setup completed successfully!"));
   });
@@ -6078,6 +6196,8 @@ var SiteSettingsController = class {
 var import_client14 = require("@prisma/client");
 var router11 = (0, import_express11.Router)();
 router11.get("/", SiteSettingsController.getSettings);
+router11.get("/status", SiteSettingsController.getOperationalStatus);
+router11.get("/operational-status", SiteSettingsController.getOperationalStatus);
 router11.put(
   "/",
   authenticateJWT,
@@ -6098,18 +6218,52 @@ process.env.UV_THREADPOOL_SIZE = process.env.UV_THREADPOOL_SIZE || "2";
 var app = (0, import_express12.default)();
 app.set("trust proxy", 1);
 app.use((0, import_compression.default)({ threshold: 1024 }));
-app.use(
-  "/uploads",
-  import_express12.default.static(import_path3.default.resolve(process.cwd(), "uploads"), {
-    maxAge: "365d",
-    immutable: true,
-    setHeaders: (res) => {
-      res.setHeader("X-Content-Type-Options", "nosniff");
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+var resolveUploadsDir = () => {
+  const candidates = [
+    process.env.UPLOAD_DIR,
+    import_path3.default.resolve(process.cwd(), "uploads"),
+    import_path3.default.resolve(process.cwd(), "../uploads"),
+    import_path3.default.resolve(__dirname, "../../uploads"),
+    import_path3.default.resolve(__dirname, "../uploads")
+  ].filter(Boolean);
+  for (const dir of candidates) {
+    if (import_fs3.default.existsSync(dir)) return dir;
+  }
+  return import_path3.default.resolve(process.cwd(), "uploads");
+};
+var uploadsDir = resolveUploadsDir();
+var smartWebpMiddleware = (req, res, next) => {
+  try {
+    const decodedPath = decodeURIComponent(req.path);
+    const match = decodedPath.match(/\.(jpe?g|png)$/i);
+    if (match) {
+      const webpRelPath = decodedPath.replace(/\.(jpe?g|png)$/i, ".webp");
+      const diskWebpPath = import_path3.default.join(uploadsDir, webpRelPath);
+      if (import_fs3.default.existsSync(diskWebpPath)) {
+        res.setHeader("Content-Type", "image/webp");
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        res.setHeader("X-Content-Type-Options", "nosniff");
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+        res.setHeader("Vary", "Accept");
+        return res.sendFile(diskWebpPath);
+      }
     }
-  })
-);
+  } catch (err) {
+  }
+  next();
+};
+var uploadsStaticMiddleware = import_express12.default.static(uploadsDir, {
+  maxAge: "365d",
+  immutable: true,
+  setHeaders: (res) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  }
+});
+app.use("/uploads", smartWebpMiddleware, uploadsStaticMiddleware);
+app.use("/api/uploads", smartWebpMiddleware, uploadsStaticMiddleware);
 app.use("/api", (_req, res, next) => {
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   res.setHeader("Pragma", "no-cache");
@@ -6447,6 +6601,17 @@ async function startServer() {
 var handleGracefulShutdown = async (signal) => {
   console.log(`
 \u{1F6D1} Received ${signal}. Starting graceful shutdown...`);
+  const forceExitTimeout = setTimeout(async () => {
+    console.warn("\u26A0\uFE0F Forceful shutdown timeout (5s) reached. Terminating process.");
+    try {
+      await closePool();
+    } catch {
+    }
+    process.exit(1);
+  }, 5e3);
+  if (typeof forceExitTimeout.unref === "function") {
+    forceExitTimeout.unref();
+  }
   const activeServer = server || httpServer;
   if (activeServer) {
     if (typeof activeServer.closeIdleConnections === "function") {
@@ -6455,14 +6620,19 @@ var handleGracefulShutdown = async (signal) => {
     activeServer.close(async () => {
       console.log("\u{1F512} Closed HTTP server connections.");
       try {
-        await prisma.$disconnect();
-        console.log("\u{1F4E6} Disconnected Prisma / MySQL connection.");
+        await closePool();
       } catch (err) {
-        console.error("Error disconnecting database:", err);
+        console.error("Error disconnecting database pool:", err);
       }
+      clearTimeout(forceExitTimeout);
       process.exit(0);
     });
   } else {
+    try {
+      await closePool();
+    } catch {
+    }
+    clearTimeout(forceExitTimeout);
     process.exit(0);
   }
 };

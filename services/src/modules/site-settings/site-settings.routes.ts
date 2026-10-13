@@ -7,6 +7,8 @@ const router = Router();
 
 // Public read
 router.get('/', SiteSettingsController.getSettings);
+router.get('/status', SiteSettingsController.getOperationalStatus);
+router.get('/operational-status', SiteSettingsController.getOperationalStatus);
 
 // Admin updates
 router.put(

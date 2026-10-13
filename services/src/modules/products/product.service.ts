@@ -256,11 +256,17 @@ export class ProductService {
       },
     };
 
-    catalogCache.set(cacheKey, result, 120); // 2 minutes TTL
+    catalogCache.set(cacheKey, result, 60); // 60s TTL
     return result;
   }
 
   static async getBySlug(slug: string) {
+    const cacheKey = `products:slug:${slug}`;
+    const cached = catalogCache.get<any>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const product = await prisma.product.findUnique({
           where: { slug, published: true },
           select: {
@@ -316,7 +322,7 @@ export class ProductService {
     const avgRating = 5.0;
     const totalStock = product.variants.reduce((acc, v) => acc + (v.inventory?.availableQuantity ?? v.stock), 0);
 
-    return {
+    const result = {
       id: product.id,
       name: product.name,
       title: product.name,
@@ -379,9 +385,30 @@ export class ProductService {
       reviewCount: 0,
       createdAt: product.createdAt,
     };
+
+    catalogCache.set(cacheKey, result, 60); // 60s TTL
+    return result;
+  }
+
+  static async getFeatured(limit = 8) {
+    const cacheKey = `products:featured:${limit}`;
+    const cached = catalogCache.get<any>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const result = await this.getAll({ featured: 'true', limit: String(limit) });
+    catalogCache.set(cacheKey, result, 60); // 60s TTL
+    return result;
   }
 
   static async getById(id: string, includeCostPrice = false) {
+    const cacheKey = `products:id:${id}:${includeCostPrice ? 'cost' : 'nocost'}`;
+    const cached = catalogCache.get<any>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const product = await prisma.product.findUnique({
       where: { id },
       include: {
@@ -401,6 +428,7 @@ export class ProductService {
       delete (product as any).costPrice;
     }
 
+    catalogCache.set(cacheKey, product, 60); // 60s TTL
     return product;
   }
 
@@ -723,6 +751,9 @@ export class ProductService {
       },
     });
 
+    catalogCache.clear();
+    emitLiveEvent('product:changed', { action: 'variant_created', productId });
+
     return variant;
   }
 
@@ -746,6 +777,9 @@ export class ProductService {
       },
     });
 
+    catalogCache.clear();
+    emitLiveEvent('product:changed', { action: 'variant_updated', productId: variant.productId });
+
     return updated;
   }
 
@@ -756,6 +790,9 @@ export class ProductService {
     });
 
     if (!variant) throw ApiError.notFound('Product variant not found');
+
+    catalogCache.clear();
+    emitLiveEvent('product:changed', { action: 'variant_deleted', productId: variant.productId });
 
     if (variant.orderItems.length > 0) {
       await prisma.productVariant.update({
@@ -817,6 +854,9 @@ export class ProductService {
       },
     });
 
+    catalogCache.clear();
+    emitLiveEvent('product:changed', { action: 'image_added', productId });
+
     return newImage;
   }
 
@@ -852,6 +892,9 @@ export class ProductService {
       },
     });
 
+    catalogCache.clear();
+    emitLiveEvent('product:changed', { action: 'image_deleted', productId });
+
     return { message: 'Product image deleted successfully' };
   }
 
@@ -883,6 +926,9 @@ export class ProductService {
       },
     });
 
+    catalogCache.clear();
+    emitLiveEvent('product:changed', { action: 'image_primary_set', productId });
+
     return updated;
   }
 
@@ -909,6 +955,9 @@ export class ProductService {
         details: { orderCount: orders.length },
       },
     });
+
+    catalogCache.clear();
+    emitLiveEvent('product:changed', { action: 'image_reordered', productId });
 
     return prisma.productImage.findMany({
       where: { productId },

@@ -18,6 +18,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { LocationPickerMap } from '../components/common/LocationPickerMap';
+import { OptimizedImage } from '../components/common/OptimizedImage';
 
 export const CheckoutPage: React.FC = () => {
   const { items, subtotal, deliveryFee, total, clearCart } = useCart();
@@ -295,13 +296,15 @@ export const CheckoutPage: React.FC = () => {
             {items.map((item) => (
               <div key={item.variantId} className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
-                  <img
+                  <OptimizedImage
                     src={
                       item.product?.images?.[0]?.url ||
                       'https://images.unsplash.com/photo-1545241047-6083a3684587?w=100'
                     }
                     alt={item.product?.title || 'Product'}
-                    className="w-10 h-10 rounded-lg object-cover bg-slate-100 shrink-0"
+                    aspectRatio="square"
+                    fit="cover"
+                    className="w-10 h-10 rounded-lg shrink-0"
                   />
                   <div>
                     <span className="font-semibold text-slate-800 line-clamp-1">

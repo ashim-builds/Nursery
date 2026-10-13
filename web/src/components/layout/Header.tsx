@@ -8,6 +8,8 @@ import { NotificationCenter } from '../notifications/NotificationCenter';
 import { useQuery } from '@tanstack/react-query';
 import { siteSettingsApi } from '../../api/site-settings.api';
 
+import { getSessionCache, setSessionCache } from '../../utils/sessionCache';
+
 export const Header: React.FC = () => {
   const { itemCount } = useCart();
   const { openCartDrawer, isSearchOpen, toggleSearch, closeSearch } = useUI();
@@ -16,9 +18,34 @@ export const Header: React.FC = () => {
   const navigate = useNavigate();
   const { data: siteSettings } = useQuery({
     queryKey: ['site-settings'],
-    queryFn: siteSettingsApi.getSettings,
+    queryFn: async () => {
+      const data = await siteSettingsApi.getSettings();
+      setSessionCache('site-settings:global', data);
+      return data;
+    },
+    initialData: () => getSessionCache<any>('site-settings:global') ?? undefined,
+    initialDataUpdatedAt: () => 0,
   });
   const businessName = siteSettings?.businessName || 'The Bloom Patch';
+
+  // Live Instant Search Suggestions hydrated from client sessionStorage (0ms)
+  const cachedCatalog = getSessionCache<any>('catalog:all:popular') || getSessionCache<any>('home:latest-products');
+  const cachedCategories = getSessionCache<any[]>('categories:all') || [];
+
+  const searchSuggestions = React.useMemo(() => {
+    const query = searchInput.trim().toLowerCase();
+    if (!query) return { products: [], categories: [] };
+
+    const matchedProducts = (cachedCatalog?.products || [])
+      .filter((p: any) => p.name?.toLowerCase().includes(query) || p.title?.toLowerCase().includes(query))
+      .slice(0, 4);
+
+    const matchedCategories = (cachedCategories || [])
+      .filter((c: any) => c.name?.toLowerCase().includes(query))
+      .slice(0, 2);
+
+    return { products: matchedProducts, categories: matchedCategories };
+  }, [searchInput, cachedCatalog, cachedCategories]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -177,6 +204,73 @@ export const Header: React.FC = () => {
                 </button>
               </div>
             </form>
+
+            {/* 0ms Instant Client Storage Search Suggestions Dropdown */}
+            {searchInput.trim().length > 0 && (
+              <div className="mt-2 bg-white rounded-2xl border border-forest-100 shadow-lifted overflow-hidden animate-in fade-in zoom-in-95">
+                {searchSuggestions.categories.length > 0 && (
+                  <div className="p-2 border-b border-slate-100 bg-forest-50/40">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-forest-700 px-2 block mb-1">
+                      Categories
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {searchSuggestions.categories.map((c: any) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => {
+                            navigate(`/category/${c.slug}`);
+                            closeSearch();
+                          }}
+                          className="text-xs bg-white hover:bg-forest-100 text-forest-900 border border-forest-200 px-2.5 py-1 rounded-lg transition-colors font-medium flex items-center gap-1 cursor-pointer"
+                        >
+                          <Sprout size={12} className="text-forest-600" />
+                          <span>{c.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {searchSuggestions.products.length > 0 ? (
+                  <div className="divide-y divide-slate-100 max-h-56 overflow-y-auto">
+                    {searchSuggestions.products.map((p: any) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          navigate(`/products/${p.slug}`);
+                          closeSearch();
+                        }}
+                        className="w-full p-2.5 hover:bg-forest-50/60 flex items-center gap-3 text-left transition-colors cursor-pointer group"
+                      >
+                        <div className="w-10 h-10 aspect-square rounded-lg overflow-hidden bg-slate-100 shrink-0">
+                          <img
+                            src={p.images?.[0]?.url || '/the-bloom-patch-logo.png'}
+                            alt={p.name || p.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <span className="font-semibold text-xs text-slate-800 group-hover:text-forest-800 truncate block">
+                            {p.title || p.name}
+                          </span>
+                          <span className="text-[11px] font-bold text-forest-700 block">
+                            रू {p.pricing?.basePrice ?? p.basePrice}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 text-center">
+                    <p className="text-xs text-slate-500">
+                      Press <span className="font-bold text-forest-800">Find</span> or Enter to search the full catalog
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Quick search pills */}
             <div className="flex items-center gap-1.5 mt-2 overflow-x-auto no-scrollbar py-0.5 text-xs">

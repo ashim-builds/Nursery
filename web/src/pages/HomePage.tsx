@@ -3,7 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { productApi } from "../api/product.api";
 import { ProductCard } from "../components/product/ProductCard";
+import { OptimizedImage } from "../components/common/OptimizedImage";
 import { SEO } from "../components/common/SEO";
+import { getSessionCache, setSessionCache } from "../utils/sessionCache";
 import {
   Sprout,
   ArrowRight,
@@ -50,8 +52,26 @@ export const HomePage: React.FC = () => {
   const { data: latestProductsData, isLoading: latestProductsLoading } =
     useQuery({
       queryKey: ["latest-products"],
-      queryFn: () => productApi.getProducts({ limit: 8, sortBy: "newest" }),
+      queryFn: async () => {
+        const data = await productApi.getProducts({ limit: 8, sortBy: "newest" });
+        setSessionCache("home:latest-products", data);
+        return data;
+      },
+      initialData: () => getSessionCache<any>("home:latest-products") ?? undefined,
+      initialDataUpdatedAt: () => 0,
     });
+
+  // Fetch Categories for quick navigation & 0 CLS cards
+  const { data: categoriesData } = useQuery({
+    queryKey: ["categories-home"],
+    queryFn: async () => {
+      const data = await productApi.getCategories();
+      setSessionCache("categories:all", data);
+      return data;
+    },
+    initialData: () => getSessionCache<any>("categories:all") ?? undefined,
+    initialDataUpdatedAt: () => 0,
+  });
 
   // Fetch Site Settings for verified phone, email, and location
   const { data: siteSettings } = useQuery({
@@ -314,6 +334,56 @@ export const HomePage: React.FC = () => {
         </section>
       )}
 
+      {/* 2b. Botanical Categories Showcase */}
+      {categoriesData && categoriesData.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-end justify-between mb-3.5">
+            <div>
+              <h2 className="font-serif font-bold text-lg sm:text-2xl text-slate-900">
+                Explore Collections
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Potted houseplants, exotic blooms, terracotta & gardening essentials
+              </p>
+            </div>
+            <Link
+              to="/categories"
+              className="text-xs font-bold text-forest-700 hover:text-forest-900 flex items-center gap-1"
+            >
+              <span>All Collections</span>
+              <ArrowRight size={13} />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 sm:gap-4">
+            {categoriesData.slice(0, 6).map((cat: any) => (
+              <Link
+                key={cat.id}
+                to={`/category/${cat.slug}`}
+                className="group bg-white p-3 rounded-2xl border border-slate-200/90 hover:border-emerald-400/80 shadow-2xs hover:shadow-sm transition-all duration-300 flex flex-col items-center text-center"
+              >
+                <div className="w-16 h-16 sm:w-20 sm:h-20 aspect-square rounded-2xl overflow-hidden mb-2 bg-forest-50/60 p-1">
+                  <OptimizedImage
+                    src={cat.imageUrl}
+                    alt={cat.name}
+                    aspectRatio="square"
+                    fit="cover"
+                    className="w-full h-full rounded-xl"
+                    imgClassName="group-hover:scale-108 transition-transform duration-500"
+                  />
+                </div>
+                <span className="font-semibold text-xs text-slate-800 group-hover:text-forest-800 line-clamp-1 transition-colors">
+                  {cat.name}
+                </span>
+                <span className="text-[10px] text-slate-500 mt-0.5">
+                  {cat._count?.products ? `${cat._count.products} plants` : 'Explore →'}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* 3. Featured Products Showcase */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between mb-4">
@@ -334,7 +404,7 @@ export const HomePage: React.FC = () => {
           </Link>
         </div>
 
-        {latestProductsLoading ? (
+        {latestProductsLoading && !latestProductsData?.products?.length ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
             {[1, 2, 3, 4].map((i) => (
               <div
@@ -356,7 +426,7 @@ export const HomePage: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-            {latestProductsData.products.map((product) => (
+            {latestProductsData.products.map((product: any) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

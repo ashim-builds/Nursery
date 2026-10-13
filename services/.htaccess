@@ -6,10 +6,30 @@ PassengerAppType node
 PassengerStartupFile app.js
 # DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END
 
-# CloudLinux NPROC & Passenger Worker Optimization
-PassengerMaxInstances 1
+# CloudLinux NPROC & Passenger Worker Optimization (Hard-capped process spawning)
+PassengerMaxPoolSize 2
+PassengerMaxInstances 2
 PassengerMinInstances 1
 PassengerPoolIdleTime 300
+PassengerStatThrottleRate 60
+
+# Block direct browser access to sensitive configuration, secrets, manifests and database dumps
+<FilesMatch "^(\.env|\.env\..*|\.git.*|package\.json|package-lock\.json|tsconfig\.json|.*\.sql|.*\.log)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Block access to hidden directories and source files
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(\.env|\.git|node_modules|logs) - [F,L,NC]
+    RewriteRule \.(sql|log|ts)$ - [F,L,NC]
+</IfModule>
 
 # Environment variables for Passenger
 SetEnv DATABASE_URL "mysql://rjflower_rjflowers:Rjflowers%402026!@localhost:3306/rjflower_nurserydb?connection_limit=3&pool_timeout=10"

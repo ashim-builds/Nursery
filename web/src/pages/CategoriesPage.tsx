@@ -2,13 +2,26 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { productApi } from '../api/product.api';
-import { Sprout, ArrowRight, Sparkles } from 'lucide-react';
+import { OptimizedImage } from '../components/common/OptimizedImage';
+import { getSessionCache, setSessionCache } from '../utils/sessionCache';
+import { ArrowRight } from 'lucide-react';
+import { Category } from '../types/product';
+
+const CATEGORIES_CACHE_KEY = 'categories:list';
 
 export const CategoriesPage: React.FC = () => {
   const { data: categories, isLoading } = useQuery({
     queryKey: ['categories'],
-    queryFn: productApi.getCategories,
+    queryFn: async () => {
+      const data = await productApi.getCategories();
+      setSessionCache(CATEGORIES_CACHE_KEY, data);
+      return data;
+    },
+    initialData: () => getSessionCache<Category[]>(CATEGORIES_CACHE_KEY) ?? undefined,
+    initialDataUpdatedAt: () => 0, // Triggers background revalidation while rendering in 0ms
   });
+
+  const showLoadingSkeleton = isLoading && !(categories as any)?.length;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6 pb-24">
@@ -22,7 +35,7 @@ export const CategoriesPage: React.FC = () => {
         </p>
       </div>
 
-      {isLoading ? (
+      {showLoadingSkeleton ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="h-44 bg-slate-100 rounded-3xl animate-pulse" />
@@ -36,11 +49,14 @@ export const CategoriesPage: React.FC = () => {
               to={`/category/${cat.slug}`}
               className="group relative bg-white rounded-3xl border border-forest-100 overflow-hidden shadow-soft hover:shadow-lifted hover:border-forest-300 transition-all duration-300 flex flex-col justify-between"
             >
-              <div className="aspect-[4/3] w-full overflow-hidden bg-forest-50/50">
-                <img
+              <div className="w-full overflow-hidden bg-forest-50/50">
+                <OptimizedImage
                   src={cat.imageUrl || 'https://images.unsplash.com/photo-1545241047-6083a3684587?auto=format&fit=crop&w=600&q=80'}
                   alt={cat.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  aspectRatio="4/3"
+                  fit="cover"
+                  className="w-full"
+                  imgClassName="group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
 
@@ -64,3 +80,4 @@ export const CategoriesPage: React.FC = () => {
     </div>
   );
 };
+

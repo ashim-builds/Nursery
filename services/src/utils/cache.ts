@@ -14,8 +14,8 @@ export class MemoryCache {
   private hits = 0;
   private misses = 0;
 
-  constructor(maxSize = 1000) {
-    this.maxSize = maxSize;
+  constructor(maxSize = 200) {
+    this.maxSize = Math.min(maxSize, 200);
 
     // Background cleanup of expired keys every 60 seconds (unref prevents holding event loop open)
     const cleanupTimer = setInterval(() => this.pruneExpired(), 60000);
@@ -55,7 +55,7 @@ export class MemoryCache {
       return null;
     }
 
-    // Refresh LRU order (delete and re-insert)
+    // Refresh LRU order (delete and re-insert as most recently used)
     this.store.delete(key);
     this.store.set(key, entry);
     this.hits++;
@@ -63,11 +63,13 @@ export class MemoryCache {
   }
 
   /**
-   * Store a value with a TTL (in seconds).
+   * Store a value with a TTL (in seconds) and LRU eviction.
    */
-  set<T>(key: string, value: T, ttlSeconds = 300): void {
-    // If cache is at capacity, evict the oldest inserted key (first entry in Map)
-    if (this.store.size >= this.maxSize) {
+  set<T>(key: string, value: T, ttlSeconds = 60): void {
+    if (this.store.has(key)) {
+      this.store.delete(key);
+    } else if (this.store.size >= this.maxSize) {
+      // Evict the oldest key (first item in Map)
       const oldestKey = this.store.keys().next().value;
       if (oldestKey) {
         this.store.delete(oldestKey);
@@ -126,7 +128,7 @@ export class MemoryCache {
   /**
    * Get cached value or fetch fresh from producer function.
    */
-  async getOrSet<T>(key: string, fetcher: () => Promise<T>, ttlSeconds = 300): Promise<T> {
+  async getOrSet<T>(key: string, fetcher: () => Promise<T>, ttlSeconds = 60): Promise<T> {
     const cached = this.get<T>(key);
     if (cached !== null) {
       return cached;
@@ -151,7 +153,7 @@ export class MemoryCache {
   }
 }
 
-// Global shared cache instances with distinct memory ceilings
-export const appCache = new MemoryCache(1500);
-export const siteSettingsCache = new MemoryCache(100);
-export const catalogCache = new MemoryCache(800);
+// Global shared cache instances bounded to 150-200 entries to maintain low RAM footprint (<15MB)
+export const appCache = new MemoryCache(150);
+export const siteSettingsCache = new MemoryCache(50);
+export const catalogCache = new MemoryCache(200);

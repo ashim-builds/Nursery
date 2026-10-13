@@ -8,7 +8,8 @@ import { siteSettingsCache } from '../../utils/cache.js';
 import { emitLiveEvent } from '../../utils/socket.js';
 
 const SETTINGS_CACHE_KEY = 'site_settings:global';
-const SETTINGS_CACHE_TTL = 600; // 10 minutes
+const SETTINGS_STATUS_CACHE_KEY = 'site_settings:operational_status';
+const SETTINGS_CACHE_TTL = 45; // 45 seconds TTL
 
 export class SiteSettingsController {
   // 1. Get current site settings (with in-memory cache)
@@ -44,6 +45,41 @@ export class SiteSettingsController {
 
     siteSettingsCache.set(SETTINGS_CACHE_KEY, settings, SETTINGS_CACHE_TTL);
     return res.status(200).json(ApiResponse.success(settings, 'Site settings retrieved successfully'));
+  });
+
+  // 1b. Get store operational status & hours (with 45s TTL cache)
+  static getOperationalStatus = asyncHandler(async (_req: Request, res: Response) => {
+    const cached = siteSettingsCache.get(SETTINGS_STATUS_CACHE_KEY);
+    if (cached) {
+      return res.status(200).json(ApiResponse.success(cached, 'Operational status retrieved successfully (cached)'));
+    }
+
+    let settings = await prisma.siteSettings.findFirst();
+    const hours = settings?.openingHours || 'Every day: 7:00 AM - 7:00 PM (Closed on festivals)';
+
+    // Calculate Nepal local time (UTC+5:45)
+    const nowUtc = Date.now();
+    const nepalOffsetMs = (5 * 60 + 45) * 60 * 1000;
+    const nepalDate = new Date(nowUtc + nepalOffsetMs);
+    const hour = nepalDate.getUTCHours();
+    const minute = nepalDate.getUTCMinutes();
+    const decimalHour = hour + minute / 60;
+
+    // Normal store hours: 7:00 AM to 7:00 PM (19:00)
+    const isOpen = decimalHour >= 7 && decimalHour < 19;
+
+    const statusData = {
+      isOpen,
+      openingHours: hours,
+      currentTimeNepal: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
+      statusMessage: isOpen ? 'Open Now — Handcrafted bouquets & plant delivery across Pokhara' : 'Closed Now — Opens at 7:00 AM',
+      nextOpening: isOpen ? 'Closes at 7:00 PM' : 'Opens tomorrow at 7:00 AM',
+      businessName: settings?.businessName || 'RJ Flowers',
+      phone: settings?.phone || '9815155580',
+    };
+
+    siteSettingsCache.set(SETTINGS_STATUS_CACHE_KEY, statusData, SETTINGS_CACHE_TTL);
+    return res.status(200).json(ApiResponse.success(statusData, 'Operational status retrieved successfully'));
   });
 
   // 2. Update site settings (Admin only)
@@ -129,6 +165,7 @@ export class SiteSettingsController {
 
     // Invalidate in-memory cache
     siteSettingsCache.del(SETTINGS_CACHE_KEY);
+    siteSettingsCache.del(SETTINGS_STATUS_CACHE_KEY);
     emitLiveEvent('settings:updated', { settings });
 
     return res.status(200).json(ApiResponse.success(settings, 'Site settings updated successfully'));
@@ -200,6 +237,7 @@ export class SiteSettingsController {
 
     // Invalidate in-memory cache
     siteSettingsCache.del(SETTINGS_CACHE_KEY);
+    siteSettingsCache.del(SETTINGS_STATUS_CACHE_KEY);
     emitLiveEvent('settings:updated', { settings: updated });
 
     return res.status(200).json(ApiResponse.success(updated, 'Admin onboarding setup completed successfully!'));

@@ -16,6 +16,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { isGenericVariantName } from '../../utils/orderDisplay';
+import { OptimizedImage } from '../common/OptimizedImage';
 
 export const CartDrawer: React.FC = () => {
   const { items, itemCount, subtotal, deliveryFee, total, updateQuantity, removeFromCart } = useCart();
@@ -173,12 +174,15 @@ export const CartDrawer: React.FC = () => {
                     <Link
                       to={productSlug ? `/products/${productSlug}` : '#'}
                       onClick={closeCartDrawer}
-                      className="w-18 h-18 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-forest-50/50 border border-slate-100 shrink-0 relative"
+                      className="w-18 h-18 sm:w-20 sm:h-20 aspect-square rounded-xl overflow-hidden bg-forest-50/50 border border-slate-100 shrink-0 relative block"
                     >
-                      <img
+                      <OptimizedImage
                         src={itemImg}
                         alt={productTitle}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        aspectRatio="square"
+                        fit="cover"
+                        className="w-full h-full"
+                        imgClassName="group-hover:scale-105 transition-transform duration-300"
                       />
                     </Link>
 

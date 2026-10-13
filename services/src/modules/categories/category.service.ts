@@ -1,9 +1,9 @@
 import { prisma } from '../../config/database.js';
 import { ApiError } from '../../utils/ApiError.js';
-import { appCache } from '../../utils/cache.js';
+import { appCache, catalogCache } from '../../utils/cache.js';
 
 const CATEGORIES_ALL_CACHE_KEY = 'categories:all';
-const CATEGORIES_CACHE_TTL = 600; // 10 minutes
+const CATEGORIES_CACHE_TTL = 60; // 60 seconds TTL
 
 export class CategoryService {
   static async getAll() {
@@ -25,21 +25,28 @@ export class CategoryService {
   }
 
   static async getBySlug(slug: string) {
-    const category = await prisma.category.findUnique({
-      where: { slug },
-      include: {
-        products: {
-          where: { published: true, available: true },
+    const cacheKey = `categories:slug:${slug}`;
+    return appCache.getOrSet(
+      cacheKey,
+      async () => {
+        const category = await prisma.category.findUnique({
+          where: { slug },
           include: {
-            variants: true,
-            images: true,
+            products: {
+              where: { published: true, available: true },
+              include: {
+                variants: true,
+                images: true,
+              },
+            },
           },
-        },
-      },
-    });
+        });
 
-    if (!category) throw ApiError.notFound('Category not found');
-    return category;
+        if (!category) throw ApiError.notFound('Category not found');
+        return category;
+      },
+      CATEGORIES_CACHE_TTL
+    );
   }
 
   static async create(data: any) {
@@ -56,6 +63,8 @@ export class CategoryService {
     });
 
     appCache.del(CATEGORIES_ALL_CACHE_KEY);
+    appCache.clearPattern('categories:slug:*');
+    catalogCache.clear();
     appCache.clearPattern('system:sitemap.xml');
     return created;
   }
@@ -67,6 +76,8 @@ export class CategoryService {
     });
 
     appCache.del(CATEGORIES_ALL_CACHE_KEY);
+    appCache.clearPattern('categories:slug:*');
+    catalogCache.clear();
     appCache.clearPattern('system:sitemap.xml');
     return updated;
   }
@@ -94,8 +105,11 @@ export class CategoryService {
     });
 
     appCache.del(CATEGORIES_ALL_CACHE_KEY);
+    appCache.clearPattern('categories:slug:*');
+    catalogCache.clear();
     appCache.clearPattern('system:sitemap.xml');
     return deleted;
   }
 }
+
 

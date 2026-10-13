@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { OptimizedImage } from '../components/common/OptimizedImage';
 import {
   Plus,
   Minus,
@@ -180,12 +181,15 @@ export const CartPage: React.FC = () => {
                 {/* Product Thumbnail */}
                 <Link
                   to={productSlug ? `/products/${productSlug}` : '#'}
-                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden bg-forest-50/50 border border-slate-100 shrink-0 relative"
+                  className="w-20 h-20 sm:w-24 sm:h-24 aspect-square rounded-2xl overflow-hidden bg-forest-50/50 border border-slate-100 shrink-0 relative block"
                 >
-                  <img
+                  <OptimizedImage
                     src={itemImg}
                     alt={productTitle}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    aspectRatio="square"
+                    fit="cover"
+                    className="w-full h-full"
+                    imgClassName="group-hover:scale-105 transition-transform duration-300"
                   />
                 </Link>
 

@@ -30,13 +30,10 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${inMemoryAccessToken}`;
     }
 
-    // Respect explicit noCache / _t params if provided, but do not bust cache indiscriminately on catalog/product GET requests
+    // Do not append artificial _t=Date.now() query parameters so that responses can leverage backend in-memory route caching
     if (config.params?.noCache) {
       const { noCache, ...restParams } = config.params;
-      config.params = {
-        ...restParams,
-        _t: Date.now(),
-      };
+      config.params = restParams;
     }
 
     return config;

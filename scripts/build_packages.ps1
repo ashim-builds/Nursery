@@ -43,10 +43,26 @@ try {
 }
 
 Write-Host "`n========================================="
-Write-Host "3. Packaging backend-update.zip..."
+Write-Host "3. Generating full_database_setup.sql..."
+Write-Host "========================================="
+$sqlPath = Join-Path $deploymentDir "full_database_setup.sql"
+Push-Location (Join-Path $root "services")
+try {
+    npx prisma migrate diff --from-empty --to-schema-datamodel ./prisma/schema.prisma --script | Out-File -FilePath $sqlPath -Encoding utf8
+    Write-Host "full_database_setup.sql generated successfully!"
+} catch {
+    Write-Warning "Could not automatically generate SQL diff: $_"
+} finally {
+    Pop-Location
+}
+
+Write-Host "`n========================================="
+Write-Host "4. Packaging backend-update.zip & backend-deploy.zip..."
 Write-Host "========================================="
 $backendZipPath = Join-Path $deploymentDir "backend-update.zip"
+$backendDeployZipPath = Join-Path $deploymentDir "backend-deploy.zip"
 if (Test-Path $backendZipPath) { Remove-Item -Force $backendZipPath }
+if (Test-Path $backendDeployZipPath) { Remove-Item -Force $backendDeployZipPath }
 
 $backendArchive = [System.IO.Compression.ZipFile]::Open($backendZipPath, [System.IO.Compression.ZipArchiveMode]::Create)
 Add-FileToZip $backendArchive (Join-Path $root "services/dist/server.js") "dist/server.js"
@@ -65,18 +81,22 @@ Add-FileToZip $backendArchive $tempRestart "tmp/restart.txt"
 Remove-Item -Force $tempRestart
 
 $backendArchive.Dispose()
-Write-Host "backend-update.zip created successfully!"
+Copy-Item -Path $backendZipPath -Destination $backendDeployZipPath -Force
+Write-Host "backend-update.zip and backend-deploy.zip created successfully!"
 
 Write-Host "`n========================================="
-Write-Host "4. Packaging frontend-deploy.zip..."
+Write-Host "5. Packaging frontend-dist.zip & frontend-deploy.zip..."
 Write-Host "========================================="
 $frontendZipPath = Join-Path $deploymentDir "frontend-deploy.zip"
+$frontendDistZipPath = Join-Path $deploymentDir "frontend-dist.zip"
 if (Test-Path $frontendZipPath) { Remove-Item -Force $frontendZipPath }
+if (Test-Path $frontendDistZipPath) { Remove-Item -Force $frontendDistZipPath }
 
 $frontendArchive = [System.IO.Compression.ZipFile]::Open($frontendZipPath, [System.IO.Compression.ZipArchiveMode]::Create)
 Add-DirectoryToZip $frontendArchive (Join-Path $root "web/dist") ""
 $frontendArchive.Dispose()
-Write-Host "frontend-deploy.zip created successfully!"
+Copy-Item -Path $frontendZipPath -Destination $frontendDistZipPath -Force
+Write-Host "frontend-dist.zip and frontend-deploy.zip created successfully!"
 
 Write-Host "`n========================================="
 Write-Host "Deployment packages ready in ./deployment:"

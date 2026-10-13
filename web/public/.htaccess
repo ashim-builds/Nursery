@@ -1,50 +1,80 @@
 # ==============================================================================
-# RJ Flowers - cPanel / Apache Production .htaccess
+# RJ Flowers - cPanel / Apache Production Static Hosting (.htaccess)
+# Designed for direct static delivery bypassing Node.js runtime
 # ==============================================================================
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
 
-  # 1. Enforce HTTPS (optional - uncomment if SSL certificate is active)
+  # 1. Enforce HTTPS (optional / enabled if SSL is active)
   # RewriteCond %{HTTPS} off
   # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-  # 2. OPTIONAL REVERSE PROXY FOR CPANEL (If backend runs on the same domain/server)
-  # If running Node.js via cPanel "Setup Node.js App" on port 5000:
-  # RewriteRule ^api/(.*)$ http://127.0.0.1:5000/api/$1 [P,L]
-
-  # 3. React / Vite Single Page Application (SPA) Routing
-  # Serve physical files or directories if they exist
+  # 2. Existing files and directories are served directly
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
-  # Otherwise fallback to index.html for React Router
+  # 3. Preserve 404 status for genuinely missing static assets (bypasses SPA fallback)
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_URI} \.(css|js|jpe?g|png|gif|webp|avif|svg|ico|woff|woff2|ttf|eot|otf|json|map|xml|txt)$ [NC]
+  RewriteRule ^ - [R=404,L]
+
+  # 4. React Single Page Application (SPA) client-side routing fallback
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule ^ index.html [L]
 </IfModule>
 
 # Disable Directory Browsing
 Options -Indexes
 
-# Custom Error Pages
-ErrorDocument 404 /index.html
-
-# Caching & Compression Optimization
+# Caching Optimization via mod_expires
 <IfModule mod_expires.c>
   ExpiresActive On
   ExpiresDefault "access plus 1 month"
+
+  # Dynamic Entry Points (HTML & Data APIs) - Must revalidate
   ExpiresByType text/html "access plus 0 seconds"
+  ExpiresByType application/json "access plus 0 seconds"
+
+  # Immutable Content-Hashed Bundles & Web Fonts (1 Year)
   ExpiresByType text/css "access plus 1 year"
   ExpiresByType application/javascript "access plus 1 year"
   ExpiresByType application/x-javascript "access plus 1 year"
+  ExpiresByType text/javascript "access plus 1 year"
+  ExpiresByType font/woff "access plus 1 year"
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType font/ttf "access plus 1 year"
+  ExpiresByType font/otf "access plus 1 year"
+  ExpiresByType application/vnd.ms-fontobject "access plus 1 year"
+
+  # Static Images & Icons (1 Year)
   ExpiresByType image/jpeg "access plus 1 year"
   ExpiresByType image/png "access plus 1 year"
   ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/avif "access plus 1 year"
   ExpiresByType image/svg+xml "access plus 1 year"
-  ExpiresByType application/json "access plus 0 seconds"
+  ExpiresByType image/x-icon "access plus 1 year"
 </IfModule>
 
+# Precise Cache-Control Headers via mod_headers
+<IfModule mod_headers.c>
+  # 1-Year Immutable Caching for content-hashed assets, fonts, and images
+  <FilesMatch "\.(css|js|woff2?|ttf|otf|eot|webp|avif|png|jpe?g|svg|ico)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  # HTML index entry point, service worker, and web manifests must never be cached aggressively
+  <FilesMatch "^(index\.html|sw\.js|manifest\.json|robots\.txt|sitemap\.xml)$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
+</IfModule>
+
+# High-Efficiency Deflate / Gzip Compression
 <IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json application/xml image/svg+xml
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/x-javascript text/javascript application/json application/xml image/svg+xml font/ttf font/otf font/woff font/woff2
 </IfModule>

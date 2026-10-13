@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { productApi } from '../api/product.api';
 import { ProductCard } from '../components/product/ProductCard';
 import { SEO } from '../components/common/SEO';
+import { getSessionCache, setSessionCache } from '../utils/sessionCache';
+import { Product } from '../types/product';
 import { ArrowUpDown, X, Sprout, Search } from 'lucide-react';
 
 export const CatalogPage: React.FC = () => {
@@ -14,14 +16,21 @@ export const CatalogPage: React.FC = () => {
 
   const [searchInput, setSearchInput] = useState(search || '');
 
+  const sessionCacheKey = `catalog:${search || 'all'}:${sortBy}`;
+
   const { data, isLoading } = useQuery({
     queryKey: ['products-catalog-simple', search, sortBy],
-    queryFn: () =>
-      productApi.getProducts({
+    queryFn: async () => {
+      const res = await productApi.getProducts({
         search,
         sortBy: sortBy as any,
         limit: 50,
-      }),
+      });
+      setSessionCache(sessionCacheKey, res);
+      return res;
+    },
+    initialData: () => getSessionCache<{ products: Product[]; meta: any }>(sessionCacheKey) ?? undefined,
+    initialDataUpdatedAt: () => 0, // 0ms instant display from sessionStorage with silent background sync
   });
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -44,6 +53,8 @@ export const CatalogPage: React.FC = () => {
     params.delete('q');
     setSearchParams(params);
   };
+
+  const showLoadingSkeleton = isLoading && !(data as any)?.products?.length;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 pb-24">
@@ -121,7 +132,7 @@ export const CatalogPage: React.FC = () => {
       </div>
 
       {/* Product Grid (Responsive: 2-col on mobile, 4-col on desktop) */}
-      {isLoading ? (
+      {showLoadingSkeleton ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div key={i} className="h-72 bg-slate-100 animate-pulse rounded-2xl" />

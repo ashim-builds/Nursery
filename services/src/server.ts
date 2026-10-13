@@ -11,7 +11,7 @@ import morgan from 'morgan';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { ENV } from './config/env.js';
-import { connectDB, prisma } from './config/database.js';
+import { connectDB, prisma, closePool } from './config/database.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import { appCache } from './utils/cache.js';
 import { initSocketIO } from './utils/socket.js';
@@ -36,19 +36,60 @@ app.set('trust proxy', 1);
 // High-Efficiency Gzip/Deflate Response Compression
 app.use((compression as any)({ threshold: 1024 }));
 
-// Dedicated Static Image Serving (High-Performance Caching with Cross-Origin Resource Sharing)
-app.use(
-  '/uploads',
-  express.static(path.resolve(process.cwd(), 'uploads'), {
-    maxAge: '365d',
-    immutable: true,
-    setHeaders: (res) => {
-      res.setHeader('X-Content-Type-Options', 'nosniff');
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    },
-  })
-);
+// Dedicated Static Image Serving with Smart WebP Auto-Negotiation & High-Performance Caching
+const resolveUploadsDir = (): string => {
+  const candidates = [
+    process.env.UPLOAD_DIR,
+    path.resolve(process.cwd(), 'uploads'),
+    path.resolve(process.cwd(), '../uploads'),
+    path.resolve(__dirname, '../../uploads'),
+    path.resolve(__dirname, '../uploads'),
+  ].filter(Boolean) as string[];
+
+  for (const dir of candidates) {
+    if (fs.existsSync(dir)) return dir;
+  }
+  return path.resolve(process.cwd(), 'uploads');
+};
+
+const uploadsDir = resolveUploadsDir();
+
+const smartWebpMiddleware = (req: Request, res: Response, next: express.NextFunction) => {
+  try {
+    const decodedPath = decodeURIComponent(req.path);
+    // If requesting a .jpg, .jpeg, or .png file, check if a lightweight .webp counterpart exists on disk
+    const match = decodedPath.match(/\.(jpe?g|png)$/i);
+    if (match) {
+      const webpRelPath = decodedPath.replace(/\.(jpe?g|png)$/i, '.webp');
+      const diskWebpPath = path.join(uploadsDir, webpRelPath);
+      if (fs.existsSync(diskWebpPath)) {
+        res.setHeader('Content-Type', 'image/webp');
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        res.setHeader('Vary', 'Accept');
+        return res.sendFile(diskWebpPath);
+      }
+    }
+  } catch (err) {
+    // Gracefully fallback to static handler if decoding fails
+  }
+  next();
+};
+
+const uploadsStaticMiddleware = express.static(uploadsDir, {
+  maxAge: '365d',
+  immutable: true,
+  setHeaders: (res) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  },
+});
+
+app.use('/uploads', smartWebpMiddleware, uploadsStaticMiddleware);
+app.use('/api/uploads', smartWebpMiddleware, uploadsStaticMiddleware);
 
 // Disable browser/proxy caching for all API endpoints to guarantee instant reflection of changes (prices, stock, products)
 app.use('/api', (_req, res, next) => {
@@ -427,6 +468,19 @@ async function startServer() {
 // Graceful Shutdown
 const handleGracefulShutdown = async (signal: string) => {
   console.log(`\n🛑 Received ${signal}. Starting graceful shutdown...`);
+
+  // Failsafe timeout to prevent hanging or zombie processes on CloudLinux
+  const forceExitTimeout = setTimeout(async () => {
+    console.warn('⚠️ Forceful shutdown timeout (5s) reached. Terminating process.');
+    try {
+      await closePool();
+    } catch {}
+    process.exit(1);
+  }, 5000);
+  if (typeof forceExitTimeout.unref === 'function') {
+    forceExitTimeout.unref();
+  }
+
   const activeServer = server || httpServer;
   if (activeServer) {
     if (typeof activeServer.closeIdleConnections === 'function') {
@@ -435,14 +489,18 @@ const handleGracefulShutdown = async (signal: string) => {
     activeServer.close(async () => {
       console.log('🔒 Closed HTTP server connections.');
       try {
-        await prisma.$disconnect();
-        console.log('📦 Disconnected Prisma / MySQL connection.');
+        await closePool();
       } catch (err) {
-        console.error('Error disconnecting database:', err);
+        console.error('Error disconnecting database pool:', err);
       }
+      clearTimeout(forceExitTimeout);
       process.exit(0);
     });
   } else {
+    try {
+      await closePool();
+    } catch {}
+    clearTimeout(forceExitTimeout);
     process.exit(0);
   }
 };

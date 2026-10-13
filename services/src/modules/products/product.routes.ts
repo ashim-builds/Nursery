@@ -7,6 +7,7 @@ const router = Router();
 
 // Public Catalog Endpoints
 router.get('/', validateRequest(productQuerySchema), ProductController.getAll);
+router.get('/featured', ProductController.getFeatured);
 router.get('/slug/:slug', ProductController.getBySlug);
 router.get('/:id', ProductController.getById);
 

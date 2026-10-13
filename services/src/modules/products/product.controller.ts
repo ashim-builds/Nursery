@@ -10,6 +10,12 @@ export class ProductController {
     res.status(200).json(ApiResponse.success(result.products, 'Products retrieved', 200, result.meta));
   });
 
+  static getFeatured = asyncHandler(async (req: Request, res: Response) => {
+    const limit = parseInt((req.query.limit as string) || '8', 10);
+    const result = await ProductService.getFeatured(limit);
+    res.status(200).json(ApiResponse.success(result.products, 'Featured products retrieved', 200, result.meta));
+  });
+
   static getBySlug = asyncHandler(async (req: Request, res: Response) => {
     const product = await ProductService.getBySlug(req.params.slug);
     res.status(200).json(ApiResponse.success(product, 'Product details retrieved'));
